@@ -1,0 +1,395 @@
+-- ENUMS
+create type user_role as enum ('super_admin', 'clinic_owner', 'customer');
+create type appointment_status as enum ('pending', 'accepted', 'rejected', 'rescheduled', 'reschedule_accepted', 'reschedule_declined', 'cancelled');
+create type notification_type as enum ('new_booking', 'accepted', 'rejected', 'rescheduled', 'reschedule_accepted', 'reschedule_declined');
+
+-- PROFILES (extends Supabase auth.users)
+create table profiles (
+  id uuid references auth.users(id) on delete cascade primary key,
+  email text not null,
+  full_name text,
+  role user_role not null default 'customer',
+  phone text,
+  avatar_url text,
+  created_at timestamptz default now()
+);
+
+-- CLINICS
+create table clinics (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid references profiles(id) on delete cascade,
+  name text not null,
+  address text,
+  city text,
+  phone text,
+  email text,
+  description text,
+  logo_url text,
+  is_active boolean default true,
+  created_at timestamptz default now()
+);
+
+-- SERVICES
+create table services (
+  id uuid primary key default gen_random_uuid(),
+  clinic_id uuid references clinics(id) on delete cascade,
+  name text not null,
+  description text,
+  duration_minutes int default 60,
+  price numeric(10,2),
+  is_active boolean default true,
+  created_at timestamptz default now()
+);
+
+-- APPOINTMENTS
+create table appointments (
+  id uuid primary key default gen_random_uuid(),
+  clinic_id uuid references clinics(id) on delete cascade,
+  service_id uuid references services(id),
+  customer_id uuid references profiles(id) on delete cascade,
+  status appointment_status default 'pending',
+  appointment_date date not null,
+  appointment_time time not null,
+  rescheduled_date date,
+  rescheduled_time time,
+  rejection_reason text,
+  notes text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+-- NOTIFICATIONS
+create table notifications (
+  id uuid primary key default gen_random_uuid(),
+  recipient_id uuid references profiles(id) on delete cascade,
+  appointment_id uuid references appointments(id) on delete cascade,
+  type notification_type not null,
+  title text not null,
+  message text not null,
+  is_read boolean default false,
+  created_at timestamptz default now()
+);
+
+-- RLS (Row Level Security)
+alter table profiles enable row level security;
+alter table clinics enable row level security;
+alter table services enable row level security;
+alter table appointments enable row level security;
+alter table notifications enable row level security;
+
+-- POLICIES
+-- Profiles: users can read all profiles, only update their own
+create policy "Public profiles are viewable" on profiles for select using (true);
+create policy "Users can update own profile" on profiles for update using (auth.uid() = id);
+create policy "Users can insert own profile" on profiles for insert with check (auth.uid() = id);
+
+-- Clinics: public read, owners can manage their own
+create policy "Clinics are publicly viewable" on clinics for select using (true);
+create policy "Owners can insert clinics" on clinics for insert with check (auth.uid() = owner_id);
+create policy "Owners can update their clinic" on clinics for update using (auth.uid() = owner_id);
+
+-- Services: public read, clinic owners manage their own
+create policy "Services are publicly viewable" on services for select using (true);
+create policy "Owners can manage services" on services for all using (
+  auth.uid() = (select owner_id from clinics where id = clinic_id)
+);
+
+-- Appointments: customers and clinic owners can see relevant ones
+create policy "Customers see own appointments" on appointments for select using (auth.uid() = customer_id);
+create policy "Clinic owners see their appointments" on appointments for select using (
+  auth.uid() = (select owner_id from clinics where id = clinic_id)
+);
+create policy "Customers can insert appointments" on appointments for insert with check (auth.uid() = customer_id);
+create policy "Clinic owners can update appointments" on appointments for update using (
+  auth.uid() = (select owner_id from clinics where id = clinic_id)
+);
+create policy "Customers can update own appointments" on appointments for update using (auth.uid() = customer_id);
+
+-- Notifications: users only see their own
+create policy "Users see own notifications" on notifications for select using (auth.uid() = recipient_id);
+create policy "Users can update own notifications" on notifications for update using (auth.uid() = recipient_id);
+create policy "System can insert notifications" on notifications for insert with check (true);
+
+-- Auto-update updated_at on appointments
+create or replace function update_updated_at()
+returns trigger as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$ language plpgsql;
+
+create trigger appointments_updated_at
+  before update on appointments
+  for each row execute function update_updated_at();
+
+-- Auto-create profile on signup
+create or replace function handle_new_user()
+returns trigger as $$
+begin
+  insert into profiles (id, email, full_name, role)
+  values (
+    new.id,
+    new.email,
+    new.raw_user_meta_data->>'full_name',
+    coalesce((new.raw_user_meta_data->>'role')::user_role, 'customer')
+  );
+  return new;
+end;
+$$ language plpgsql security definer;
+
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function handle_new_user();
+
+
+-- ENUMS
+create type user_role as enum ('super_admin', 'clinic_owner', 'customer');
+create type appointment_status as enum ('pending', 'accepted', 'rejected', 'rescheduled', 'reschedule_accepted', 'reschedule_declined', 'cancelled');
+create type notification_type as enum ('new_booking', 'accepted', 'rejected', 'rescheduled', 'reschedule_accepted', 'reschedule_declined');
+
+-- PROFILES (extends Supabase auth.users)
+create table profiles (
+  id uuid references auth.users(id) on delete cascade primary key,
+  email text not null,
+  full_name text,
+  role user_role not null default 'customer',
+  phone text,
+  avatar_url text,
+  created_at timestamptz default now()
+);
+
+-- CLINICS
+create table clinics (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid references profiles(id) on delete cascade,
+  name text not null,
+  address text,
+  city text,
+  phone text,
+  email text,
+  description text,
+  logo_url text,
+  is_active boolean default true,
+  created_at timestamptz default now()
+);
+
+-- SERVICES
+create table services (
+  id uuid primary key default gen_random_uuid(),
+  clinic_id uuid references clinics(id) on delete cascade,
+  name text not null,
+  description text,
+  duration_minutes int default 60,
+  price numeric(10,2),
+  is_active boolean default true,
+  created_at timestamptz default now()
+);
+
+-- APPOINTMENTS
+create table appointments (
+  id uuid primary key default gen_random_uuid(),
+  clinic_id uuid references clinics(id) on delete cascade,
+  service_id uuid references services(id),
+  customer_id uuid references profiles(id) on delete cascade,
+  status appointment_status default 'pending',
+  appointment_date date not null,
+  appointment_time time not null,
+  rescheduled_date date,
+  rescheduled_time time,
+  rejection_reason text,
+  notes text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+-- NOTIFICATIONS
+create table notifications (
+  id uuid primary key default gen_random_uuid(),
+  recipient_id uuid references profiles(id) on delete cascade,
+  appointment_id uuid references appointments(id) on delete cascade,
+  type notification_type not null,
+  title text not null,
+  message text not null,
+  is_read boolean default false,
+  created_at timestamptz default now()
+);
+
+-- RLS (Row Level Security)
+alter table profiles enable row level security;
+alter table clinics enable row level security;
+alter table services enable row level security;
+alter table appointments enable row level security;
+alter table notifications enable row level security;
+
+-- POLICIES
+-- Profiles: users can read all profiles, only update their own
+create policy "Public profiles are viewable" on profiles for select using (true);
+create policy "Users can update own profile" on profiles for update using (auth.uid() = id);
+create policy "Users can insert own profile" on profiles for insert with check (auth.uid() = id);
+
+-- Clinics: public read, owners can manage their own
+create policy "Clinics are publicly viewable" on clinics for select using (true);
+create policy "Owners can insert clinics" on clinics for insert with check (auth.uid() = owner_id);
+create policy "Owners can update their clinic" on clinics for update using (auth.uid() = owner_id);
+
+-- Services: public read, clinic owners manage their own
+create policy "Services are publicly viewable" on services for select using (true);
+create policy "Owners can manage services" on services for all using (
+  auth.uid() = (select owner_id from clinics where id = clinic_id)
+);
+
+-- Appointments: customers and clinic owners can see relevant ones
+create policy "Customers see own appointments" on appointments for select using (auth.uid() = customer_id);
+create policy "Clinic owners see their appointments" on appointments for select using (
+  auth.uid() = (select owner_id from clinics where id = clinic_id)
+);
+create policy "Customers can insert appointments" on appointments for insert with check (auth.uid() = customer_id);
+create policy "Clinic owners can update appointments" on appointments for update using (
+  auth.uid() = (select owner_id from clinics where id = clinic_id)
+);
+create policy "Customers can update own appointments" on appointments for update using (auth.uid() = customer_id);
+
+-- Notifications: users only see their own
+create policy "Users see own notifications" on notifications for select using (auth.uid() = recipient_id);
+create policy "Users can update own notifications" on notifications for update using (auth.uid() = recipient_id);
+create policy "System can insert notifications" on notifications for insert with check (true);
+
+-- Auto-update updated_at on appointments
+create or replace function update_updated_at()
+returns trigger as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$ language plpgsql;
+
+create trigger appointments_updated_at
+  before update on appointments
+  for each row execute function update_updated_at();
+
+-- Auto-create profile on signup
+create or replace function handle_new_user()
+returns trigger as $$
+begin
+  insert into profiles (id, email, full_name, role)
+  values (
+    new.id,
+    new.email,
+    new.raw_user_meta_data->>'full_name',
+    coalesce((new.raw_user_meta_data->>'role')::user_role, 'customer')
+  );
+  return new;
+end;
+$$ language plpgsql security definer;
+
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function handle_new_user();
+
+
+create or replace function handle_new_user()
+returns trigger as $$
+begin
+  insert into profiles (id, email, full_name, role)
+  values (
+    new.id,
+    new.email,
+    new.raw_user_meta_data->>'full_name',
+    case 
+      when new.raw_user_meta_data->>'role' = 'clinic_owner' then 'clinic_owner'::user_role
+      when new.raw_user_meta_data->>'role' = 'super_admin' then 'super_admin'::user_role
+      else 'customer'::user_role
+    end
+  );
+  return new;
+end;
+$$ language plpgsql security definer;
+
+---
+
+## Step 6 — Enable Realtime on notifications table
+
+In Supabase → **Database → Replication**, enable realtime for the `notifications` table so the bell icon updates live.
+
+---
+
+## Step 7 — Project folder structure
+
+Set up this structure inside `src/`:
+```
+src/
+├── lib/
+│   └── supabase.js
+├── context/
+│   └── AuthContext.jsx        # global auth state
+├── hooks/
+│   └── useNotifications.js    # realtime notification hook
+├── pages/
+│   ├── Landing.jsx
+│   ├── Login.jsx
+│   ├── Register.jsx
+│   ├── customer/
+│   │   ├── CustomerDashboard.jsx
+│   │   ├── ClinicList.jsx
+│   │   ├── BookAppointment.jsx
+│   │   └── MyAppointments.jsx
+│   ├── clinic/
+│   │   ├── ClinicDashboard.jsx
+│   │   ├── AppointmentRequests.jsx
+│   │   ├── ManageServices.jsx
+│   │   └── ClinicProfile.jsx
+│   └── admin/
+│       └── SuperAdminDashboard.jsx
+├── components/
+│   ├── Navbar.jsx
+│   ├── NotificationBell.jsx
+│   ├── ProtectedRoute.jsx
+│   └── ui/                    # reusable UI bits
+└── App.jsx
+
+
+-- ============================================
+-- RUN THIS IN SUPABASE SQL EDITOR
+-- ============================================
+
+-- 1. Add new appointment status 'completed' to enum
+alter type appointment_status add value if not exists 'completed';
+
+-- 2. Add image columns to clinics table
+alter table clinics 
+  add column if not exists logo_url text,
+  add column if not exists banner_url text;
+
+-- 3. Add payment tracking to clinics
+alter table clinics
+  add column if not exists subscription_status text check (subscription_status in ('active', 'unpaid', 'suspended')) default 'active',
+  add column if not exists last_payment_date date,
+  add column if not exists next_payment_date date;
+
+-- 4. Reviews table
+create table if not exists reviews (
+  id uuid primary key default gen_random_uuid(),
+  appointment_id uuid references appointments(id) on delete cascade unique,
+  clinic_id uuid references clinics(id) on delete cascade,
+  customer_id uuid references profiles(id) on delete cascade,
+  rating int check (rating >= 1 and rating <= 5) not null,
+  comment text,
+  created_at timestamptz default now()
+);
+
+-- 5. Add 'review_submitted' to notification type enum
+alter type notification_type add value if not exists 'completed';
+alter type notification_type add value if not exists 'review_request';
+
+-- 6. RLS for reviews
+alter table reviews enable row level security;
+
+create policy "Reviews are publicly viewable" on reviews for select using (true);
+create policy "Customers can insert own reviews" on reviews for insert 
+  with check (auth.uid() = customer_id);
+create policy "Customers can update own reviews" on reviews for update 
+  using (auth.uid() = customer_id);
+
+-- 7. Storage buckets for clinic images (run separately if needed)
+-- Go to Supabase → Storage → Create bucket named "clinic-images" and set it to PUBLIC

@@ -1,0 +1,47 @@
+📦dental
+ ┣ 📂node_modules
+ ┣ 📂public
+ ┃ ┗ 📜vite.svg
+ ┣ 📂src
+ ┃ ┣ 📂assets
+ ┃ ┃ ┗ 📜react.svg
+ ┃ ┣ 📂components
+ ┃ ┃ ┣ 📂ui
+ ┃ ┃ ┣ 📜Navbar.jsx
+ ┃ ┃ ┣ 📜NotificationsBell.jsx
+ ┃ ┃ ┗ 📜ProtectedRoute.jsx
+ ┃ ┣ 📂context
+ ┃ ┃ ┗ 📜AuthContext.jsx
+ ┃ ┣ 📂hooks
+ ┃ ┃ ┗ 📜useNotifications.js
+ ┃ ┣ 📂lib
+ ┃ ┃ ┗ 📜supabase.js
+ ┃ ┣ 📂pages
+ ┃ ┃ ┣ 📂admin
+ ┃ ┃ ┃ ┗ 📜SuperAdminDashboard.jsx
+ ┃ ┃ ┣ 📂clinic
+ ┃ ┃ ┃ ┣ 📜AppointmentRequest.jsx
+ ┃ ┃ ┃ ┣ 📜ClinicDashboard.jsx
+ ┃ ┃ ┃ ┣ 📜ClinicProfile.jsx
+ ┃ ┃ ┃ ┗ 📜ManageServices.jsx
+ ┃ ┃ ┣ 📂customer
+ ┃ ┃ ┃ ┣ 📜BookAppointment.jsx
+ ┃ ┃ ┃ ┣ 📜ClinicList.jsx
+ ┃ ┃ ┃ ┣ 📜CustomerDashboard.jsx
+ ┃ ┃ ┃ ┗ 📜MyAppointment.jsx
+ ┃ ┃ ┣ 📜Landing.jsx
+ ┃ ┃ ┣ 📜Login.jsx
+ ┃ ┃ ┗ 📜Register.jsx
+ ┃ ┣ 📜App.css
+ ┃ ┣ 📜App.jsx
+ ┃ ┣ 📜index.css
+ ┃ ┗ 📜main.jsx
+ ┣ 📜.env
+ ┣ 📜.gitignore
+ ┣ 📜dentaldb.txt
+ ┣ 📜eslint.config.js
+ ┣ 📜index.html
+ ┣ 📜package-lock.json
+ ┣ 📜package.json
+ ┣ 📜README.md
+ ┗ 📜vite.config.js
