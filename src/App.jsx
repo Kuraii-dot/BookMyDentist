@@ -1,12 +1,12 @@
 import { AuthProvider } from './context/AuthContext'
-import { RouterProvider } from 'react-router-dom'  // ← add this
-import router from './router'                        // ← change this
+import { RouterProvider } from 'react-router-dom'
+import router from './router' 
 import { Toaster } from 'react-hot-toast'
 
 export default function App() {
   return (
     <AuthProvider>
-      <RouterProvider router={router} />              {/* ← change this */}
+      <RouterProvider router={router} />
       <Toaster
         position="top-right"
         toastOptions={{
