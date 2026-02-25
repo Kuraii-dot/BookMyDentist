@@ -117,7 +117,7 @@ export default function AppointmentRequests() {
     all:      appointments.length
   }
 
-  if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" /></div>
+  if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-sky-500 border-t-transparent rounded-full animate-spin" /></div>
 
   return (
     <div>
@@ -130,7 +130,7 @@ export default function AppointmentRequests() {
       <div className="flex gap-1 bg-white rounded-2xl border border-slate-100 p-1 shadow-sm mb-5 overflow-x-auto">
         {TABS.map(t => (
           <button key={t.key} onClick={() => setTab(t.key)}
-            className={`flex-1 min-w-0 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap px-2 ${tab === t.key ? 'bg-teal-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+            className={`flex-1 min-w-0 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap px-2 ${tab === t.key ? 'bg-sky-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
             <span className="hidden sm:inline">{t.icon}</span> {t.label}
             {counts[t.key] > 0 && (
               <span className={`text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center ${tab === t.key ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'}`}>
@@ -163,10 +163,10 @@ export default function AppointmentRequests() {
             const past = isPast(dateObj)
 
             return (
-              <div key={a.id} className={`card p-5 transition-all hover:shadow-md ${isPending ? 'border-l-4 border-l-amber-400' : isAccepted ? 'border-l-4 border-l-teal-400' : ''}`}>
+              <div key={a.id} className={`card p-5 transition-all hover:shadow-md ${isPending ? 'border-l-4 border-l-amber-400' : isAccepted ? 'border-l-4 border-l-sky-400' : ''}`}>
                 <div className="flex items-start gap-4 flex-wrap">
                   {/* Avatar */}
-                  <div className="w-11 h-11 rounded-xl bg-teal-50 flex items-center justify-center font-bold text-teal-600 shrink-0 overflow-hidden">
+                  <div className="w-11 h-11 rounded-xl bg-sky-50 flex items-center justify-center font-bold text-sky-600 shrink-0 overflow-hidden">
                     {a.profiles?.avatar_url
                       ? <img src={a.profiles.avatar_url} alt="" className="w-full h-full object-cover" />
                       : <span>{a.profiles?.full_name?.[0]?.toUpperCase()}</span>

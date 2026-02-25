@@ -60,20 +60,20 @@ export default function ClinicDashboard() {
 
   if (loading) return (
     <div className="flex justify-center py-16">
-      <div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
+      <div className="w-8 h-8 border-4 border-sky-500 border-t-transparent rounded-full animate-spin" />
     </div>
   )
 
   return (
     <div className="animate-fade-in">
       {/* Welcome */}
-      <div className="bg-gradient-to-r from-teal-600 to-teal-700 rounded-2xl p-6 mb-6 text-white relative overflow-hidden">
+      <div className="bg-gradient-to-r from-sky-600 to-sky-100 rounded-2xl p-6 mb-6 text-white relative overflow-hidden">
         <div className="absolute inset-0 opacity-10" style={{backgroundImage:'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize:'20px 20px'}} />
         <div className="relative flex items-center justify-between gap-4 flex-wrap">
           <div>
-            <p className="text-teal-200 text-sm">{greeting} 👋</p>
+            <p className="text-sky-200 text-sm">{greeting} 👋</p>
             <h1 className="font-display font-bold text-2xl mt-0.5">{clinic?.name || profile?.full_name}</h1>
-            <p className="text-teal-100 text-sm mt-1">
+            <p className="text-sky-100 text-sm mt-1">
               {stats.pending > 0
                 ? `${stats.pending} request${stats.pending > 1 ? 's' : ''} awaiting your response`
                 : 'No pending requests — all caught up!'}

@@ -150,7 +150,7 @@ export default function Landing() {
             <div className="w-8 h-8 bg-sky-600 rounded-lg flex items-center justify-center shadow-sm">
               <span className="text-white text-sm">🦷</span>
             </div>
-            <span className="font-display font-bold text-slate-900 text-lg">DentBook</span>
+            <span className="font-display font-bold text-slate-900 text-lg">BookMyDentist</span>
           </div>
           <div className="flex items-center gap-3">
             <Link to="/login" className="btn btn-secondary btn-sm hidden sm:flex">Sign In</Link>
@@ -160,20 +160,20 @@ export default function Landing() {
       </nav>
 
       {/* Hero */}
-      <section ref={heroRef} className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-sky-950 to-slate-900">
+      <section ref={heroRef} className="relative overflow-hidden bg-gradient-to-br from-sky-100 via-blue-50 to-amber-100">
         {/* Background pattern */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0" style={{backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.3) 1px, transparent 0)', backgroundSize: '32px 32px'}} />
         </div>
         {/* Glow */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-sky-500/20 blur-3xl rounded-full" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-amber-500/20 blur-3xl rounded-full" />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-24 text-center">
-          <div className="inline-flex items-center gap-2 bg-sky-500/10 border border-sky-500/20 text-sky-300 px-4 py-1.5 rounded-full text-sm font-medium mb-8 animate-fade-in">
+          <div className="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 text-amber-800 px-4 py-1.5 rounded-full text-sm font-medium mb-8 animate-fade-in">
             <span className="w-2 h-2 bg-sky-400 rounded-full animate-pulse" />
             Trusted by patients across the Philippines
           </div>
-          <h1 className="font-display font-bold text-white text-5xl sm:text-6xl md:text-7xl leading-[1.1] mb-6 animate-fade-in" style={{animationDelay: '100ms'}}>
+          <h1 className="font-display font-bold text-transparent bg-clip-text bg-gradient-to-r from-sky-600 to-cyan-700 text-5xl sm:text-6xl md:text-7xl leading-[1.1] mb-6 animate-fade-in" style={{animationDelay: '100ms'}}>
             Your Smile Deserves<br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-500 to-cyan-300">the Best Care</span>
           </h1>
@@ -212,7 +212,7 @@ export default function Landing() {
       </section>
 
       {/* Stats bar */}
-      <section className="bg-sky-600">
+      <section className="bg-gradient-to-br from-amber-50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 grid grid-cols-3 divide-x divide-sky-500">
           {[
             { value: `${clinics.length}+`, label: 'Verified Clinics' },
@@ -220,8 +220,8 @@ export default function Landing() {
             { value: '4.8★', label: 'Average Rating' },
           ].map(s => (
             <div key={s.label} className="text-center px-4">
-              <p className="font-display font-bold text-white text-xl sm:text-2xl">{s.value}</p>
-              <p className="text-sky-200 text-xs sm:text-sm">{s.label}</p>
+              <p className="font-display font-bold text-black text-xl sm:text-2xl">{s.value}</p>
+              <p className="text-black text-xs sm:text-sm">{s.label}</p>
             </div>
           ))}
         </div>

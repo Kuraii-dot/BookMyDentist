@@ -171,7 +171,7 @@ export default function ClinicAvailability() {
         <div className="flex gap-2 flex-wrap">
           {[15, 20, 30, 45, 60, 90].map(d => (
             <button key={d} onClick={() => setSlotDuration(d)}
-              className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${slotDuration === d ? 'bg-teal-600 text-white border-teal-600' : 'border-slate-200 text-slate-600 hover:border-teal-300'}`}>
+              className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${slotDuration === d ? 'bg-sky-600 text-white border-sky-600' : 'border-slate-200 text-slate-600 hover:border-sky-300'}`}>
               {d} min
             </button>
           ))}

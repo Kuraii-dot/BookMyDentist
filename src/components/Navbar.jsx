@@ -26,7 +26,7 @@ export default function Navbar({ showNotifications = false }) {
             <div className="w-8 h-8 bg-amber-400 rounded-lg flex items-center justify-center">
               <span className="text-white text-sm font-bold">🦷</span>
             </div>
-            <span className="font-bold text-stone-800 text-lg tracking-tight">DentBook</span>
+            <span className="font-bold text-stone-800 text-lg tracking-tight">BookMyDentist</span>
           </Link>
           <div className="w-20 h-8 bg-amber-100 rounded-full animate-pulse" />
         </div>
@@ -42,7 +42,7 @@ export default function Navbar({ showNotifications = false }) {
             <div className="w-8 h-8 bg-amber-400 rounded-lg flex items-center justify-center">
               <span className="text-white text-sm font-bold">🦷</span>
             </div>
-            <span className="font-bold text-stone-800 text-lg tracking-tight">DentBook</span>
+            <span className="font-bold text-stone-800 text-lg tracking-tight">BookMyDentist</span>
           </Link>
 
           <div className="flex items-center gap-3">
