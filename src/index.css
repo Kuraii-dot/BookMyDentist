@@ -1,7 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap');
 @import "tailwindcss";
 
+/* ----------------- Root Variables ----------------- */
 :root {
+  /* Brand */
   --brand-50:  #f0fdfa;
   --brand-100: #ccfbf1;
   --brand-200: #99f6e4;
@@ -13,6 +15,7 @@
   --brand-800: #115e59;
   --brand-900: #134e4a;
 
+  /* Neutral */
   --gray-50:  #f8fafc;
   --gray-100: #f1f5f9;
   --gray-200: #e2e8f0;
@@ -24,12 +27,14 @@
   --gray-800: #1e293b;
   --gray-900: #0f172a;
 
+  /* Semantic */
   --success: #10b981;
   --warning: #f59e0b;
   --danger:  #ef4444;
   --info:    #3b82f6;
 }
 
+/* ----------------- Base Styles ----------------- */
 * {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -45,10 +50,21 @@ h1, h2, h3, .font-display {
   font-family: 'Syne', sans-serif;
 }
 
-/* Scrollbar and transitions (ok to leave as-is) */
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--gray-100); }
+::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--gray-400); }
 
+/* Smooth transitions */
+*, *::before, *::after {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ----------------- Components Layer ----------------- */
 @layer components {
-  /* Cards */
+
+  /* Card */
   .card {
     @apply bg-white rounded-2xl border border-slate-100 shadow-sm;
   }
@@ -99,15 +115,48 @@ h1, h2, h3, .font-display {
   }
   .input-error { @apply border-red-300 focus:ring-red-400; }
 
-  /* Stat cards, tables, modals, navs */
+  /* Page header */
+  .page-header { @apply mb-6; }
+  .page-title { @apply text-2xl font-bold text-slate-900; }
+  .page-subtitle { @apply text-slate-500 mt-1 text-sm; }
+
+  /* Stat cards */
   .stat-card { @apply bg-white rounded-2xl border border-slate-100 shadow-sm p-5; }
+
+  /* Table */
   .table-container { @apply bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden; }
   .table-header { @apply bg-slate-50 border-b border-slate-100; }
   .table-row { @apply hover:bg-slate-50/60 transition-colors; }
   .table-cell { @apply px-4 py-3 text-sm; }
+
+  /* Modal */
   .modal-backdrop { @apply fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4; }
   .modal { @apply bg-white rounded-3xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto; }
+
+  /* Sidebar nav */
   .nav-item { @apply flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150; }
   .nav-item-active { @apply bg-teal-50 text-teal-700 font-semibold; }
   .nav-item-inactive { @apply text-slate-600 hover:bg-slate-50 hover:text-slate-900; }
+
 }
+  
+/* ----------------- Animations ----------------- */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.animate-fade-in { animation: fadeIn 0.3s ease forwards; }
+.animate-slide-in { animation: slideIn 0.25s ease forwards; }
+
+.stagger > *:nth-child(1) { animation-delay: 0ms; }
+.stagger > *:nth-child(2) { animation-delay: 60ms; }
+.stagger > *:nth-child(3) { animation-delay: 120ms; }
+.stagger > *:nth-child(4) { animation-delay: 180ms; }
+.stagger > *:nth-child(5) { animation-delay: 240ms; }
+.stagger > *:nth-child(6) { animation-delay: 300ms; }
