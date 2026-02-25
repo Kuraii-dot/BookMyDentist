@@ -1,21 +1,50 @@
 @import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap');
 
+/* ============================================
+   THEME — change these to retheme everything
+   ============================================ */
 @theme {
   --font-display: 'Syne', sans-serif;
-  --font-sans: 'DM Sans', sans-serif;
+  --font-sans:    'DM Sans', sans-serif;
+
+  /* Brand color scale — swap all 5 to change the whole app */
+  --color-brand:        #0d9488;  /* buttons, active nav, accents     */
+  --color-brand-hover:  #0f766e;  /* hover on buttons                 */
+  --color-brand-light:  #f0fdfa;  /* light backgrounds, badge bg      */
+  --color-brand-text:   #0f766e;  /* text on light brand backgrounds  */
+  --color-brand-border: #99f6e4;  /* badge borders, dividers          */
+  --color-brand-ring:   rgb(20 184 166 / 0.15); /* focus ring shadow  */
 }
 
+/* ============================================
+   BASE
+   ============================================ */
 @layer base {
-  * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
-  body { font-family: var(--font-sans); background-color: #f8fafc; color: #1e293b; }
-  h1, h2, h3 { font-family: var(--font-display); }
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: #f8fafc;
+    color: #1e293b;
+  }
+
+  h1, h2, h3 {
+    font-family: var(--font-display);
+  }
+
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: #f1f5f9; }
   ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
   ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 }
 
+/* ============================================
+   KEYFRAMES
+   ============================================ */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -25,7 +54,12 @@
   to   { opacity: 1; transform: translateX(0); }
 }
 
+/* ============================================
+   COMPONENTS
+   ============================================ */
 @layer components {
+
+  /* ── Card ── */
   .card {
     background-color: #ffffff;
     border-radius: 1rem;
@@ -33,6 +67,7 @@
     box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05);
   }
 
+  /* ── Badges ── */
   .badge {
     display: inline-flex;
     align-items: center;
@@ -42,14 +77,19 @@
     padding: 0.25rem 0.625rem;
     border-radius: 9999px;
   }
+  .badge-teal {
+    background-color: var(--color-brand-light);
+    color: var(--color-brand-text);
+    border: 1px solid var(--color-brand-border);
+  }
   .badge-success { background-color: #ecfdf5; color: #065f46; border: 1px solid #d1fae5; }
   .badge-warning { background-color: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
   .badge-danger  { background-color: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
   .badge-info    { background-color: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
-  .badge-teal    { background-color: #f0fdfa; color: #0f766e; border: 1px solid #99f6e4; }
   .badge-gray    { background-color: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
   .badge-purple  { background-color: #f5f3ff; color: #5b21b6; border: 1px solid #ddd6fe; }
 
+  /* ── Buttons ── */
   .btn {
     display: inline-flex;
     align-items: center;
@@ -63,27 +103,27 @@
     text-decoration: none;
   }
   .btn-primary {
-    background-color: #0d9488;
+    background-color: var(--color-brand);
     color: #ffffff;
-    border-color: #0d9488;
+    border-color: var(--color-brand);
   }
-  .btn-primary:hover { background-color: #0f766e; border-color: #0f766e; }
+  .btn-primary:hover {
+    background-color: var(--color-brand-hover);
+    border-color: var(--color-brand-hover);
+  }
   .btn-secondary {
     background-color: #ffffff;
     color: #334155;
     border-color: #e2e8f0;
   }
   .btn-secondary:hover { background-color: #f8fafc; }
-  .btn-danger {
-    background-color: #ef4444;
-    color: #ffffff;
-    border-color: #ef4444;
-  }
+  .btn-danger { background-color: #ef4444; color: #ffffff; border-color: #ef4444; }
   .btn-danger:hover { background-color: #dc2626; border-color: #dc2626; }
   .btn-sm  { padding: 0.375rem 0.75rem; font-size: 0.75rem; }
   .btn-md  { padding: 0.625rem 1rem;    font-size: 0.875rem; }
   .btn-lg  { padding: 0.75rem 1.5rem;   font-size: 1rem; }
 
+  /* ── Input ── */
   .input {
     width: 100%;
     border: 1px solid #e2e8f0;
@@ -97,10 +137,11 @@
   .input::placeholder { color: #94a3b8; }
   .input:focus {
     outline: none;
-    border-color: #14b8a6;
-    box-shadow: 0 0 0 3px rgb(20 184 166 / 0.15);
+    border-color: var(--color-brand);
+    box-shadow: 0 0 0 3px var(--color-brand-ring);
   }
 
+  /* ── Typography ── */
   .page-title {
     font-family: var(--font-display);
     font-size: 1.5rem;
@@ -109,6 +150,7 @@
   }
   .page-subtitle { color: #64748b; margin-top: 0.25rem; font-size: 0.875rem; }
 
+  /* ── Table ── */
   .table-container {
     background-color: #ffffff;
     border-radius: 1rem;
@@ -120,6 +162,7 @@
   .table-row:hover { background-color: rgb(248 250 252 / 0.6); }
   .table-cell { padding: 0.75rem 1rem; font-size: 0.875rem; }
 
+  /* ── Nav ── */
   .nav-item {
     display: flex;
     align-items: center;
@@ -131,10 +174,15 @@
     transition: background-color 150ms, color 150ms;
     text-decoration: none;
   }
-  .nav-item-active  { background-color: #f0fdfa; color: #0f766e; font-weight: 600; }
+  .nav-item-active {
+    background-color: var(--color-brand-light);
+    color: var(--color-brand-text);
+    font-weight: 600;
+  }
   .nav-item-inactive { color: #475569; }
   .nav-item-inactive:hover { background-color: #f8fafc; color: #0f172a; }
 
+  /* ── Modal ── */
   .modal-backdrop {
     position: fixed;
     inset: 0;
@@ -156,11 +204,12 @@
     overflow-y: auto;
   }
 
-  .animate-fade-in { animation: fadeIn 0.3s ease forwards; }
+  /* ── Animations ── */
+  .animate-fade-in  { animation: fadeIn  0.3s  ease forwards; }
   .animate-slide-in { animation: slideIn 0.25s ease forwards; }
 
-  .stagger > *:nth-child(1) { animation-delay: 0ms; }
-  .stagger > *:nth-child(2) { animation-delay: 60ms; }
+  .stagger > *:nth-child(1) { animation-delay: 0ms;   }
+  .stagger > *:nth-child(2) { animation-delay: 60ms;  }
   .stagger > *:nth-child(3) { animation-delay: 120ms; }
   .stagger > *:nth-child(4) { animation-delay: 180ms; }
   .stagger > *:nth-child(5) { animation-delay: 240ms; }
