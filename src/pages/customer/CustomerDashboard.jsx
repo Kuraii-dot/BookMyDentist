@@ -22,10 +22,10 @@ function AppointmentCard({ appt, onCancel }) {
   const dateLabel = isToday(date) ? '🔴 Today' : isTomorrow(date) ? '🟡 Tomorrow' : format(date, 'EEE, MMM d')
 
   return (
-    <div className={`card p-4 transition-all hover:shadow-md ${isUpcoming ? 'border-l-4 border-l-teal-500' : ''}`}>
+    <div className={`card p-4 transition-all hover:shadow-md ${isUpcoming ? 'border-l-4 border-l-sky-500' : ''}`}>
       <div className="flex items-start gap-3">
         {/* Clinic logo */}
-        <div className="w-11 h-11 rounded-xl overflow-hidden bg-teal-50 shrink-0">
+        <div className="w-11 h-11 rounded-xl overflow-hidden bg-sky-50 shrink-0">
           {appt.clinics?.logo_url
             ? <img src={appt.clinics.logo_url} alt="" className="w-full h-full object-cover" />
             : <div className="w-full h-full flex items-center justify-center text-lg">🦷</div>
@@ -35,7 +35,7 @@ function AppointmentCard({ appt, onCancel }) {
           <div className="flex items-start justify-between gap-2 flex-wrap">
             <div>
               <p className="font-semibold text-slate-900 text-sm">{appt.clinics?.name}</p>
-              <p className="text-teal-600 text-xs font-medium">{appt.services?.name}</p>
+              <p className="text-sky-600 text-xs font-medium">{appt.services?.name}</p>
             </div>
             <span className={`badge ${status.class}`}>{status.icon} {status.label}</span>
           </div>
@@ -126,26 +126,26 @@ export default function CustomerDashboard() {
 
   if (loading) return (
     <div className="flex justify-center py-16">
-      <div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
+      <div className="w-8 h-8 border-4 border-sky-500 border-t-transparent rounded-full animate-spin" />
     </div>
   )
 
   return (
     <div className="animate-fade-in">
       {/* Welcome banner */}
-      <div className="bg-gradient-to-r from-teal-600 to-teal-700 rounded-2xl p-6 mb-6 text-white relative overflow-hidden">
+      <div className="bg-gradient-to-r from-sky-600 to-sky-200 rounded-2xl p-6 mb-6 text-white relative overflow-hidden">
         <div className="absolute inset-0 opacity-10" style={{backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '20px 20px'}} />
         <div className="relative flex items-center justify-between gap-4 flex-wrap">
           <div>
-            <p className="text-teal-200 text-sm">{greeting} 👋</p>
+            <p className="text-sky-200 text-sm">{greeting} 👋</p>
             <h1 className="font-display font-bold text-2xl mt-0.5">{profile?.full_name?.split(' ')[0]}</h1>
-            <p className="text-teal-100 text-sm mt-1">
+            <p className="text-sky-100 text-sm mt-1">
               {upcoming.length > 0
                 ? `You have ${upcoming.length} upcoming appointment${upcoming.length > 1 ? 's' : ''}`
                 : 'No upcoming appointments'}
             </p>
           </div>
-          <Link to="/" className="btn bg-white text-teal-700 hover:bg-teal-50 btn-md rounded-xl shadow-sm shrink-0">
+          <Link to="/dashboard/browse" className="btn bg-white text-sky-700 hover:bg-sky-50 btn-md rounded-xl shadow-sm shrink-0">
             🔍 Book Appointment
           </Link>
         </div>
@@ -154,7 +154,7 @@ export default function CustomerDashboard() {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3 mb-6 stagger">
         {[
-          { label: 'Upcoming', value: upcoming.length, color: 'text-teal-600', bg: 'bg-teal-50', icon: '📅' },
+          { label: 'Upcoming', value: upcoming.length, color: 'text-sky-600', bg: 'bg-sky-50', icon: '📅' },
           { label: 'Completed', value: appointments.filter(a => a.status === 'completed').length, color: 'text-violet-600', bg: 'bg-violet-50', icon: '✅' },
           { label: 'Total', value: appointments.length, color: 'text-slate-600', bg: 'bg-slate-100', icon: '📊' },
         ].map(s => (
@@ -174,7 +174,7 @@ export default function CustomerDashboard() {
             <span className="text-4xl">📅</span>
             <p className="text-slate-500 font-medium mt-3">No upcoming appointments</p>
             <p className="text-slate-400 text-sm mt-1">Book one at a clinic near you</p>
-            <Link to="/" className="btn btn-primary btn-md mt-4 rounded-xl">Browse Clinics</Link>
+            <Link to="/dashboard/browse" className="btn btn-primary btn-md mt-4 rounded-xl">Browse Clinics</Link>
           </div>
         ) : (
           <div className="space-y-3">
@@ -191,7 +191,7 @@ export default function CustomerDashboard() {
             {past.slice(0, 5).map(a => <AppointmentCard key={a.id} appt={a} onCancel={setCancelModal} />)}
           </div>
           {past.length > 5 && (
-            <Link to="/dashboard/appointments" className="block text-center text-teal-600 text-sm font-medium mt-3 hover:underline">
+            <Link to="/dashboard/appointments" className="block text-center text-sky-600 text-sm font-medium mt-3 hover:underline">
               View all {past.length} past appointments →
             </Link>
           )}

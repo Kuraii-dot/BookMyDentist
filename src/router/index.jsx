@@ -12,6 +12,7 @@ import CustomerLayout from '../pages/customer/CustomerLayout'
 import CustomerDashboard from '../pages/customer/CustomerDashboard'
 import MyAppointments from '../pages/customer/MyAppointment'
 import BookAppointment from '../pages/customer/BookAppointment'
+import BrowseClinics from '../pages/customer/BrowseClinics'
 
 // Clinic
 import ClinicLayout from '../pages/clinic/ClinicLayout'
@@ -37,6 +38,7 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <CustomerDashboard /> },
       { path: 'appointments', element: <MyAppointments /> },
+      { path: 'browse', element: <BrowseClinics /> },
       { path: 'profile', element: <ProfileEdit /> },
     ]
   },
