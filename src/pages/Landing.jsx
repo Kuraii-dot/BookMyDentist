@@ -22,7 +22,7 @@ function ClinicCard({ clinic, onBook }) {
   return (
     <div className="card overflow-hidden hover:shadow-md transition-all duration-300 group">
       {/* Banner */}
-      <div className="relative h-40 bg-gradient-to-br from-teal-100 to-cyan-50 overflow-hidden">
+      <div className="relative h-40 bg-gradient-to-br from-sky-100 to-cyan-50 overflow-hidden">
         {clinic.banner_url
           ? <img src={clinic.banner_url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
           : <div className="w-full h-full flex items-center justify-center"><span className="text-5xl opacity-20">🦷</span></div>
@@ -32,7 +32,7 @@ function ClinicCard({ clinic, onBook }) {
           <div className="w-12 h-12 rounded-xl border-2 border-white bg-white shadow-md overflow-hidden">
             {clinic.logo_url
               ? <img src={clinic.logo_url} alt="" className="w-full h-full object-cover" />
-              : <div className="w-full h-full bg-teal-100 flex items-center justify-center text-xl">🦷</div>
+              : <div className="w-full h-full bg-sky-100 flex items-center justify-center text-xl">🦷</div>
             }
           </div>
         </div>
@@ -57,7 +57,7 @@ function ClinicCard({ clinic, onBook }) {
         {clinic.services?.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-3">
             {clinic.services.slice(0, 3).map(s => (
-              <span key={s.id} className="badge badge-teal text-xs">{s.name}</span>
+              <span key={s.id} className="badge badge-sky text-xs">{s.name}</span>
             ))}
             {clinic.services.length > 3 && <span className="badge badge-gray">+{clinic.services.length - 3}</span>}
           </div>
@@ -66,7 +66,7 @@ function ClinicCard({ clinic, onBook }) {
         {/* Pricing */}
         {clinic.services?.length > 0 && (
           <p className="text-xs text-slate-400 mt-2">
-            From <span className="font-semibold text-teal-600">₱{Math.min(...clinic.services.map(s => s.price || 0)).toLocaleString()}</span>
+            From <span className="font-semibold text-sky-600">₱{Math.min(...clinic.services.map(s => s.price || 0)).toLocaleString()}</span>
           </p>
         )}
 
@@ -147,7 +147,7 @@ export default function Landing() {
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-teal-600 rounded-lg flex items-center justify-center shadow-sm">
+            <div className="w-8 h-8 bg-sky-600 rounded-lg flex items-center justify-center shadow-sm">
               <span className="text-white text-sm">🦷</span>
             </div>
             <span className="font-display font-bold text-slate-900 text-lg">DentBook</span>
@@ -160,22 +160,22 @@ export default function Landing() {
       </nav>
 
       {/* Hero */}
-      <section ref={heroRef} className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-teal-950 to-slate-900">
+      <section ref={heroRef} className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-sky-950 to-slate-900">
         {/* Background pattern */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute inset-0" style={{backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.3) 1px, transparent 0)', backgroundSize: '32px 32px'}} />
         </div>
         {/* Glow */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-teal-500/20 blur-3xl rounded-full" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-sky-500/20 blur-3xl rounded-full" />
 
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-24 text-center">
-          <div className="inline-flex items-center gap-2 bg-teal-500/10 border border-teal-500/20 text-teal-300 px-4 py-1.5 rounded-full text-sm font-medium mb-8 animate-fade-in">
-            <span className="w-2 h-2 bg-teal-400 rounded-full animate-pulse" />
+          <div className="inline-flex items-center gap-2 bg-sky-500/10 border border-sky-500/20 text-sky-300 px-4 py-1.5 rounded-full text-sm font-medium mb-8 animate-fade-in">
+            <span className="w-2 h-2 bg-sky-400 rounded-full animate-pulse" />
             Trusted by patients across the Philippines
           </div>
           <h1 className="font-display font-bold text-white text-5xl sm:text-6xl md:text-7xl leading-[1.1] mb-6 animate-fade-in" style={{animationDelay: '100ms'}}>
             Your Smile Deserves<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-300 to-cyan-300">the Best Care</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-500 to-cyan-300">the Best Care</span>
           </h1>
           <p className="text-slate-400 text-lg sm:text-xl max-w-2xl mx-auto mb-10 animate-fade-in" style={{animationDelay: '200ms'}}>
             Book dental appointments instantly. Find top-rated clinics near you, check availability, and get reminders — all in one place.
@@ -183,7 +183,7 @@ export default function Landing() {
 
           {/* Search bar */}
           <div className="max-w-2xl mx-auto animate-fade-in" style={{animationDelay: '300ms'}}>
-            <div className="relative bg-white rounded-2xl shadow-2xl shadow-teal-950/30 p-2 flex flex-col sm:flex-row gap-2">
+            <div className="relative bg-white rounded-2xl shadow-2xl shadow-sky-950/30 p-2 flex flex-col sm:flex-row gap-2">
               <div className="flex-1 relative">
                 <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                 <input
@@ -212,8 +212,8 @@ export default function Landing() {
       </section>
 
       {/* Stats bar */}
-      <section className="bg-teal-600">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 grid grid-cols-3 divide-x divide-teal-500">
+      <section className="bg-sky-600">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 grid grid-cols-3 divide-x divide-sky-500">
           {[
             { value: `${clinics.length}+`, label: 'Verified Clinics' },
             { value: '10k+', label: 'Appointments Booked' },
@@ -221,7 +221,7 @@ export default function Landing() {
           ].map(s => (
             <div key={s.label} className="text-center px-4">
               <p className="font-display font-bold text-white text-xl sm:text-2xl">{s.value}</p>
-              <p className="text-teal-200 text-xs sm:text-sm">{s.label}</p>
+              <p className="text-sky-200 text-xs sm:text-sm">{s.label}</p>
             </div>
           ))}
         </div>
@@ -238,7 +238,7 @@ export default function Landing() {
           <div className="flex flex-wrap gap-2">
             {['Cleaning', 'Braces', 'Whitening', 'Extraction', 'Implants'].map(s => (
               <button key={s} onClick={() => setServiceFilter(serviceFilter === s ? '' : s)}
-                className={`text-xs px-3 py-1.5 rounded-full font-medium transition-all border ${serviceFilter === s ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-slate-600 border-slate-200 hover:border-teal-300'}`}>
+                className={`text-xs px-3 py-1.5 rounded-full font-medium transition-all border ${serviceFilter === s ? 'bg-sky-600 text-white border-sky-600' : 'bg-white text-slate-600 border-slate-200 hover:border-sky-300'}`}>
                 {s}
               </button>
             ))}
@@ -291,8 +291,8 @@ export default function Landing() {
               { step: '03', icon: '✅', title: 'Get Confirmed', desc: 'Receive instant confirmation and reminders before your appointment.' },
             ].map(s => (
               <div key={s.step} className="relative text-center">
-                <div className="w-16 h-16 bg-teal-50 border-2 border-teal-100 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4">{s.icon}</div>
-                <span className="font-display font-bold text-teal-200 text-4xl absolute top-0 right-0 sm:relative sm:block hidden">{s.step}</span>
+                <div className="w-16 h-16 bg-sky-50 border-2 border-sky-100 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4">{s.icon}</div>
+                <span className="font-display font-bold text-sky-200 text-4xl absolute top-0 right-0 sm:relative sm:block hidden">{s.step}</span>
                 <h3 className="font-display font-bold text-slate-900 text-lg mb-2">{s.title}</h3>
                 <p className="text-slate-500 text-sm leading-relaxed">{s.desc}</p>
               </div>
@@ -304,13 +304,13 @@ export default function Landing() {
       {/* CTA */}
       <section className="py-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
-          <div className="bg-gradient-to-br from-teal-600 to-teal-700 rounded-3xl p-10 sm:p-16 text-center relative overflow-hidden">
+          <div className="bg-gradient-to-br from-sky-600 to-sky-700 rounded-3xl p-10 sm:p-16 text-center relative overflow-hidden">
             <div className="absolute inset-0 opacity-10" style={{backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px'}} />
             <div className="relative">
               <h2 className="font-display font-bold text-white text-3xl sm:text-4xl mb-4">Ready for a healthier smile?</h2>
-              <p className="text-teal-100 mb-8 text-lg">Join thousands of patients who trust DentBook for their dental care.</p>
+              <p className="text-sky-100 mb-8 text-lg">Join thousands of patients who trust DentBook for their dental care.</p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Link to="/register" className="btn bg-white text-teal-700 hover:bg-teal-50 btn-lg rounded-2xl shadow-lg">
+                <Link to="/register" className="btn bg-white text-sky-700 hover:bg-sky-50 btn-lg rounded-2xl shadow-lg">
                   Book an Appointment
                 </Link>
                 <Link to="/register?role=clinic" className="btn border-2 border-white/30 text-white hover:bg-white/10 btn-lg rounded-2xl">
@@ -326,14 +326,14 @@ export default function Landing() {
       <footer className="border-t border-slate-100 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-teal-600 rounded-md flex items-center justify-center"><span className="text-white text-xs">🦷</span></div>
+            <div className="w-6 h-6 bg-sky-600 rounded-md flex items-center justify-center"><span className="text-white text-xs">🦷</span></div>
             <span className="font-display font-bold text-slate-700">DentBook</span>
           </div>
           <p className="text-slate-400 text-sm">© {new Date().getFullYear()} DentBook. All rights reserved.</p>
           <div className="flex gap-4 text-sm text-slate-400">
-            <a href="#" className="hover:text-teal-600 transition-colors">Privacy</a>
-            <a href="#" className="hover:text-teal-600 transition-colors">Terms</a>
-            <a href="#" className="hover:text-teal-600 transition-colors">Contact</a>
+            <a href="#" className="hover:text-sky-600 transition-colors">Privacy</a>
+            <a href="#" className="hover:text-sky-600 transition-colors">Terms</a>
+            <a href="#" className="hover:text-sky-600 transition-colors">Contact</a>
           </div>
         </div>
       </footer>
