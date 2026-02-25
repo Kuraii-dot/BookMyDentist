@@ -9,11 +9,11 @@
   --font-sans:    'DM Sans', sans-serif;
 
   /* Brand color scale — swap all 5 to change the whole app */
-  --color-brand:        #0d9488;  /* buttons, active nav, accents     */
-  --color-brand-hover:  #0f766e;  /* hover on buttons                 */
-  --color-brand-light:  #f0fdfa;  /* light backgrounds, badge bg      */
-  --color-brand-text:   #0f766e;  /* text on light brand backgrounds  */
-  --color-brand-border: #99f6e4;  /* badge borders, dividers          */
+--color-brand:        #0ea5e9;
+--color-brand-hover:  #0284c7;
+--color-brand-light:  #f0f9ff;
+--color-brand-text:   #0369a1;
+--color-brand-border: #bae6fd;
   --color-brand-ring:   rgb(20 184 166 / 0.15); /* focus ring shadow  */
 }
 
