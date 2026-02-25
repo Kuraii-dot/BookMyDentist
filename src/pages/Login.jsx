@@ -4,89 +4,66 @@ import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
 
 export default function Login() {
-  const { signIn, profile, loading } = useAuth()
-  const navigate = useNavigate()
   const [form, setForm] = useState({ email: '', password: '' })
-  const [submitting, setSubmitting] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const { signIn, profile } = useAuth()
+  const navigate = useNavigate()
 
-  // Once profile loads after login, redirect based on role
   useEffect(() => {
-    if (!loading && profile) {
+    if (profile) {
       const map = { super_admin: '/admin', clinic_owner: '/clinic', customer: '/dashboard' }
-      navigate(map[profile.role] || '/dashboard', { replace: true })
+      navigate(map[profile.role] || '/')
     }
-  }, [profile, loading])
+  }, [profile])
 
   async function handleSubmit(e) {
     e.preventDefault()
-    setSubmitting(true)
-    const { error } = await signIn(form)
-    setSubmitting(false)
-    if (error) { toast.error(error.message); return }
-    toast.success('Welcome back!')
-    // redirect handled by useEffect above once profile loads
+    setLoading(true)
+    const { error } = await signIn({ email: form.email, password: form.password })
+    if (error) { toast.error('Invalid email or password'); setLoading(false) }
   }
 
   return (
-    <div className="min-h-screen bg-amber-50 flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="w-10 h-10 bg-amber-400 rounded-xl flex items-center justify-center shadow-md">
-              <span className="text-xl">🦷</span>
-            </div>
-            <span className="font-black text-stone-800 text-xl">DentBook</span>
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      <nav className="bg-white border-b border-slate-100 px-4">
+        <div className="max-w-md mx-auto h-14 flex items-center">
+          <Link to="/" className="flex items-center gap-2">
+            <div className="w-7 h-7 bg-teal-600 rounded-lg flex items-center justify-center"><span className="text-white text-xs">🦷</span></div>
+            <span className="font-display font-bold text-slate-900">DentBook</span>
           </Link>
-          <h1 className="text-2xl font-black text-stone-800">Welcome back!</h1>
-          <p className="text-stone-500 mt-1">Sign in to manage your appointments</p>
         </div>
+      </nav>
 
-        <div className="bg-white rounded-3xl shadow-sm border border-amber-100 p-8">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-semibold text-stone-700 mb-1.5">Email</label>
-              <input
-                type="email"
-                required
-                value={form.email}
-                onChange={e => setForm({ ...form, email: e.target.value })}
-                placeholder="you@example.com"
-                className="w-full border border-amber-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300 bg-amber-50/30"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-stone-700 mb-1.5">Password</label>
-              <input
-                type="password"
-                required
-                value={form.password}
-                onChange={e => setForm({ ...form, password: e.target.value })}
-                placeholder="••••••••"
-                className="w-full border border-amber-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300 bg-amber-50/30"
-              />
-            </div>
+      <div className="flex-1 flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-md animate-fade-in">
+          <div className="text-center mb-8">
+            <h1 className="font-display font-bold text-slate-900 text-2xl">Welcome back</h1>
+            <p className="text-slate-400 mt-1 text-sm">Sign in to your DentBook account</p>
+          </div>
 
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full bg-amber-400 hover:bg-amber-500 disabled:opacity-60 text-white font-bold py-3 rounded-xl transition-colors mt-2 flex items-center justify-center gap-2"
-            >
-              {submitting
-                ? <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Signing in...</>
-                : 'Sign In'}
-            </button>
-          </form>
-
-          <p className="text-center text-sm text-stone-500 mt-6">
-            Don't have an account?{' '}
-            <Link to="/register" className="text-amber-600 font-semibold hover:text-amber-700">Sign up</Link>
-          </p>
+          <div className="card p-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Email</label>
+                <input type="email" required value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
+                  placeholder="juan@email.com" className="input" />
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-sm font-semibold text-slate-700">Password</label>
+                </div>
+                <input type="password" required value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
+                  placeholder="Your password" className="input" />
+              </div>
+              <button type="submit" disabled={loading} className="btn btn-primary btn-md w-full mt-2">
+                {loading ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Signing in...</> : 'Sign In'}
+              </button>
+            </form>
+            <p className="text-center text-slate-400 text-sm mt-5">
+              Don't have an account? <Link to="/register" className="text-teal-600 hover:text-teal-700 font-semibold">Sign up free</Link>
+            </p>
+          </div>
         </div>
-
-        <p className="text-center text-xs text-stone-400 mt-4">
-          Are you a clinic owner?{' '}
-          <Link to="/register?role=clinic_owner" className="text-amber-600 hover:underline">Register your clinic</Link>
-        </p>
       </div>
     </div>
   )

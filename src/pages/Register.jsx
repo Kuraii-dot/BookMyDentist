@@ -4,123 +4,90 @@ import { useAuth } from '../context/AuthContext'
 import toast from 'react-hot-toast'
 
 export default function Register() {
+  const [searchParams] = useSearchParams()
+  const defaultRole = searchParams.get('role') === 'clinic' ? 'clinic_owner' : 'customer'
+  const [role, setRole] = useState(defaultRole)
+  const [form, setForm] = useState({ fullName: '', email: '', password: '' })
+  const [loading, setLoading] = useState(false)
   const { signUp } = useAuth()
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
-  const defaultRole = searchParams.get('role') || 'customer'
-
-  const [form, setForm] = useState({
-    fullName: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    role: defaultRole
-  })
-  const [loading, setLoading] = useState(false)
 
   async function handleSubmit(e) {
     e.preventDefault()
-    if (form.password !== form.confirmPassword) { toast.error('Passwords do not match'); return }
+    if (!form.fullName.trim()) { toast.error('Please enter your full name'); return }
     if (form.password.length < 6) { toast.error('Password must be at least 6 characters'); return }
-
     setLoading(true)
-    const { error } = await signUp({ email: form.email, password: form.password, fullName: form.fullName, role: form.role })
-    setLoading(false)
-
-    if (error) { toast.error(error.message); return }
-
-    toast.success('Account created! Please check your email to verify.')
+    const { error } = await signUp({ email: form.email, password: form.password, fullName: form.fullName, role })
+    if (error) { toast.error(error.message); setLoading(false); return }
+    toast.success('Account created! Please sign in.')
     navigate('/login')
   }
 
   return (
-    <div className="min-h-screen bg-amber-50 flex items-center justify-center px-4 py-10">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="w-10 h-10 bg-amber-400 rounded-xl flex items-center justify-center shadow-md">
-              <span className="text-xl">🦷</span>
-            </div>
-            <span className="font-black text-stone-800 text-xl">DentBook</span>
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      <nav className="bg-white border-b border-slate-100 px-4">
+        <div className="max-w-md mx-auto h-14 flex items-center">
+          <Link to="/" className="flex items-center gap-2">
+            <div className="w-7 h-7 bg-teal-600 rounded-lg flex items-center justify-center"><span className="text-white text-xs">🦷</span></div>
+            <span className="font-display font-bold text-slate-900">DentBook</span>
           </Link>
-          <h1 className="text-2xl font-black text-stone-800">Create your account</h1>
-          <p className="text-stone-500 mt-1">Join thousands of happy patients</p>
         </div>
+      </nav>
 
-        <div className="bg-white rounded-3xl shadow-sm border border-amber-100 p-8">
-          {/* Role toggle */}
-          <div className="flex rounded-xl bg-amber-50 p-1 mb-6 border border-amber-100">
-            {[{ value: 'customer', label: '🙋 Patient' }, { value: 'clinic_owner', label: '🏥 Clinic Owner' }].map(r => (
-              <button
-                key={r.value}
-                type="button"
-                onClick={() => setForm({ ...form, role: r.value })}
-                className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${form.role === r.value ? 'bg-white shadow text-amber-700' : 'text-stone-500 hover:text-stone-700'}`}
-              >
-                {r.label}
-              </button>
-            ))}
+      <div className="flex-1 flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-md animate-fade-in">
+          <div className="text-center mb-8">
+            <h1 className="font-display font-bold text-slate-900 text-2xl">Create your account</h1>
+            <p className="text-slate-400 mt-1 text-sm">Join DentBook for free</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-semibold text-stone-700 mb-1.5">Full Name</label>
-              <input
-                type="text"
-                required
-                value={form.fullName}
-                onChange={e => setForm({ ...form, fullName: e.target.value })}
-                placeholder="Juan dela Cruz"
-                className="w-full border border-amber-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300 bg-amber-50/30"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-stone-700 mb-1.5">Email</label>
-              <input
-                type="email"
-                required
-                value={form.email}
-                onChange={e => setForm({ ...form, email: e.target.value })}
-                placeholder="you@example.com"
-                className="w-full border border-amber-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300 bg-amber-50/30"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-stone-700 mb-1.5">Password</label>
-              <input
-                type="password"
-                required
-                value={form.password}
-                onChange={e => setForm({ ...form, password: e.target.value })}
-                placeholder="Min. 6 characters"
-                className="w-full border border-amber-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300 bg-amber-50/30"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-stone-700 mb-1.5">Confirm Password</label>
-              <input
-                type="password"
-                required
-                value={form.confirmPassword}
-                onChange={e => setForm({ ...form, confirmPassword: e.target.value })}
-                placeholder="Repeat your password"
-                className="w-full border border-amber-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300 bg-amber-50/30"
-              />
+          <div className="card p-6">
+            {/* Role selector */}
+            <div className="flex bg-slate-100 rounded-xl p-1 mb-5">
+              <button type="button" onClick={() => setRole('customer')}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all ${role === 'customer' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                🙋 I'm a Patient
+              </button>
+              <button type="button" onClick={() => setRole('clinic_owner')}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-all ${role === 'clinic_owner' ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+                🦷 I Own a Clinic
+              </button>
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-amber-400 hover:bg-amber-500 disabled:opacity-60 text-white font-bold py-3 rounded-xl transition-colors mt-2 flex items-center justify-center gap-2"
-            >
-              {loading ? <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Creating account...</> : 'Create Account'}
-            </button>
-          </form>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Full Name</label>
+                <input type="text" required value={form.fullName} onChange={e => setForm({ ...form, fullName: e.target.value })}
+                  placeholder="Juan dela Cruz" className="input" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Email</label>
+                <input type="email" required value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
+                  placeholder="juan@email.com" className="input" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Password</label>
+                <input type="password" required value={form.password} onChange={e => setForm({ ...form, password: e.target.value })}
+                  placeholder="At least 6 characters" className="input" />
+              </div>
 
-          <p className="text-center text-sm text-stone-500 mt-6">
-            Already have an account?{' '}
-            <Link to="/login" className="text-amber-600 font-semibold hover:text-amber-700">Sign in</Link>
-          </p>
+              {role === 'clinic_owner' && (
+                <div className="bg-teal-50 border border-teal-100 rounded-xl p-3">
+                  <p className="text-teal-700 text-xs font-medium">
+                    🔍 Clinic accounts require admin verification before going live. Usually takes 1-2 business days.
+                  </p>
+                </div>
+              )}
+
+              <button type="submit" disabled={loading} className="btn btn-primary btn-md w-full mt-2">
+                {loading ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Creating account...</> : 'Create Account'}
+              </button>
+            </form>
+
+            <p className="text-center text-slate-400 text-sm mt-5">
+              Already have an account? <Link to="/login" className="text-teal-600 hover:text-teal-700 font-semibold">Sign in</Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>

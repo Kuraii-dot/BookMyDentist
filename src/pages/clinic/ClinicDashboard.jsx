@@ -1,115 +1,200 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
-import { Link } from 'react-router-dom'
-import { format } from 'date-fns'
+import { format, isToday, startOfMonth, endOfMonth } from 'date-fns'
 
 const STATUS_CONFIG = {
-  pending:             { label: 'Pending',    bg: 'bg-amber-100', text: 'text-amber-700' },
-  accepted:            { label: 'Accepted',   bg: 'bg-green-100', text: 'text-green-700' },
-  rejected:            { label: 'Declined',   bg: 'bg-red-100',   text: 'text-red-600' },
-  rescheduled:         { label: 'Rescheduled',bg: 'bg-blue-100',  text: 'text-blue-700' },
-  reschedule_accepted: { label: 'Confirmed',  bg: 'bg-green-100', text: 'text-green-700' },
-  reschedule_declined: { label: 'Declined',   bg: 'bg-red-100',   text: 'text-red-600' },
-  cancelled:           { label: 'Cancelled',  bg: 'bg-stone-100', text: 'text-stone-500' },
+  pending:             { label: 'Pending',    class: 'badge-warning' },
+  accepted:            { label: 'Confirmed',  class: 'badge-success' },
+  rejected:            { label: 'Declined',   class: 'badge-danger'  },
+  completed:           { label: 'Completed',  class: 'badge-purple'  },
+  cancelled:           { label: 'Cancelled',  class: 'badge-gray'    },
+  rescheduled:         { label: 'Rescheduled',class: 'badge-info'    },
+  reschedule_accepted: { label: 'Confirmed',  class: 'badge-success' },
+  reschedule_declined: { label: 'Declined',   class: 'badge-danger'  },
 }
 
 export default function ClinicDashboard() {
   const { user, profile } = useAuth()
   const [clinic, setClinic] = useState(null)
-  const [stats, setStats] = useState({ pending: 0, accepted: 0, total: 0 })
-  const [recent, setRecent] = useState([])
+  const [stats, setStats] = useState({ pending: 0, today: 0, thisMonth: 0, completed: 0 })
+  const [todayAppts, setTodayAppts] = useState([])
+  const [recentAppts, setRecentAppts] = useState([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    async function load() {
-      const { data: c } = await supabase.from('clinics').select('*').eq('owner_id', user.id).single()
-      setClinic(c)
-      if (!c) { setLoading(false); return }
+  useEffect(() => { loadData() }, [user])
 
-      const { data: appts } = await supabase
-        .from('appointments')
-        .select('*, profiles!appointments_customer_id_fkey(*), services(*)')
-        .eq('clinic_id', c.id)
-        .order('created_at', { ascending: false })
-        .limit(5)
+  async function loadData() {
+    const { data: c } = await supabase.from('clinics').select('*').eq('owner_id', user.id).maybeSingle()
+    setClinic(c)
+    if (!c) { setLoading(false); return }
 
-      const { data: allAppts } = await supabase.from('appointments').select('status').eq('clinic_id', c.id)
-      setStats({
-        pending: allAppts?.filter(a => a.status === 'pending').length || 0,
-        accepted: allAppts?.filter(a => a.status === 'accepted' || a.status === 'reschedule_accepted').length || 0,
-        total: allAppts?.length || 0
-      })
-      setRecent(appts || [])
-      setLoading(false)
-    }
-    load()
-  }, [user])
+    const now = new Date()
+    const todayStr = format(now, 'yyyy-MM-dd')
+    const monthStart = format(startOfMonth(now), 'yyyy-MM-dd')
+    const monthEnd = format(endOfMonth(now), 'yyyy-MM-dd')
+
+    const { data: all } = await supabase.from('appointments')
+      .select('*, profiles!appointments_customer_id_fkey(full_name, avatar_url), services(name, price)')
+      .eq('clinic_id', c.id)
+      .order('appointment_date', { ascending: false })
+      .limit(50)
+
+    const appts = all || []
+    const todayList = appts.filter(a => a.appointment_date === todayStr)
+
+    setStats({
+      pending:    appts.filter(a => a.status === 'pending').length,
+      today:      todayList.length,
+      thisMonth:  appts.filter(a => a.appointment_date >= monthStart && a.appointment_date <= monthEnd).length,
+      completed:  appts.filter(a => a.status === 'completed').length,
+    })
+    setTodayAppts(todayList)
+    setRecentAppts(appts.slice(0, 6))
+    setLoading(false)
+  }
+
+  const hour = new Date().getHours()
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
 
   if (loading) return (
-    <div className="flex items-center justify-center h-48">
-      <div className="w-8 h-8 border-4 border-amber-400 border-t-transparent rounded-full animate-spin" />
-    </div>
-  )
-
-  if (!clinic) return (
-    <div className="text-center py-20 bg-white rounded-2xl border border-amber-100">
-      <span className="text-5xl">🏥</span>
-      <h2 className="text-xl font-bold text-stone-800 mt-4">Set up your clinic</h2>
-      <p className="text-stone-500 mt-2 mb-6">Complete your clinic profile to start receiving bookings</p>
-      <Link to="/clinic/profile" className="bg-amber-400 hover:bg-amber-500 text-white font-bold px-6 py-3 rounded-xl transition-colors">
-        Set Up Clinic
-      </Link>
+    <div className="flex justify-center py-16">
+      <div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
     </div>
   )
 
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-black text-stone-800">Welcome, {profile?.full_name?.split(' ')[0]}! 👋</h1>
-        <p className="text-stone-500">{clinic.name}</p>
+    <div className="animate-fade-in">
+      {/* Welcome */}
+      <div className="bg-gradient-to-r from-teal-600 to-teal-700 rounded-2xl p-6 mb-6 text-white relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10" style={{backgroundImage:'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize:'20px 20px'}} />
+        <div className="relative flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <p className="text-teal-200 text-sm">{greeting} 👋</p>
+            <h1 className="font-display font-bold text-2xl mt-0.5">{clinic?.name || profile?.full_name}</h1>
+            <p className="text-teal-100 text-sm mt-1">
+              {stats.pending > 0
+                ? `${stats.pending} request${stats.pending > 1 ? 's' : ''} awaiting your response`
+                : 'No pending requests — all caught up!'}
+            </p>
+          </div>
+          {stats.pending > 0 && (
+            <Link to="/clinic/appointments" className="btn bg-white text-teal-700 hover:bg-teal-50 btn-md rounded-xl shadow-sm shrink-0 font-bold">
+              Review Requests →
+            </Link>
+          )}
+        </div>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6 stagger">
         {[
-          { label: 'Pending', value: stats.pending, bg: 'bg-amber-400', icon: '⏳' },
-          { label: 'Accepted', value: stats.accepted, bg: 'bg-green-400', icon: '✅' },
-          { label: 'Total', value: stats.total, bg: 'bg-stone-400', icon: '📊' },
+          { label: 'Pending',       value: stats.pending,    icon: '⏳', color: 'text-amber-600',  bg: 'bg-amber-50',   border: 'border-amber-100' },
+          { label: "Today's Appts", value: stats.today,      icon: '📅', color: 'text-teal-600',   bg: 'bg-teal-50',    border: 'border-teal-100' },
+          { label: 'This Month',    value: stats.thisMonth,  icon: '📊', color: 'text-blue-600',   bg: 'bg-blue-50',    border: 'border-blue-100' },
+          { label: 'Completed',     value: stats.completed,  icon: '✅', color: 'text-violet-600', bg: 'bg-violet-50',  border: 'border-violet-100' },
         ].map(s => (
-          <div key={s.label} className="bg-white rounded-2xl border border-amber-100 p-4 text-center">
-            <div className={`w-10 h-10 ${s.bg} rounded-xl flex items-center justify-center text-lg mx-auto mb-2`}>{s.icon}</div>
-            <p className="text-2xl font-black text-stone-800">{s.value}</p>
-            <p className="text-stone-500 text-xs font-medium">{s.label}</p>
+          <div key={s.label} className={`card p-4 border ${s.border} animate-fade-in`}>
+            <div className={`w-10 h-10 ${s.bg} rounded-xl flex items-center justify-center text-xl mb-3`}>{s.icon}</div>
+            <p className={`text-3xl font-display font-bold ${s.color}`}>{s.value}</p>
+            <p className="text-slate-400 text-xs font-medium mt-0.5">{s.label}</p>
           </div>
         ))}
       </div>
 
-      {/* Recent appointments */}
-      <div className="bg-white rounded-2xl border border-amber-100 p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-bold text-stone-800">Recent Appointments</h2>
-          <Link to="/clinic/appointments" className="text-amber-600 text-sm font-medium hover:text-amber-700">View all →</Link>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Today's schedule */}
+        <div className="card overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/50">
+            <div>
+              <h2 className="font-display font-semibold text-slate-800">Today's Schedule</h2>
+              <p className="text-slate-400 text-xs">{format(new Date(), 'EEEE, MMMM d')}</p>
+            </div>
+            <span className="badge badge-teal">{todayAppts.length} appt{todayAppts.length !== 1 ? 's' : ''}</span>
+          </div>
+          {todayAppts.length === 0 ? (
+            <div className="py-10 text-center">
+              <span className="text-3xl">☀️</span>
+              <p className="text-slate-400 text-sm mt-2">No appointments today</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-50">
+              {todayAppts.map(a => {
+                const st = STATUS_CONFIG[a.status] || STATUS_CONFIG.pending
+                return (
+                  <div key={a.id} className="flex items-center gap-3 px-5 py-3">
+                    <div className="w-9 h-9 bg-teal-50 rounded-full flex items-center justify-center font-bold text-teal-600 text-sm shrink-0 overflow-hidden">
+                      {a.profiles?.avatar_url
+                        ? <img src={a.profiles.avatar_url} alt="" className="w-full h-full object-cover" />
+                        : a.profiles?.full_name?.[0]?.toUpperCase()
+                      }
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-slate-800 text-sm truncate">{a.profiles?.full_name}</p>
+                      <p className="text-teal-600 text-xs">{a.services?.name}</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      {a.appointment_time && <p className="text-slate-600 text-xs font-semibold">{a.appointment_time}</p>}
+                      <span className={`badge ${st.class} mt-0.5`}>{st.label}</span>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
 
-        {recent.length === 0 ? (
-          <p className="text-stone-400 text-sm text-center py-8">No appointments yet</p>
-        ) : (
-          <div className="space-y-3">
-            {recent.map(appt => {
-              const st = STATUS_CONFIG[appt.status] || STATUS_CONFIG.pending
-              return (
-                <div key={appt.id} className="flex items-center justify-between py-2 border-b border-amber-50 last:border-0">
-                  <div>
-                    <p className="font-semibold text-stone-800 text-sm">{appt.profiles?.full_name}</p>
-                    <p className="text-stone-500 text-xs">{appt.services?.name} · {format(new Date(appt.appointment_date), 'MMM d')} at {appt.appointment_time}</p>
-                  </div>
-                  <span className={`${st.bg} ${st.text} text-xs font-semibold px-2.5 py-1 rounded-full`}>{st.label}</span>
-                </div>
-              )
-            })}
+        {/* Recent appointments */}
+        <div className="card overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/50">
+            <h2 className="font-display font-semibold text-slate-800">Recent Activity</h2>
+            <Link to="/clinic/appointments" className="text-xs text-teal-600 hover:text-teal-700 font-medium">View all →</Link>
           </div>
-        )}
+          {recentAppts.length === 0 ? (
+            <div className="py-10 text-center">
+              <span className="text-3xl">📭</span>
+              <p className="text-slate-400 text-sm mt-2">No appointments yet</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-50">
+              {recentAppts.map(a => {
+                const st = STATUS_CONFIG[a.status] || STATUS_CONFIG.pending
+                return (
+                  <div key={a.id} className="flex items-center gap-3 px-5 py-3">
+                    <div className="w-9 h-9 bg-teal-50 rounded-full flex items-center justify-center font-bold text-teal-600 text-sm shrink-0 overflow-hidden">
+                      {a.profiles?.avatar_url
+                        ? <img src={a.profiles.avatar_url} alt="" className="w-full h-full object-cover" />
+                        : a.profiles?.full_name?.[0]?.toUpperCase()
+                      }
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-slate-800 text-sm truncate">{a.profiles?.full_name}</p>
+                      <p className="text-slate-400 text-xs">{a.services?.name} · {format(new Date(a.appointment_date), 'MMM d')}</p>
+                    </div>
+                    <span className={`badge ${st.class} shrink-0`}>{st.label}</span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Quick links */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
+        {[
+          { to: '/clinic/appointments', icon: '📅', label: 'Manage Appointments' },
+          { to: '/clinic/services', icon: '🔧', label: 'Edit Services' },
+          { to: '/clinic/availability', icon: '🕐', label: 'Set Schedule' },
+          { to: '/clinic/profile', icon: '🏥', label: 'Clinic Profile' },
+        ].map(l => (
+          <Link key={l.to} to={l.to}
+            className="card p-4 flex flex-col items-center text-center hover:shadow-md hover:border-teal-200 transition-all group cursor-pointer">
+            <span className="text-2xl mb-2 group-hover:scale-110 transition-transform">{l.icon}</span>
+            <span className="text-xs font-semibold text-slate-600 group-hover:text-teal-600 transition-colors">{l.label}</span>
+          </Link>
+        ))}
       </div>
     </div>
   )
