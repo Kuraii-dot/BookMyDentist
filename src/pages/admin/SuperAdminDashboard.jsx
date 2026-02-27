@@ -78,7 +78,7 @@ export default function SuperAdminDashboard() {
       loadStats()
     }
 
-    if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{borderColor:"var(--color-brand)",borderTopColor:"transparent"}} /></div>
+    if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 rounded-full animate-spin" style={{borderColor:"var(--color-brand)",borderTopColor:"transparent"}} /></div>
 
     return (
       <>
@@ -90,7 +90,7 @@ export default function SuperAdminDashboard() {
               <div key={c.id} className="card p-5 border-l-4 border-l-amber-400">
                 <div className="flex items-start gap-4 flex-wrap">
                   {/* Logo */}
-                  <div className="w-14 h-14 rounded-xl bg-sky-50 overflow-hidden shrink-0">
+                  <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0" style={{background:"rgba(224,242,254,0.6)",border:"1px solid rgba(186,230,253,0.5)"}}>
                     {c.logo_url ? <img src={c.logo_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-2xl">🦷</div>}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -154,7 +154,7 @@ export default function SuperAdminDashboard() {
 
     const filtered = clinics.filter(c => !search || c.name?.toLowerCase().includes(search.toLowerCase()))
 
-    if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{borderColor:"var(--color-brand)",borderTopColor:"transparent"}} /></div>
+    if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 rounded-full animate-spin" style={{borderColor:"var(--color-brand)",borderTopColor:"transparent"}} /></div>
 
     return (
       <div>
@@ -165,7 +165,7 @@ export default function SuperAdminDashboard() {
         <div className="space-y-3">
           {filtered.map(c => (
             <div key={c.id} className={`card p-4 flex items-center gap-4 flex-wrap ${!c.is_active ? 'opacity-60' : ''}`}>
-              <div className="w-11 h-11 rounded-xl bg-sky-50 overflow-hidden shrink-0">
+              <div className="w-11 h-11 rounded-xl overflow-hidden shrink-0" style={{background:"rgba(224,242,254,0.6)",border:"1px solid rgba(186,230,253,0.5)"}}>
                 {c.logo_url ? <img src={c.logo_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-xl">🦷</div>}
               </div>
               <div className="flex-1 min-w-0">
@@ -203,7 +203,7 @@ export default function SuperAdminDashboard() {
       u.email?.toLowerCase().includes(search.toLowerCase())
     )
 
-    if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{borderColor:"var(--color-brand)",borderTopColor:"transparent"}} /></div>
+    if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 rounded-full animate-spin" style={{borderColor:"var(--color-brand)",borderTopColor:"transparent"}} /></div>
 
     return (
       <div>
@@ -220,12 +220,12 @@ export default function SuperAdminDashboard() {
                 <th className="table-cell text-left font-semibold text-slate-600 hidden md:table-cell">Joined</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50">
+            <tbody className="divide-y divide-white/60">
               {filtered.map(u => (
                 <tr key={u.id} className="table-row">
                   <td className="table-cell">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 bg-sky-100 rounded-full flex items-center justify-center overflow-hidden shrink-0">
+                      <div className="w-9 h-9 rounded-full flex items-center justify-center overflow-hidden shrink-0" style={{background:"rgba(224,242,254,0.7)",border:"1px solid rgba(186,230,253,0.6)"}}>
                         {u.avatar_url ? <img src={u.avatar_url} alt="" className="w-full h-full object-cover" /> : <span className="text-sky-600 font-bold text-sm">{u.full_name?.[0]?.toUpperCase()}</span>}
                       </div>
                       <div>
@@ -260,7 +260,7 @@ export default function SuperAdminDashboard() {
 
     const STATUS_COLORS = { pending: 'badge-warning', accepted: 'badge-success', rejected: 'badge-danger', completed: 'badge-purple', cancelled: 'badge-gray', rescheduled: 'badge-info' }
 
-    if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{borderColor:"var(--color-brand)",borderTopColor:"transparent"}} /></div>
+    if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 rounded-full animate-spin" style={{borderColor:"var(--color-brand)",borderTopColor:"transparent"}} /></div>
 
     return (
       <div className="table-container overflow-x-auto">
@@ -274,7 +274,7 @@ export default function SuperAdminDashboard() {
               <th className="table-cell text-left font-semibold text-slate-600">Status</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-50">
+          <tbody className="divide-y divide-white/60">
             {appointments.map(a => (
               <tr key={a.id} className="table-row">
                 <td className="table-cell font-medium text-slate-800">{a.profiles?.full_name}</td>
@@ -292,12 +292,12 @@ export default function SuperAdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen" style={{backgroundColor:"#f0f9ff"}}>
+    <div className="min-h-screen" >
       {/* Header */}
-      <header className="bg-white border-b border-slate-100 sticky top-0 z-40 shadow-sm">
+      <header className="glass-header sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-sky-400 to-sky-600 flex items-center justify-center shadow-sm shadow-sky-200"><span className="text-white text-sm">🦷</span></div>
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-sky-400 to-cyan-500 flex items-center justify-center shadow-sm"><span className="text-white text-sm">🦷</span></div>
             <span className="font-display font-bold text-slate-900">BookMyDentist</span>
             <span className="ml-2 badge bg-sky-100 text-sky-700 border-sky-200">Admin</span>
           </div>
@@ -322,7 +322,7 @@ export default function SuperAdminDashboard() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 bg-white rounded-2xl border border-slate-100 p-1 shadow-sm mb-6 overflow-x-auto">
+        <div className="flex gap-1 card p-1 mb-6 rounded-2xl overflow-x-auto">
           {TABS.map(t => (
             <button key={t} onClick={() => setTab(t)}
               className={`flex-1 min-w-max flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-sm font-semibold transition-all ${tab === t ? 'text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'} style={tab === t ? {backgroundColor:'var(--color-brand)'} : {}}`}>

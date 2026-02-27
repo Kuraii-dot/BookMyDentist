@@ -183,7 +183,7 @@ export default function ClinicAvailability() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-white rounded-2xl border border-slate-100 p-1 shadow-sm mb-6 overflow-x-auto">
+      <div className="flex gap-1 card p-1 mb-6 rounded-2xl overflow-x-auto">
         {TABS.map(t => (
           <button key={t.key} onClick={() => setTab(t.key)}
             className={`flex-1 min-w-max flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${tab === t.key ? 'text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
@@ -212,7 +212,7 @@ export default function ClinicAvailability() {
               const mins = (ch * 60 + cm) - (oh * 60 + om)
               const slots = Math.max(0, Math.floor(mins / slotDuration))
               return (
-                <div key={day.key} className={`p-4 transition-colors ${s.enabled ? 'bg-white' : 'bg-slate-50/50'}`}>
+                <div key={day.key} className={`p-4 transition-colors ${s.enabled ? '' : ''}`}>
                   <div className="flex items-center gap-3 flex-wrap">
                     <div className="flex items-center gap-3 w-36 shrink-0">
                       <Toggle on={s.enabled} onChange={() => toggleDay(day.key)} />
@@ -323,7 +323,7 @@ export default function ClinicAvailability() {
 
             {!showAddSpecial ? (
               <button onClick={() => setShowAddSpecial(true)}
-                className="w-full py-2.5 border-2 border-dashed border-slate-200 rounded-xl text-slate-400 text-sm hover:border-teal-300 hover:text-teal-500 transition-all flex items-center justify-center gap-2 mb-4">
+                className="w-full py-2.5 rounded-xl text-sm flex items-center justify-center gap-2 mb-4 transition-all" style={{border:"1.5px dashed rgba(186,230,253,0.8)",color:"#94a3b8",background:"rgba(255,255,255,0.3)"}}>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
                 Add special date
               </button>
@@ -389,10 +389,10 @@ export default function ClinicAvailability() {
                 <p className="text-slate-400 text-xs mt-0.5 mb-3">How many patients can book the same time slot (useful if you have multiple dentists)</p>
                 <div className="flex items-center gap-3">
                   <button onClick={() => setMaxPerSlot(m => Math.max(1, m - 1))}
-                    className="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 font-bold text-lg transition-colors">−</button>
+                    className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-lg transition-all btn-secondary btn" style={{padding:0}}>−</button>
                   <span className="font-display font-bold text-2xl w-10 text-center" style={{color:'var(--color-brand)'}}>{maxPerSlot}</span>
                   <button onClick={() => setMaxPerSlot(m => Math.min(10, m + 1))}
-                    className="w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 font-bold text-lg transition-colors">+</button>
+                    className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-lg transition-all btn-secondary btn" style={{padding:0}}>+</button>
                   <span className="text-slate-400 text-sm">patient{maxPerSlot !== 1 ? 's' : ''} per slot</span>
                 </div>
               </div>
@@ -497,7 +497,7 @@ export default function ClinicAvailability() {
 
                 {/* Preview */}
                 {(vacationFrom || vacationMessage) && (
-                  <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                  <div className="rounded-xl p-4 border border-slate-200">
                     <p className="text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wide">Patient-facing preview</p>
                     <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
                       <div className="flex items-center gap-2 mb-1.5">

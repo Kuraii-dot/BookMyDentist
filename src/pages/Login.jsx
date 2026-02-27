@@ -24,18 +24,18 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex" style={{backgroundColor:'#f0f9ff'}}>
+    <div className="min-h-screen flex" >
       {/* Ambient glows */}
       <div className="pointer-events-none fixed top-0 right-0 w-[500px] h-[500px] rounded-full opacity-30"
         style={{background:'radial-gradient(circle, #bae6fd 0%, transparent 70%)'}} />
       <div className="pointer-events-none fixed bottom-0 left-0 w-[400px] h-[400px] rounded-full opacity-20"
-        style={{background:'radial-gradient(circle, #fde68a 0%, transparent 70%)'}} />
+        style={{background:'radial-gradient(circle, rgba(251,191,36,0.35) 0%, transparent 70%)'}} />
 
       <div className="relative w-full flex flex-col">
         {/* Nav */}
         <nav className="px-6 h-16 flex items-center">
           <Link to="/" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-sky-400 to-sky-600 flex items-center justify-center shadow-sm shadow-sky-200">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-sky-400 to-cyan-500 flex items-center justify-center shadow-sm">
               <span className="text-white text-sm">🦷</span>
             </div>
             <span className="font-display font-bold text-slate-900">BookMyDentist</span>
@@ -46,14 +46,14 @@ export default function Login() {
         <div className="flex-1 flex items-center justify-center px-4 py-12">
           <div className="w-full max-w-sm animate-fade-in">
             <div className="text-center mb-8">
-              <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-sky-400 to-sky-600 flex items-center justify-center text-3xl mx-auto mb-5 shadow-lg shadow-sky-200">
+              <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-sky-400 to-cyan-500 flex items-center justify-center text-3xl mx-auto mb-5 ">
                 🦷
               </div>
               <h1 className="font-display font-bold text-slate-900 text-3xl">Welcome back</h1>
               <p className="text-slate-400 mt-1.5 text-sm">Sign in to your BookMyDentist account</p>
             </div>
 
-            <div className="bg-white rounded-3xl border border-sky-100 shadow-sm shadow-sky-100 p-7">
+            <div className="card p-7">
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1.5">Email</label>

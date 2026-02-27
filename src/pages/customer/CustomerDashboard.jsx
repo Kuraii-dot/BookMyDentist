@@ -23,7 +23,7 @@ function AppointmentCard({ appt, onCancel }) {
 
   return (
     <div className={`bg-white rounded-2xl border transition-all hover:shadow-md ${
-      isUpcoming ? 'border-sky-200 shadow-sm shadow-sky-100' : 'border-slate-100'
+      isUpcoming ? 'border-sky-200 ' : 'border-slate-100'
     } ${isCancelled ? 'opacity-70' : ''} p-4`}>
       <div className="flex items-start gap-3">
         <div className="w-11 h-11 rounded-xl overflow-hidden shrink-0 flex items-center justify-center bg-sky-50 border border-sky-100">
@@ -134,11 +134,11 @@ export default function CustomerDashboard() {
     <div className="animate-fade-in space-y-6">
 
       {/* Welcome banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-sky-500 to-sky-600 p-6 text-white shadow-lg shadow-sky-200">
+      <div className="relative overflow-hidden rounded-3xl gradient-banner p-6 text-white">
         <div className="pointer-events-none absolute inset-0 opacity-10"
           style={{backgroundImage:'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize:'24px 24px'}} />
         <div className="pointer-events-none absolute -top-10 -right-10 w-48 h-48 rounded-full opacity-20"
-          style={{background:'radial-gradient(circle, #fde68a 0%, transparent 70%)'}} />
+          style={{background:'radial-gradient(circle, rgba(251,191,36,0.35) 0%, transparent 70%)'}} />
         <div className="relative flex items-center justify-between gap-4 flex-wrap">
           <div>
             <p className="text-sky-200 text-sm">{greeting} 👋</p>
@@ -150,7 +150,7 @@ export default function CustomerDashboard() {
             </p>
           </div>
           <Link to="/dashboard/browse"
-            className="px-5 py-2.5 rounded-xl bg-white font-bold text-sm hover:bg-sky-50 transition-all shadow-md hover:-translate-y-0.5 shrink-0"
+            className="btn btn-secondary btn-md shrink-0"
             style={{color:'var(--color-brand)'}}>
             🔍 Browse Clinics
           </Link>
@@ -180,7 +180,7 @@ export default function CustomerDashboard() {
           {upcoming.length > 0 && <span className="badge badge-teal">{upcoming.length}</span>}
         </h2>
         {upcoming.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-sky-100 p-10 text-center shadow-sm">
+          <div className="card p-10 text-center shadow-sm">
             <div className="w-16 h-16 bg-sky-50 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-3">📅</div>
             <p className="text-slate-600 font-semibold">No upcoming appointments</p>
             <p className="text-slate-400 text-sm mt-1 mb-4">Find a great clinic near you</p>

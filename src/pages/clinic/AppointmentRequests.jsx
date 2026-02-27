@@ -59,7 +59,7 @@ function PerformedServicesModal({ appointment, clinicServices, onSave, onClose }
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+      <div className="modal w-full max-w-lg" onClick={e => e.stopPropagation()}>
         <div className="p-6">
           <div className="flex items-start justify-between gap-3 mb-5">
             <div>
@@ -71,14 +71,14 @@ function PerformedServicesModal({ appointment, clinicServices, onSave, onClose }
             </button>
           </div>
 
-          <div className="bg-slate-50 rounded-xl p-3 mb-4 flex items-center gap-2 flex-wrap">
+          <div className="rounded-xl p-3 mb-4 flex items-center gap-2 flex-wrap">
             <span className="text-slate-400 text-xs shrink-0">Originally booked:</span>
             <span className="badge badge-gray">{appointment.services?.name}</span>
           </div>
 
           <div className="space-y-2 mb-4">
             {performed.map((p, i) => (
-              <div key={i} className="flex items-center gap-2 border border-slate-100 rounded-xl p-3 bg-white">
+              <div key={i} className="flex items-center gap-2 rounded-xl p-3" style={{background:"rgba(255,255,255,0.6)",border:"1px solid rgba(255,255,255,0.8)"}}>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <p className="font-semibold text-slate-800 text-sm truncate">{p.name}</p>
@@ -88,7 +88,7 @@ function PerformedServicesModal({ appointment, clinicServices, onSave, onClose }
                 <div className="flex items-center gap-1.5 shrink-0">
                   <span className="text-slate-400 text-xs">₱</span>
                   <input type="number" value={p.price} onChange={e => updatePrice(i, e.target.value)} min="0"
-                    className="w-20 border border-slate-200 rounded-lg px-2 py-1 text-sm text-right font-semibold text-slate-700 focus:outline-none focus:border-teal-400" />
+                    className="w-20 border border-slate-200 rounded-lg px-2 py-1 text-sm text-right font-semibold text-slate-700 focus:outline-none focus:border-sky-400" />
                   <button onClick={() => remove(i)} className="w-7 h-7 flex items-center justify-center text-slate-300 hover:text-red-400 hover:bg-red-50 rounded-lg transition-colors">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
                   </button>
@@ -102,7 +102,7 @@ function PerformedServicesModal({ appointment, clinicServices, onSave, onClose }
             <div className="flex flex-wrap gap-1.5">
               {clinicServices.filter(s => !performed.find(p => p.service_id === s.id)).map(s => (
                 <button key={s.id} onClick={() => addFromCatalog(s)}
-                  className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-full border border-slate-200 bg-white text-slate-600 hover:border-teal-300 hover:text-teal-700 transition-all font-medium">
+                  className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-full font-medium transition-all btn-secondary btn">
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
                   {s.name}
                 </button>
@@ -115,13 +115,13 @@ function PerformedServicesModal({ appointment, clinicServices, onSave, onClose }
 
           {!showCustom ? (
             <button onClick={() => setShowCustom(true)}
-              className="w-full py-2.5 border-2 border-dashed border-slate-200 rounded-xl text-slate-400 text-sm hover:border-teal-300 hover:text-teal-500 transition-all flex items-center justify-center gap-2 mb-4">
+              className="w-full py-2.5 rounded-xl text-sm flex items-center justify-center gap-2 mb-4 transition-all" style={{border:"1.5px dashed rgba(186,230,253,0.8)",color:"#94a3b8",background:"rgba(255,255,255,0.3)"}}>
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
               Add custom procedure
             </button>
           ) : (
-            <div className="border border-teal-200 bg-teal-50/30 rounded-xl p-3 mb-4">
-              <p className="text-xs font-semibold text-teal-700 mb-2">Custom Procedure</p>
+            <div className="border border-sky-200 bg-sky-50/30 rounded-xl p-3 mb-4">
+              <p className="text-xs font-semibold text-sky-600 mb-2">Custom Procedure</p>
               <div className="flex gap-2 flex-wrap">
                 <input type="text" value={customName} onChange={e => setCustomName(e.target.value)}
                   placeholder="e.g. Pasta / Filling / Cleaning" className="input flex-1 py-2 text-sm min-w-0"
@@ -146,7 +146,7 @@ function PerformedServicesModal({ appointment, clinicServices, onSave, onClose }
               placeholder="e.g. Follow-up in 2 weeks, avoid cold drinks for 24hrs..." className="input resize-none text-sm" />
           </div>
 
-          <div className="bg-slate-50 rounded-xl p-3 mb-5 flex items-center justify-between">
+          <div className="rounded-xl p-3 mb-5 flex items-center justify-between">
             <span className="text-slate-500 font-medium text-sm">Total Amount</span>
             <span className="font-display font-bold text-lg" style={{color:'var(--color-brand)'}}>₱{total.toLocaleString()}</span>
           </div>
@@ -262,7 +262,7 @@ export default function AppointmentRequests() {
         <p className="page-subtitle">{appointments.length} total appointment{appointments.length !== 1 ? 's' : ''}</p>
       </div>
 
-      <div className="flex gap-1 bg-white rounded-2xl border border-slate-100 p-1 shadow-sm mb-5 overflow-x-auto">
+      <div className="flex gap-1 card p-1 mb-5 rounded-2xl overflow-x-auto">
         {TABS.map(t => (
           <button key={t.key} onClick={() => setTab(t.key)}
             className={`flex-1 min-w-0 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap px-2 ${tab === t.key ? 'text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
@@ -314,12 +314,12 @@ export default function AppointmentRequests() {
                     </div>
 
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
-                      <div className="bg-slate-50 rounded-xl p-2.5">
+                      <div className="rounded-xl p-2.5">
                         <p className="text-slate-400 text-xs mb-0.5">Booked</p>
                         <p className="font-semibold text-slate-700 text-sm">{a.services?.name}</p>
                         {a.services?.price && <p className="text-xs font-semibold" style={{color:'var(--color-brand)'}}>₱{parseFloat(a.services.price).toLocaleString()}</p>}
                       </div>
-                      <div className="bg-slate-50 rounded-xl p-2.5">
+                      <div className="rounded-xl p-2.5">
                         <p className="text-slate-400 text-xs mb-0.5">Date</p>
                         <p className="font-semibold text-slate-700 text-sm">{format(new Date(a.appointment_date), 'MMM d, yyyy')}</p>
                         {a.appointment_time && <p className="text-slate-500 text-xs">{a.appointment_time}</p>}
@@ -338,7 +338,7 @@ export default function AppointmentRequests() {
                         </div>
                       )}
                       {a.clinic_notes && (
-                        <div className="bg-slate-50 rounded-xl p-2.5 col-span-2">
+                        <div className="rounded-xl p-2.5 col-span-2">
                           <p className="text-slate-400 text-xs mb-0.5">Clinic Notes</p>
                           <p className="text-slate-600 text-xs">{a.clinic_notes}</p>
                         </div>

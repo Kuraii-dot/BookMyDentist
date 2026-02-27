@@ -19,14 +19,14 @@ export default function CustomerLayout() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{backgroundColor:'#f0f9ff'}}>
+    <div className="min-h-screen flex flex-col" >
 
       {/* Header */}
-      <header className="bg-white/80 backdrop-blur-md border-b border-sky-100 sticky top-0 z-40">
+      <header className="glass-header sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-sky-400 to-sky-600 flex items-center justify-center shadow-sm shadow-sky-200">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-sky-400 to-cyan-500 flex items-center justify-center shadow-sm">
               <span className="text-white text-sm">🦷</span>
             </div>
             <span className="font-display font-bold text-slate-900">BookMyDentist</span>
@@ -55,7 +55,7 @@ export default function CustomerLayout() {
       <div className="max-w-7xl mx-auto w-full px-4 py-6 flex gap-6 flex-1">
         {/* Sidebar */}
         <aside className="w-56 shrink-0 hidden md:block">
-          <nav className="bg-white rounded-2xl border border-sky-100 shadow-sm shadow-sky-50 p-2 sticky top-24">
+          <nav className="glass-sidebar p-2 sticky top-24">
             {navItems.map(item => (
               <NavLink key={item.to} to={item.to} end={item.end}
                 className={({ isActive }) =>
@@ -81,7 +81,7 @@ export default function CustomerLayout() {
       </div>
 
       {/* Mobile bottom nav */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-white/90 backdrop-blur-md border-t border-sky-100 flex z-40">
+      <nav className="md:hidden fixed bottom-0 inset-x-0 flex z-40" style={{background:"rgba(255,255,255,0.75)",backdropFilter:"blur(20px)",borderTop:"1px solid rgba(255,255,255,0.8)"}}>
         {navItems.map(item => (
           <NavLink key={item.to} to={item.to} end={item.end}
             className={({ isActive }) =>

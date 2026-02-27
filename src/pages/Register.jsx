@@ -24,16 +24,16 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-screen flex" style={{backgroundColor:'#f0f9ff'}}>
+    <div className="min-h-screen flex" >
       <div className="pointer-events-none fixed top-0 right-0 w-[500px] h-[500px] rounded-full opacity-30"
         style={{background:'radial-gradient(circle, #bae6fd 0%, transparent 70%)'}} />
       <div className="pointer-events-none fixed bottom-0 left-0 w-[400px] h-[400px] rounded-full opacity-20"
-        style={{background:'radial-gradient(circle, #fde68a 0%, transparent 70%)'}} />
+        style={{background:'radial-gradient(circle, rgba(251,191,36,0.35) 0%, transparent 70%)'}} />
 
       <div className="relative w-full flex flex-col">
         <nav className="px-6 h-16 flex items-center">
           <Link to="/" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-sky-400 to-sky-600 flex items-center justify-center shadow-sm shadow-sky-200">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-sky-400 to-cyan-500 flex items-center justify-center shadow-sm">
               <span className="text-white text-sm">🦷</span>
             </div>
             <span className="font-display font-bold text-slate-900">BookMyDentist</span>
@@ -47,7 +47,7 @@ export default function Register() {
               <p className="text-slate-400 mt-1.5 text-sm">Join BookMyDentist for free</p>
             </div>
 
-            <div className="bg-white rounded-3xl border border-sky-100 shadow-sm shadow-sky-100 p-7">
+            <div className="card p-7">
               {/* Role toggle */}
               <div className="flex bg-sky-50 rounded-2xl p-1 mb-6 border border-sky-100">
                 <button type="button" onClick={() => setRole('customer')}
