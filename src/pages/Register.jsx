@@ -28,7 +28,7 @@ export default function Register() {
       <nav className="bg-white border-b border-slate-100 px-4">
         <div className="max-w-md mx-auto h-14 flex items-center">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-teal-600 rounded-lg flex items-center justify-center"><span className="text-white text-xs">🦷</span></div>
+            <div className="w-7 h-7 bg-sky-500 rounded-lg flex items-center justify-center"><span className="text-white text-xs">🦷</span></div>
             <span className="font-display font-bold text-slate-900">DentBook</span>
           </Link>
         </div>
@@ -85,7 +85,7 @@ export default function Register() {
             </form>
 
             <p className="text-center text-slate-400 text-sm mt-5">
-              Already have an account? <Link to="/login" className="text-teal-600 hover:text-teal-700 font-semibold">Sign in</Link>
+              Already have an account? <Link to="/login" className="text-sky-600 hover:text-sky-700 font-semibold">Sign in</Link>
             </p>
           </div>
         </div>
