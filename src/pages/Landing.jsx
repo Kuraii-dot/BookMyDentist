@@ -183,11 +183,11 @@ export default function Landing() {
               Trusted by patients across the Philippines
             </div>
 
-            <h1 className="font-display font-bold text-slate-900 text-5xl sm:text-6xl leading-[1.08] mb-5">
+            <h1 className="font-display font-bold text-5xl sm:text-6xl leading-[1.08] mb-5 text-transparent bg-clip-text bg-linear-to-r from-sky-500 to-cyan-100">
               Your Smile<br />
               Deserves{' '}
               <span className="relative inline-block">
-                <span className="relative z-10 text-transparent bg-clip-text"
+                <span className="relative z-10 text-transparent bg-clip-text bg-linear-to-r from-sky-500 to-cyan-300"
                   style={{backgroundImage:'linear-gradient(135deg,#0ea5e9,#f59e0b)'}}>
                   the Best
                 </span>
