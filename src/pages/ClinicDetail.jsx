@@ -71,7 +71,7 @@ export default function ClinicDetail() {
           </div>
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 bg-teal-600 rounded-md flex items-center justify-center"><span className="text-white text-xs">🦷</span></div>
-            <span className="font-display font-bold text-slate-900">DentBook</span>
+            <span className="font-display font-bold text-slate-900"><BookMyDentist></BookMyDentist></span>
           </div>
           <div className="w-20" />
         </div>

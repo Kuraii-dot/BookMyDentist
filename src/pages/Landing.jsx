@@ -150,7 +150,7 @@ export default function Landing() {
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-sm text-white text-sm font-bold"
               style={{background:'linear-gradient(135deg,#0ea5e9,#0284c7)'}}>🦷</div>
-            <span className="font-display font-bold text-slate-900 text-lg">DentBook</span>
+            <span className="font-display font-bold text-slate-900 text-lg">BookMyDentist</span>
           </div>
           <div className="flex items-center gap-2">
             {user ? (
@@ -349,7 +349,7 @@ export default function Landing() {
           <div className="absolute inset-0 opacity-10" style={{backgroundImage:'radial-gradient(circle at 2px 2px,rgba(255,255,255,0.4) 1px,transparent 0)',backgroundSize:'28px 28px'}} />
           <div className="absolute top-0 right-0 w-64 h-64 rounded-full opacity-10 blur-3xl" style={{background:'#fde68a'}} />
           <div className="relative">
-            <span className="inline-block bg-white/20 text-white text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-6">Join DentBook</span>
+            <span className="inline-block bg-white/20 text-white text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-6">Join BookMyDentist</span>
             <h2 className="font-display font-bold text-white text-4xl sm:text-5xl mb-4">Ready for a healthier smile?</h2>
             <p className="text-sky-100 text-lg mb-8 max-w-xl mx-auto">Create your free account and book your first appointment in under 2 minutes.</p>
             <div className="flex flex-wrap justify-center gap-3">
@@ -372,9 +372,9 @@ export default function Landing() {
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs"
               style={{background:'linear-gradient(135deg,#0ea5e9,#0284c7)'}}>🦷</div>
-            <span className="font-display font-bold text-slate-700">DentBook</span>
+            <span className="font-display font-bold text-slate-700">BookMyDentist</span>
           </div>
-          <p className="text-slate-400 text-sm">© 2025 DentBook · Made with ❤️ for Filipino smiles</p>
+          <p className="text-slate-400 text-sm">© 2025 BookMyDentist · Made with ❤️ for Filipino smiles</p>
           <div className="flex gap-4">
             <Link to="/login"    className="text-slate-400 hover:text-sky-600 text-sm transition-colors">Sign In</Link>
             <Link to="/register" className="text-slate-400 hover:text-sky-600 text-sm transition-colors">Register</Link>
