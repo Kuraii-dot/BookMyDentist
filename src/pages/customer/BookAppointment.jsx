@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
-import { format, addDays, startOfToday, getDay } from 'date-fns'
+import { format, addDays, startOfToday, addHours, getDay, parseISO } from 'date-fns'
 import toast from 'react-hot-toast'
 
 const DAY_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
@@ -58,24 +58,51 @@ export default function BookAppointment() {
     load()
   }, [clinicId])
 
-  // Generate available dates (next 30 days based on clinic schedule)
+  // Generate available dates respecting all booking rules
   function getAvailableDates() {
     const dates = []
     const today = startOfToday()
-    for (let i = 1; i <= 30; i++) {
+    const window = availability?.booking_window_days || 30
+    const advanceHours = availability?.advance_notice_hours ?? 2
+    const blocked = (availability?.blocked_dates || []).map(b => b.date)
+    const special = (availability?.special_dates || []).map(s => s.date)
+
+    for (let i = 0; i <= window; i++) {
       const d = addDays(today, i)
+      const dateStr = format(d, 'yyyy-MM-dd')
+
+      // Skip blocked dates
+      if (blocked.includes(dateStr)) continue
+
+      // Skip dates too close (advance notice)
+      const cutoff = addHours(new Date(), advanceHours)
+      if (d < cutoff && !special.includes(dateStr)) continue
+
       const dayKey = DAY_KEYS[getDay(d)]
+
+      // Special date override — always include
+      if (special.includes(dateStr)) { dates.push(d); continue }
+
+      // Check weekly schedule
       if (!availability?.schedule) { dates.push(d); continue }
       if (availability.schedule[dayKey]?.enabled) dates.push(d)
     }
-    return dates.slice(0, 14)
+    return dates.slice(0, 21)
   }
 
-  // Generate time slots for selected date
+  // Generate time slots respecting break, advance notice, and special date hours
   function getTimeSlots(date) {
     if (!date) return []
+    const dateStr = format(date, 'yyyy-MM-dd')
     const dayKey = DAY_KEYS[getDay(date)]
-    const sched = availability?.schedule?.[dayKey]
+    const advanceHours = availability?.advance_notice_hours ?? 2
+    const nowPlusNotice = addHours(new Date(), advanceHours)
+
+    // Check for special date override
+    const specialDate = (availability?.special_dates || []).find(s => s.date === dateStr)
+    const sched = specialDate
+      ? { enabled: true, open: specialDate.open, close: specialDate.close }
+      : availability?.schedule?.[dayKey]
     if (!sched?.enabled) return []
 
     const slots = []
@@ -83,10 +110,10 @@ export default function BookAppointment() {
     const [ch, cm] = (sched.close || '18:00').split(':').map(Number)
     const duration = availability?.slot_duration || 30
     const breakStart = availability?.has_break ? availability.break_start : null
-    const breakEnd = availability?.has_break ? availability.break_end : null
+    const breakEnd   = availability?.has_break ? availability.break_end   : null
 
     let current = oh * 60 + om
-    const end = ch * 60 + cm
+    const end   = ch * 60 + cm
 
     while (current + duration <= end) {
       const hh = Math.floor(current / 60).toString().padStart(2, '0')
@@ -97,12 +124,16 @@ export default function BookAppointment() {
       if (breakStart && breakEnd) {
         const [bsh, bsm] = breakStart.split(':').map(Number)
         const [beh, bem] = breakEnd.split(':').map(Number)
-        const breakStartMins = bsh * 60 + bsm
-        const breakEndMins = beh * 60 + bem
-        if (current >= breakStartMins && current < breakEndMins) { current += duration; continue }
+        const bStartMins = bsh * 60 + bsm
+        const bEndMins   = beh * 60 + bem
+        if (current >= bStartMins && current < bEndMins) { current += duration; continue }
       }
 
-      // Format to 12hr
+      // Skip slots too soon (advance notice)
+      const slotDateTime = new Date(date)
+      slotDateTime.setHours(Math.floor(current / 60), current % 60, 0, 0)
+      if (slotDateTime < nowPlusNotice) { current += duration; continue }
+
       const h12 = current >= 720 ? Math.floor(current / 60) - 12 || 12 : Math.floor(current / 60) || 12
       const ampm = current >= 720 ? 'PM' : 'AM'
       slots.push({ value: timeStr, label: `${h12}:${mm} ${ampm}` })
@@ -149,6 +180,9 @@ export default function BookAppointment() {
       <div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
     </div>
   )
+
+  // Vacation mode banner
+  const isOnVacation = clinic?.availability?.vacation_mode
 
   if (done) return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
@@ -212,6 +246,21 @@ export default function BookAppointment() {
           <div className="animate-fade-in">
             <h2 className="font-display font-bold text-slate-900 text-xl mb-1">Choose a Service</h2>
             <p className="text-slate-500 text-sm mb-6">Select the treatment you need</p>
+            {isOnVacation && (
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-5">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-amber-500 text-lg">🏖️</span>
+                  <p className="font-semibold text-amber-700 text-sm">This clinic is currently on vacation</p>
+                </div>
+                {clinic.availability.vacation_from && clinic.availability.vacation_to && (
+                  <p className="text-amber-600 text-xs mb-1">{clinic.availability.vacation_from} – {clinic.availability.vacation_to}</p>
+                )}
+                {clinic.availability.vacation_message && (
+                  <p className="text-amber-600 text-xs leading-relaxed">{clinic.availability.vacation_message}</p>
+                )}
+                <p className="text-amber-500 text-xs mt-2 font-medium">Bookings are temporarily unavailable.</p>
+              </div>
+            )}
             {services.length === 0 ? (
               <div className="card p-10 text-center"><p className="text-slate-400">No services available yet.</p></div>
             ) : (
