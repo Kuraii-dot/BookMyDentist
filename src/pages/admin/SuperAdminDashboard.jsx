@@ -78,7 +78,7 @@ export default function SuperAdminDashboard() {
       loadStats()
     }
 
-    if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" /></div>
+    if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{borderColor:"var(--color-brand)",borderTopColor:"transparent"}} /></div>
 
     return (
       <>
@@ -90,7 +90,7 @@ export default function SuperAdminDashboard() {
               <div key={c.id} className="card p-5 border-l-4 border-l-amber-400">
                 <div className="flex items-start gap-4 flex-wrap">
                   {/* Logo */}
-                  <div className="w-14 h-14 rounded-xl bg-teal-50 overflow-hidden shrink-0">
+                  <div className="w-14 h-14 rounded-xl bg-sky-50 overflow-hidden shrink-0">
                     {c.logo_url ? <img src={c.logo_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-2xl">🦷</div>}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -154,7 +154,7 @@ export default function SuperAdminDashboard() {
 
     const filtered = clinics.filter(c => !search || c.name?.toLowerCase().includes(search.toLowerCase()))
 
-    if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" /></div>
+    if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{borderColor:"var(--color-brand)",borderTopColor:"transparent"}} /></div>
 
     return (
       <div>
@@ -165,7 +165,7 @@ export default function SuperAdminDashboard() {
         <div className="space-y-3">
           {filtered.map(c => (
             <div key={c.id} className={`card p-4 flex items-center gap-4 flex-wrap ${!c.is_active ? 'opacity-60' : ''}`}>
-              <div className="w-11 h-11 rounded-xl bg-teal-50 overflow-hidden shrink-0">
+              <div className="w-11 h-11 rounded-xl bg-sky-50 overflow-hidden shrink-0">
                 {c.logo_url ? <img src={c.logo_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-xl">🦷</div>}
               </div>
               <div className="flex-1 min-w-0">
@@ -203,7 +203,7 @@ export default function SuperAdminDashboard() {
       u.email?.toLowerCase().includes(search.toLowerCase())
     )
 
-    if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" /></div>
+    if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{borderColor:"var(--color-brand)",borderTopColor:"transparent"}} /></div>
 
     return (
       <div>
@@ -225,8 +225,8 @@ export default function SuperAdminDashboard() {
                 <tr key={u.id} className="table-row">
                   <td className="table-cell">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 bg-teal-100 rounded-full flex items-center justify-center overflow-hidden shrink-0">
-                        {u.avatar_url ? <img src={u.avatar_url} alt="" className="w-full h-full object-cover" /> : <span className="text-teal-700 font-bold text-sm">{u.full_name?.[0]?.toUpperCase()}</span>}
+                      <div className="w-9 h-9 bg-sky-100 rounded-full flex items-center justify-center overflow-hidden shrink-0">
+                        {u.avatar_url ? <img src={u.avatar_url} alt="" className="w-full h-full object-cover" /> : <span className="text-sky-600 font-bold text-sm">{u.full_name?.[0]?.toUpperCase()}</span>}
                       </div>
                       <div>
                         <p className="font-semibold text-slate-800">{u.full_name}</p>
@@ -260,7 +260,7 @@ export default function SuperAdminDashboard() {
 
     const STATUS_COLORS = { pending: 'badge-warning', accepted: 'badge-success', rejected: 'badge-danger', completed: 'badge-purple', cancelled: 'badge-gray', rescheduled: 'badge-info' }
 
-    if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" /></div>
+    if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{borderColor:"var(--color-brand)",borderTopColor:"transparent"}} /></div>
 
     return (
       <div className="table-container overflow-x-auto">
@@ -292,18 +292,18 @@ export default function SuperAdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen" style={{backgroundColor:"#f0f9ff"}}>
       {/* Header */}
       <header className="bg-white border-b border-slate-100 sticky top-0 z-40 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-teal-600 rounded-lg flex items-center justify-center shadow-sm"><span className="text-white text-sm">🦷</span></div>
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-sky-400 to-sky-600 flex items-center justify-center shadow-sm shadow-sky-200"><span className="text-white text-sm">🦷</span></div>
             <span className="font-display font-bold text-slate-900">DentBook</span>
-            <span className="ml-2 badge bg-rose-100 text-rose-700 border-rose-200">Admin</span>
+            <span className="ml-2 badge bg-sky-100 text-sky-700 border-sky-200">Admin</span>
           </div>
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center">
-              <span className="text-teal-700 font-bold text-sm">{profile?.full_name?.[0]?.toUpperCase()}</span>
+            <div className="w-8 h-8 rounded-full bg-sky-100 flex items-center justify-center ring-2 ring-sky-200">
+              <span className="text-sky-600 font-bold text-sm">{profile?.full_name?.[0]?.toUpperCase()}</span>
             </div>
             <span className="text-sm font-medium text-slate-700 hidden sm:block">{profile?.full_name}</span>
             <button onClick={async () => { await signOut(); navigate('/') }}
@@ -315,7 +315,7 @@ export default function SuperAdminDashboard() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8 stagger">
-          <StatCard icon="🏥" label="Active Clinics"   value={stats.clinics}      color="text-teal-600"   bg="bg-teal-50" />
+          <StatCard icon="🏥" label="Active Clinics"   value={stats.clinics}      color="text-sky-600" bg="bg-sky-50" />
           <StatCard icon="👨‍⚕️" label="Clinic Owners"  value={stats.owners}       color="text-blue-600"   bg="bg-blue-50" />
           <StatCard icon="👥" label="Customers"         value={stats.customers}    color="text-violet-600" bg="bg-violet-50" />
           <StatCard icon="📅" label="Total Appointments"value={stats.appointments} color="text-amber-600"  bg="bg-amber-50" />
@@ -325,10 +325,10 @@ export default function SuperAdminDashboard() {
         <div className="flex gap-1 bg-white rounded-2xl border border-slate-100 p-1 shadow-sm mb-6 overflow-x-auto">
           {TABS.map(t => (
             <button key={t} onClick={() => setTab(t)}
-              className={`flex-1 min-w-max flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-sm font-semibold transition-all ${tab === t ? 'bg-teal-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+              className={`flex-1 min-w-max flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-sm font-semibold transition-all ${tab === t ? 'text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'} style={tab === t ? {backgroundColor:'var(--color-brand)'} : {}}`}>
               {t}
               {t === 'Pending Clinics' && pendingCount > 0 && (
-                <span className={`text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center ${tab === t ? 'bg-white text-teal-600' : 'bg-red-500 text-white'}`}>{pendingCount}</span>
+                <span className={`text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center ${tab === t ? 'bg-white text-sky-600' : 'bg-red-500 text-white'}`}>{pendingCount}</span>
               )}
             </button>
           ))}
