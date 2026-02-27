@@ -58,7 +58,7 @@ export default function SuperAdminDashboard() {
     async function approve(clinic) {
       setActionLoading(clinic.id)
       await supabase.from('clinics').update({ verification_status: 'approved', is_active: true }).eq('id', clinic.id)
-      await supabase.from('notifications').insert({ recipient_id: clinic.profiles.id, type: 'clinic_approved', title: '🎉 Clinic Approved!', message: `Your clinic "${clinic.name}" has been approved and is now live on DentBook!` })
+      await supabase.from('notifications').insert({ recipient_id: clinic.profiles.id, type: 'clinic_approved', title: '🎉 Clinic Approved!', message: `Your clinic "${clinic.name}" has been approved and is now live on BookMyDentist!` })
       await sendClinicApprovedEmail?.({ to: clinic.profiles.email, name: clinic.profiles.full_name, clinicName: clinic.name })
       toast.success(`${clinic.name} approved!`)
       setClinics(prev => prev.filter(c => c.id !== clinic.id))
@@ -298,7 +298,7 @@ export default function SuperAdminDashboard() {
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-sky-400 to-sky-600 flex items-center justify-center shadow-sm shadow-sky-200"><span className="text-white text-sm">🦷</span></div>
-            <span className="font-display font-bold text-slate-900">DentBook</span>
+            <span className="font-display font-bold text-slate-900">BookMyDentist</span>
             <span className="ml-2 badge bg-sky-100 text-sky-700 border-sky-200">Admin</span>
           </div>
           <div className="flex items-center gap-3">

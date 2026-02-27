@@ -72,7 +72,7 @@ export default function ClinicDetail() {
             <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-sky-400 to-sky-600 flex items-center justify-center shadow-sm">
               <span className="text-white text-xs">🦷</span>
             </div>
-            <span className="font-display font-bold text-slate-900">DentBook</span>
+            <span className="font-display font-bold text-slate-900">BookMyDentist</span>
           </Link>
           <button onClick={() => user ? navigate(`/book/${clinic.id}`) : navigate('/login')}
             className="btn btn-primary btn-sm rounded-xl">

@@ -36,7 +36,7 @@ export default function Register() {
             <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-sky-400 to-sky-600 flex items-center justify-center shadow-sm shadow-sky-200">
               <span className="text-white text-sm">🦷</span>
             </div>
-            <span className="font-display font-bold text-slate-900">DentBook</span>
+            <span className="font-display font-bold text-slate-900">BookMyDentist</span>
           </Link>
         </nav>
 
@@ -44,7 +44,7 @@ export default function Register() {
           <div className="w-full max-w-sm animate-fade-in">
             <div className="text-center mb-7">
               <h1 className="font-display font-bold text-slate-900 text-3xl">Create account</h1>
-              <p className="text-slate-400 mt-1.5 text-sm">Join DentBook for free</p>
+              <p className="text-slate-400 mt-1.5 text-sm">Join BookMyDentist for free</p>
             </div>
 
             <div className="bg-white rounded-3xl border border-sky-100 shadow-sm shadow-sky-100 p-7">

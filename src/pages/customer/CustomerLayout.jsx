@@ -29,7 +29,7 @@ export default function CustomerLayout() {
             <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-sky-400 to-sky-600 flex items-center justify-center shadow-sm shadow-sky-200">
               <span className="text-white text-sm">🦷</span>
             </div>
-            <span className="font-display font-bold text-slate-900">DentBook</span>
+            <span className="font-display font-bold text-slate-900">BookMyDentist</span>
           </div>
 
           {/* Right */}

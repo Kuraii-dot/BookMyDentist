@@ -2,23 +2,21 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
-import { format, isToday, startOfMonth, endOfMonth } from 'date-fns'
+import { format, startOfMonth, endOfMonth } from 'date-fns'
 
 const STATUS_CONFIG = {
-  pending:             { label: 'Pending',    class: 'badge-warning' },
-  accepted:            { label: 'Confirmed',  class: 'badge-success' },
-  rejected:            { label: 'Declined',   class: 'badge-danger'  },
-  completed:           { label: 'Completed',  class: 'badge-purple'  },
-  cancelled:           { label: 'Cancelled',  class: 'badge-gray'    },
-  rescheduled:         { label: 'Rescheduled',class: 'badge-info'    },
-  reschedule_accepted: { label: 'Confirmed',  class: 'badge-success' },
-  reschedule_declined: { label: 'Declined',   class: 'badge-danger'  },
+  pending:   { label:'Pending',   class:'badge-warning' },
+  accepted:  { label:'Confirmed', class:'badge-success' },
+  rejected:  { label:'Declined',  class:'badge-danger'  },
+  completed: { label:'Completed', class:'badge-purple'  },
+  cancelled: { label:'Cancelled', class:'badge-gray'    },
+  rescheduled:{ label:'Rescheduled',class:'badge-info'  },
 }
 
 export default function ClinicDashboard() {
   const { user, profile } = useAuth()
   const [clinic, setClinic] = useState(null)
-  const [stats, setStats] = useState({ pending: 0, today: 0, thisMonth: 0, completed: 0 })
+  const [stats, setStats] = useState({ pending:0, today:0, thisMonth:0, completed:0 })
   const [todayAppts, setTodayAppts] = useState([])
   const [recentAppts, setRecentAppts] = useState([])
   const [loading, setLoading] = useState(true)
@@ -36,21 +34,19 @@ export default function ClinicDashboard() {
     const monthEnd = format(endOfMonth(now), 'yyyy-MM-dd')
 
     const { data: all } = await supabase.from('appointments')
-      .select('*, profiles!appointments_customer_id_fkey(full_name, avatar_url), services(name, price)')
+      .select('*, profiles!appointments_customer_id_fkey(full_name,avatar_url), services(name,price)')
       .eq('clinic_id', c.id)
       .order('appointment_date', { ascending: false })
       .limit(50)
 
     const appts = all || []
-    const todayList = appts.filter(a => a.appointment_date === todayStr)
-
     setStats({
-      pending:    appts.filter(a => a.status === 'pending').length,
-      today:      todayList.length,
-      thisMonth:  appts.filter(a => a.appointment_date >= monthStart && a.appointment_date <= monthEnd).length,
-      completed:  appts.filter(a => a.status === 'completed').length,
+      pending:   appts.filter(a => a.status === 'pending').length,
+      today:     appts.filter(a => a.appointment_date === todayStr).length,
+      thisMonth: appts.filter(a => a.appointment_date >= monthStart && a.appointment_date <= monthEnd).length,
+      completed: appts.filter(a => a.status === 'completed').length,
     })
-    setTodayAppts(todayList)
+    setTodayAppts(appts.filter(a => a.appointment_date === todayStr))
     setRecentAppts(appts.slice(0, 6))
     setLoading(false)
   }
@@ -60,15 +56,20 @@ export default function ClinicDashboard() {
 
   if (loading) return (
     <div className="flex justify-center py-16">
-      <div className="w-8 h-8 border-4 border-sky-500 border-t-transparent rounded-full animate-spin" />
+      <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin"
+        style={{borderColor:'var(--color-brand)',borderTopColor:'transparent'}} />
     </div>
   )
 
   return (
-    <div className="animate-fade-in">
-      {/* Welcome */}
-      <div className="bg-gradient-to-r from-sky-600 to-sky-100 rounded-2xl p-6 mb-6 text-white relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10" style={{backgroundImage:'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize:'20px 20px'}} />
+    <div className="animate-fade-in space-y-6">
+
+      {/* Welcome banner */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-sky-500 to-sky-600 p-6 text-white shadow-lg shadow-sky-200">
+        <div className="pointer-events-none absolute inset-0 opacity-10"
+          style={{backgroundImage:'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize:'24px 24px'}} />
+        <div className="pointer-events-none absolute -top-10 -right-10 w-48 h-48 rounded-full opacity-20"
+          style={{background:'radial-gradient(circle, #fde68a 0%, transparent 70%)'}} />
         <div className="relative flex items-center justify-between gap-4 flex-wrap">
           <div>
             <p className="text-sky-200 text-sm">{greeting} 👋</p>
@@ -76,11 +77,13 @@ export default function ClinicDashboard() {
             <p className="text-sky-100 text-sm mt-1">
               {stats.pending > 0
                 ? `${stats.pending} request${stats.pending > 1 ? 's' : ''} awaiting your response`
-                : 'No pending requests — all caught up!'}
+                : 'All caught up — no pending requests!'}
             </p>
           </div>
           {stats.pending > 0 && (
-            <Link to="/clinic/appointments" className="btn bg-white text-teal-700 hover:bg-teal-50 btn-md rounded-xl shadow-sm shrink-0 font-bold">
+            <Link to="/clinic/appointments"
+              className="px-5 py-2.5 rounded-xl bg-white font-bold text-sm hover:bg-sky-50 transition-all shadow-md hover:-translate-y-0.5 shrink-0"
+              style={{color:'var(--color-brand)'}}>
               Review Requests →
             </Link>
           )}
@@ -88,14 +91,14 @@ export default function ClinicDashboard() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6 stagger">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 stagger">
         {[
-          { label: 'Pending',       value: stats.pending,    icon: '⏳', color: 'text-amber-600',  bg: 'bg-amber-50',   border: 'border-amber-100' },
-          { label: "Today's Appts", value: stats.today,      icon: '📅', color: 'text-teal-600',   bg: 'bg-teal-50',    border: 'border-teal-100' },
-          { label: 'This Month',    value: stats.thisMonth,  icon: '📊', color: 'text-blue-600',   bg: 'bg-blue-50',    border: 'border-blue-100' },
-          { label: 'Completed',     value: stats.completed,  icon: '✅', color: 'text-violet-600', bg: 'bg-violet-50',  border: 'border-violet-100' },
+          { label:'Pending',      value: stats.pending,   icon:'⏳', color:'text-amber-600',  bg:'bg-amber-50',  border:'border-amber-100' },
+          { label:"Today's",      value: stats.today,     icon:'📅', color:'text-sky-600',    bg:'bg-sky-50',    border:'border-sky-100' },
+          { label:'This Month',   value: stats.thisMonth, icon:'📊', color:'text-violet-600', bg:'bg-violet-50', border:'border-violet-100' },
+          { label:'Completed',    value: stats.completed, icon:'✅', color:'text-emerald-600',bg:'bg-emerald-50',border:'border-emerald-100' },
         ].map(s => (
-          <div key={s.label} className={`card p-4 border ${s.border} animate-fade-in`}>
+          <div key={s.label} className={`bg-white rounded-2xl border ${s.border} p-4 animate-fade-in shadow-sm`}>
             <div className={`w-10 h-10 ${s.bg} rounded-xl flex items-center justify-center text-xl mb-3`}>{s.icon}</div>
             <p className={`text-3xl font-display font-bold ${s.color}`}>{s.value}</p>
             <p className="text-slate-400 text-xs font-medium mt-0.5">{s.label}</p>
@@ -103,10 +106,10 @@ export default function ClinicDashboard() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Today's schedule */}
-        <div className="card overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/50">
+        <div className="bg-white rounded-2xl border border-sky-100 shadow-sm overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-sky-50 bg-sky-50/50">
             <div>
               <h2 className="font-display font-semibold text-slate-800">Today's Schedule</h2>
               <p className="text-slate-400 text-xs">{format(new Date(), 'EEEE, MMMM d')}</p>
@@ -115,24 +118,24 @@ export default function ClinicDashboard() {
           </div>
           {todayAppts.length === 0 ? (
             <div className="py-10 text-center">
-              <span className="text-3xl">☀️</span>
-              <p className="text-slate-400 text-sm mt-2">No appointments today</p>
+              <div className="w-12 h-12 bg-sky-50 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-2">☀️</div>
+              <p className="text-slate-400 text-sm">No appointments today</p>
             </div>
           ) : (
             <div className="divide-y divide-slate-50">
               {todayAppts.map(a => {
                 const st = STATUS_CONFIG[a.status] || STATUS_CONFIG.pending
                 return (
-                  <div key={a.id} className="flex items-center gap-3 px-5 py-3">
-                    <div className="w-9 h-9 bg-teal-50 rounded-full flex items-center justify-center font-bold text-teal-600 text-sm shrink-0 overflow-hidden">
+                  <div key={a.id} className="flex items-center gap-3 px-5 py-3 hover:bg-sky-50/30 transition-colors">
+                    <div className="w-9 h-9 bg-sky-50 rounded-full flex items-center justify-center font-bold text-sky-600 text-sm shrink-0 overflow-hidden border border-sky-100">
                       {a.profiles?.avatar_url
-                        ? <img src={a.profiles.avatar_url} alt="" className="w-full h-full object-cover" />
+                        ? <img src={a.profiles.avatar_url} alt="" className="w-full h-full object-cover"/>
                         : a.profiles?.full_name?.[0]?.toUpperCase()
                       }
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-slate-800 text-sm truncate">{a.profiles?.full_name}</p>
-                      <p className="text-teal-600 text-xs">{a.services?.name}</p>
+                      <p className="text-sky-600 text-xs">{a.services?.name}</p>
                     </div>
                     <div className="text-right shrink-0">
                       {a.appointment_time && <p className="text-slate-600 text-xs font-semibold">{a.appointment_time}</p>}
@@ -145,26 +148,26 @@ export default function ClinicDashboard() {
           )}
         </div>
 
-        {/* Recent appointments */}
-        <div className="card overflow-hidden">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50/50">
+        {/* Recent activity */}
+        <div className="bg-white rounded-2xl border border-sky-100 shadow-sm overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-sky-50 bg-sky-50/50">
             <h2 className="font-display font-semibold text-slate-800">Recent Activity</h2>
-            <Link to="/clinic/appointments" className="text-xs text-teal-600 hover:text-teal-700 font-medium">View all →</Link>
+            <Link to="/clinic/appointments" className="text-xs font-semibold text-sky-600 hover:text-sky-700">View all →</Link>
           </div>
           {recentAppts.length === 0 ? (
             <div className="py-10 text-center">
-              <span className="text-3xl">📭</span>
-              <p className="text-slate-400 text-sm mt-2">No appointments yet</p>
+              <div className="w-12 h-12 bg-sky-50 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-2">📭</div>
+              <p className="text-slate-400 text-sm">No appointments yet</p>
             </div>
           ) : (
             <div className="divide-y divide-slate-50">
               {recentAppts.map(a => {
                 const st = STATUS_CONFIG[a.status] || STATUS_CONFIG.pending
                 return (
-                  <div key={a.id} className="flex items-center gap-3 px-5 py-3">
-                    <div className="w-9 h-9 bg-teal-50 rounded-full flex items-center justify-center font-bold text-teal-600 text-sm shrink-0 overflow-hidden">
+                  <div key={a.id} className="flex items-center gap-3 px-5 py-3 hover:bg-sky-50/30 transition-colors">
+                    <div className="w-9 h-9 bg-sky-50 rounded-full flex items-center justify-center font-bold text-sky-600 text-sm shrink-0 overflow-hidden border border-sky-100">
                       {a.profiles?.avatar_url
-                        ? <img src={a.profiles.avatar_url} alt="" className="w-full h-full object-cover" />
+                        ? <img src={a.profiles.avatar_url} alt="" className="w-full h-full object-cover"/>
                         : a.profiles?.full_name?.[0]?.toUpperCase()
                       }
                     </div>
@@ -182,17 +185,17 @@ export default function ClinicDashboard() {
       </div>
 
       {/* Quick links */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { to: '/clinic/appointments', icon: '📅', label: 'Manage Appointments' },
-          { to: '/clinic/services', icon: '🔧', label: 'Edit Services' },
-          { to: '/clinic/availability', icon: '🕐', label: 'Set Schedule' },
-          { to: '/clinic/profile', icon: '🏥', label: 'Clinic Profile' },
+          { to:'/clinic/appointments', icon:'📅', label:'Appointments' },
+          { to:'/clinic/services',     icon:'🔧', label:'Services' },
+          { to:'/clinic/availability', icon:'🕐', label:'Schedule' },
+          { to:'/clinic/profile',      icon:'🏥', label:'Profile' },
         ].map(l => (
           <Link key={l.to} to={l.to}
-            className="card p-4 flex flex-col items-center text-center hover:shadow-md hover:border-teal-200 transition-all group cursor-pointer">
+            className="bg-white rounded-2xl border border-sky-100 p-4 flex flex-col items-center text-center hover:shadow-md hover:border-sky-300 hover:-translate-y-0.5 transition-all group shadow-sm">
             <span className="text-2xl mb-2 group-hover:scale-110 transition-transform">{l.icon}</span>
-            <span className="text-xs font-semibold text-slate-600 group-hover:text-teal-600 transition-colors">{l.label}</span>
+            <span className="text-xs font-semibold text-slate-600 group-hover:text-sky-600 transition-colors">{l.label}</span>
           </Link>
         ))}
       </div>
