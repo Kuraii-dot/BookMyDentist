@@ -64,7 +64,7 @@ export default function ManageServices() {
     toast.success('Service deleted')
   }
 
-  if (loading) return <div className="flex items-center justify-center h-48"><div className="w-8 h-8 border-4 border-amber-400 border-t-transparent rounded-full animate-spin" /></div>
+  if (loading) return <div className="flex items-center justify-center h-48"><div className="w-8 h-8 border-4 border-sky-400 border-t-transparent rounded-full animate-spin" /></div>
 
   return (
     <div>
@@ -73,7 +73,7 @@ export default function ManageServices() {
           <h1 className="text-2xl font-black text-stone-800">Services</h1>
           <p className="text-stone-500 mt-1">Manage what your clinic offers</p>
         </div>
-        <button onClick={openAdd} className="bg-amber-400 hover:bg-amber-500 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-colors flex items-center gap-2">
+        <button onClick={openAdd} className="bg-sky-500 hover:bg-sky-600 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-colors flex items-center gap-2">
           + Add Service
         </button>
       </div>
@@ -83,12 +83,12 @@ export default function ManageServices() {
           <span className="text-4xl">🔧</span>
           <p className="text-stone-500 mt-4 font-medium">No services yet</p>
           <p className="text-stone-400 text-sm mt-1">Add your first service to start receiving bookings</p>
-          <button onClick={openAdd} className="mt-5 bg-amber-400 hover:bg-amber-500 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition-colors">Add Service</button>
+          <button onClick={openAdd} className="mt-5 bg-sky-500 hover:bg-sky-600 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition-colors">Add Service</button>
         </div>
       ) : (
         <div className="space-y-3">
           {services.map(s => (
-            <div key={s.id} className={`bg-white rounded-2xl border p-4 flex items-center gap-4 ${s.is_active ? 'border-amber-100' : 'border-stone-100 opacity-60'}`}>
+            <div key={s.id} className={`bg-white rounded-2xl border p-4 flex items-center gap-4 ${s.is_active ? 'border-sky-100' : 'border-stone-100 opacity-60'}`}>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <p className="font-bold text-stone-800">{s.name}</p>
@@ -125,7 +125,7 @@ export default function ManageServices() {
                   value={form.name}
                   onChange={e => setForm({ ...form, name: e.target.value })}
                   placeholder="e.g. Dental Cleaning"
-                  className="w-full border border-amber-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300"
+                  className="w-full border border-cyan-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300"
                 />
               </div>
               <div>
@@ -135,7 +135,7 @@ export default function ManageServices() {
                   onChange={e => setForm({ ...form, description: e.target.value })}
                   placeholder="Brief description of the service..."
                   rows={2}
-                  className="w-full border border-amber-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300 resize-none"
+                  className="w-full border border-cyan-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300 resize-none"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -147,7 +147,7 @@ export default function ManageServices() {
                     onChange={e => setForm({ ...form, duration_minutes: parseInt(e.target.value) })}
                     min={15}
                     step={15}
-                    className="w-full border border-amber-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300"
+                    className="w-full border border-cyan-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300"
                   />
                 </div>
                 <div>
@@ -158,19 +158,19 @@ export default function ManageServices() {
                     onChange={e => setForm({ ...form, price: e.target.value })}
                     placeholder="0.00"
                     min={0}
-                    className="w-full border border-amber-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300"
+                    className="w-full border border-cyan-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300"
                   />
                 </div>
               </div>
             </div>
             <div className="flex gap-3 mt-6">
-              <button onClick={() => setModal(null)} className="flex-1 border border-amber-200 text-stone-600 font-semibold py-2.5 rounded-xl text-sm hover:bg-amber-50 transition-colors">
+              <button onClick={() => setModal(null)} className="flex-1 border border-cyan-200 text-stone-600 font-semibold py-2.5 rounded-xl text-sm hover:bg-cyan-50 transition-colors">
                 Cancel
               </button>
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex-1 bg-amber-400 hover:bg-amber-500 disabled:opacity-50 text-white font-bold py-2.5 rounded-xl text-sm transition-colors"
+                className="flex-1 bg-sky-500 hover:bg-sky-600 disabled:opacity-50 text-white font-bold py-2.5 rounded-xl text-sm transition-colors"
               >
                 {saving ? 'Saving...' : modal === 'add' ? 'Add Service' : 'Save Changes'}
               </button>

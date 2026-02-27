@@ -36,8 +36,8 @@ function Toggle({ on, onChange }) {
   return (
     <button type="button" onClick={() => onChange(!on)} role="switch" aria-checked={on}
       className="relative rounded-full transition-colors shrink-0 focus:outline-none"
-      style={{ width: 40, height: 22, backgroundColor: on ? 'var(--color-brand)' : '#e2e8f0' }}>
-      <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${on ? 'translate-x-5' : 'translate-x-0.5'}`} />
+      style={{ width: 50, height: 24, backgroundColor: on ? 'var(--color-brand)' : '#e2e8f0' }}>
+      <span className={`absolute top-1 right-8 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${on ? 'translate-x-7' : 'translate-x-0.5'}`} />
     </button>
   )
 }
