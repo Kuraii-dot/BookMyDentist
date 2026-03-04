@@ -4,6 +4,7 @@ import ProtectedRoute from '../components/ProtectedRoute'
 import Landing from '../pages/Landing'
 import Login from '../pages/Login'
 import Register from '../pages/Register'
+import VerifyEmail from '../pages/VerifyEmail'
 import ClinicDetail from '../pages/ClinicDetail'
 import ProfileEdit from '../pages/ProfileEdit'
 
@@ -29,6 +30,7 @@ const router = createBrowserRouter([
   { path: '/', element: <Landing /> },
   { path: '/login', element: <Login /> },
   { path: '/register', element: <Register /> },
+  { path: '/verify-email', element: <VerifyEmail /> },
   { path: '/clinic/:id', element: <ClinicDetail /> },
 
   // Customer routes
