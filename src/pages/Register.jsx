@@ -164,7 +164,3 @@ export default function Register() {
     </div>
   )
 }
-
-const rawRole = searchParams.get('role') || 'customer'
-const role = ['customer', 'clinic_owner'].includes(rawRole) ? rawRole : 'customer'
-// 'super_admin' is now impossible to self-register
