@@ -1,15 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap');
 @import "tailwindcss";
 
-@font-face {
-  font-family: 'BB Noname Pro Ultra';
-  src: url('/fonts/BBNonameProUltra.woff2') format('woff2'),
-       url('/fonts/BBNonameProUltra.woff') format('woff');
-  font-weight: 900;
-  font-style: normal;
-  font-display: swap;
-}
-
+/* rest stays exactly the same */
 /* ============================================
    THEME — BookMyDentist glassmorphism palette
    sky · cyan · amber

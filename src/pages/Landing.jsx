@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import heroImage from '../assets/2.jpg'
 
 // ── SVG Icons (no emojis) ────────────────────────────────────────────────────
 const ToothIcon = ({ className = 'w-6 h-6' }) => (
@@ -328,24 +329,17 @@ export default function Landing() {
             </div>
           </div>
 
-          {/* Right */}
+{/* Right */}
           <div className="relative flex justify-center md:justify-end animate-fade-in" style={{animationDelay:'150ms'}}>
             <div className="relative w-full max-w-sm">
-              <div className="relative h-[400px] sm:h-[460px] w-full rounded-3xl overflow-hidden"
+              <div className="relative h-[550px] sm:h-[600px] w-full rounded-3xl overflow-hidden"
                 style={{
                   background:'linear-gradient(135deg, rgba(186,230,253,0.7), rgba(207,250,254,0.6), rgba(253,230,138,0.3))',
                   border:'1px solid rgba(255,255,255,0.85)',
                   backdropFilter:'blur(20px)',
                   boxShadow:'0 24px 64px rgba(14,165,233,0.18), 0 8px 24px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.9)'
                 }}>
-                <div className="w-full h-full flex flex-col items-center justify-center gap-4">
-                  <div className="w-24 h-24 rounded-3xl flex items-center justify-center animate-float"
-                    style={{background:'rgba(255,255,255,0.7)',backdropFilter:'blur(12px)',border:'1px solid rgba(255,255,255,0.9)',boxShadow:'0 8px 32px rgba(14,165,233,0.15)'}}>
-                    <ToothIcon className="w-12 h-12 text-sky-400" />
-                  </div>
-                  <p className="text-sky-400 text-sm font-semibold">Add your hero image here</p>
-                  <p className="text-sky-300 text-xs text-center px-8 leading-relaxed">Replace this div with:<br/>&lt;img src="…" className="w-full h-full object-cover"/&gt;</p>
-                </div>
+                <img src={heroImage} className="w-full h-full object-cover" alt="Dental care" />
                 <div className="absolute inset-0 opacity-30 pointer-events-none"
                   style={{background:'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 50%, rgba(255,255,255,0.15) 100%)'}}/>
               </div>

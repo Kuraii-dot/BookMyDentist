@@ -7,6 +7,9 @@ import Register from '../pages/Register'
 import VerifyEmail from '../pages/VerifyEmail'
 import ClinicDetail from '../pages/ClinicDetail'
 import ProfileEdit from '../pages/ProfileEdit'
+import AboutUs from '../pages/AboutUs'
+import ContactUs from '../pages/ContactUs'
+import BrowseServices from '../pages/BrowseServices'
 
 // Customer
 import CustomerLayout from '../pages/customer/CustomerLayout'
@@ -31,6 +34,9 @@ const router = createBrowserRouter([
   { path: '/login', element: <Login /> },
   { path: '/register', element: <Register /> },
   { path: '/verify-email', element: <VerifyEmail /> },
+  { path: '/about', element: <AboutUs /> },
+  { path: '/contact', element: <ContactUs /> },
+  { path: '/browse', element: <BrowseServices /> },
   { path: '/clinic/:id', element: <ClinicDetail /> },
 
   // Customer routes
