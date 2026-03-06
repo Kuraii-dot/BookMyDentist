@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
@@ -132,6 +132,55 @@ function ClinicCard({ clinic }) {
   )
 }
 
+// ── Browse Dropdown ─────────────────────────────────────────────────────────
+function BrowseDropdown({ services }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    function handleClick(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  const COMMON = ['Cleaning','Braces','Whitening','Extraction','Implants','Checkup','Root Canal','Veneers']
+
+  return (
+    <div className="relative" ref={ref}>
+      <button onClick={() => setOpen(!open)}
+        className="flex items-center gap-1 text-sm font-semibold text-slate-600 hover:text-sky-600 transition-colors px-3 py-2">
+        Browse
+        <svg className={`w-3.5 h-3.5 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+      {open && (
+        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 rounded-2xl shadow-xl z-50 overflow-hidden"
+          style={{background:'rgba(255,255,255,0.95)',backdropFilter:'blur(20px)',border:'1px solid rgba(186,230,253,0.6)'}}>
+          <div className="p-3">
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-wide px-2 mb-2">Browse by Service</p>
+            <div className="grid grid-cols-2 gap-1">
+              {COMMON.map(s => (
+                <button key={s} onClick={() => { navigate(`/browse?service=${encodeURIComponent(s)}`); setOpen(false) }}
+                  className="text-left text-sm text-slate-600 hover:text-sky-600 hover:bg-sky-50 px-3 py-2 rounded-xl transition-all font-medium">
+                  {s}
+                </button>
+              ))}
+            </div>
+            <div className="border-t border-sky-50 mt-2 pt-2">
+              <button onClick={() => { navigate('/browse'); setOpen(false) }}
+                className="w-full text-center text-sm font-semibold text-sky-600 hover:text-sky-700 py-2 rounded-xl hover:bg-sky-50 transition-all">
+                View All Clinics →
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Logo ─────────────────────────────────────────────────────────────────────
 const LOGO = () => (
   <div className="flex items-center gap-2.5">
@@ -206,7 +255,14 @@ export default function Landing() {
       {/* ── NAV ── */}
       <nav className="glass-header fixed top-0 inset-x-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <LOGO />
+          <div className="flex items-center gap-6">
+            <LOGO />
+            <div className="hidden md:flex items-center">
+              <BrowseDropdown />
+              <Link to="/about" className="text-sm font-semibold text-slate-600 hover:text-sky-600 transition-colors px-3 py-2">About</Link>
+              <Link to="/contact" className="text-sm font-semibold text-slate-600 hover:text-sky-600 transition-colors px-3 py-2">Contact</Link>
+            </div>
+          </div>
           <div className="flex items-center gap-3">
             {user ? (
               <button onClick={() => navigate(profile?.role === 'clinic_owner' ? '/clinic' : '/dashboard')}
