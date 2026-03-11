@@ -6,9 +6,9 @@ import mascotImage from '../assets/MNB.png'
 import footerBg from '../assets/Footer.png'
 import searchMascot from '../assets/search.png'
 import cloud1 from '../assets/cloud1.png'
-import cloud2 from '../assets/cloud2.png'
-import cloud3 from '../assets/cloud3.png'
-import cloud4 from '../assets/cloud4.png'
+import cloud2 from '../assets/Cloud2.png'
+import cloud3 from '../assets/Cloud3.png'
+import cloud4 from '../assets/Cloud4.png'
 
 // ── Global animation + paper styles ─────────────────────────────────────────
 const ANIM_STYLES = `
