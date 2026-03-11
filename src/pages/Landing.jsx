@@ -9,6 +9,7 @@ import cloud1 from '../assets/cloud1.png'
 import cloud2 from '../assets/Cloud2.png'
 import cloud3 from '../assets/Cloud3.png'
 import cloud4 from '../assets/Cloud4.png'
+import dentalGif from '../assets/DentalGif.gif'
 
 // ── Global animation + paper styles ─────────────────────────────────────────
 const ANIM_STYLES = `
@@ -605,7 +606,7 @@ export default function Landing() {
   return (
     <div className="min-h-screen paper-grain relative" style={{
       fontFamily:"'DM Sans', sans-serif",
-      background:'linear-gradient(160deg, #e0f2fe 0%, #bae6fd 20%, #7dd3fc 40%, #bae6fd 60%, #e0f2fe 80%, #e0f2fe 100%)',
+      background:'linear-gradient(160deg, #e0f2fe 0%, #e0f2fe 20%, #ffffff 40%, #e0f2fe 60%, #e0f2fe 80%, #e0f2fe 100%)',
     }}>
       <style>{ANIM_STYLES}</style>
       <BackgroundScene/>
@@ -691,7 +692,7 @@ export default function Landing() {
               <div className="relative w-full max-w-sm">
                 <div className="relative rounded-3xl overflow-visible flex items-center justify-center h-[520px] bg-gradient-to-br from-sky-200/55 via-cyan-100/45 to-amber-100/20 border border-white/85 backdrop-blur-xl shadow-[0_24px_64px_rgba(14,165,233,0.15),0_8px_24px_rgba(0,0,0,0.05),inset_0_1px_0_rgba(255,255,255,0.9)]">
                   <div className="w-[90%] h-[90%] relative z-[1]">
-                    <HeroIllustration/>
+                    <img src={dentalGif} alt="Dental" className="w-full h-full object-contain animate-float"/>
                   </div>
                 </div>
 
