@@ -9,7 +9,8 @@ import cloud1 from '../assets/cloud1.png'
 import cloud2 from '../assets/Cloud2.png'
 import cloud3 from '../assets/Cloud3.png'
 import cloud4 from '../assets/Cloud4.png'
-import dentalGif from '../assets/DentalGif.gif'
+import dentalGif from '../assets/mascotnoBG.png'
+import heroImg from '../assets/heroooo.png'
 
 // ── Global animation + paper styles ─────────────────────────────────────────
 const ANIM_STYLES = `
@@ -637,90 +638,89 @@ export default function Landing() {
       </nav>
 
       {/* ── HERO ── */}
-      <section className="relative overflow-hidden pt-16 pb-8 z-[1]">
-        <div className="pointer-events-none absolute top-10 left-1/4 w-80 h-80 rounded-full opacity-40 animate-float bg-[radial-gradient(circle,rgba(251,191,36,0.22)_0%,transparent_70%)]" style={{animationDelay:'0s'}}/>
-        <div className="pointer-events-none absolute top-20 right-1/4 w-60 h-60 rounded-full opacity-30 animate-float bg-[radial-gradient(circle,rgba(180,140,80,0.18)_0%,transparent_70%)]" style={{animationDelay:'2s'}}/>
-        <div className="pointer-events-none absolute bottom-0 left-0 w-96 h-96 rounded-full opacity-25 animate-float bg-[radial-gradient(circle,rgba(245,234,214,0.7)_0%,transparent_70%)]" style={{animationDelay:'1s'}}/>
+      <section className="relative z-[1] pt-16 overflow-hidden">
+        {/* Full-bleed hero image */}
+        <div className="relative w-full" style={{minHeight:'88vh'}}>
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-20 md:py-28 grid grid-cols-1 md:grid-cols-2 gap-12 items-center z-[1]">
-          <div>
-            <Reveal variant="blur-up" delay={0}>
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold mb-6 bg-[rgba(251,191,36,0.15)] border border-[rgba(251,191,36,0.35)] text-amber-800 backdrop-blur-sm">
-                <span className="w-1.5 h-1.5 bg-sky-400 rounded-full animate-pulse"/>
-                Trusted by patients across the Philippines
-              </div>
-            </Reveal>
-            <Reveal variant="blur-up" delay={80}>
-              <h1 className="font-display font-bold text-slate-900 text-4xl sm:text-5xl lg:text-6xl leading-[1.08] mb-5 tracking-[-0.02em]">
-                Your Smile<br/>Deserves<br/>
-                <span className="text-transparent bg-clip-text bg-gradient-to-br from-sky-500 to-cyan-500">
-                  the Best Care
-                </span>
-              </h1>
-            </Reveal>
-            <Reveal variant="blur-up" delay={180}>
-              <p className="text-slate-500 text-base sm:text-lg leading-relaxed max-w-md mb-8">
-                Book dental appointments instantly. Find top-rated clinics near you, check real-time availability, and never miss a visit.
-              </p>
-            </Reveal>
-            <Reveal variant="blur-up" delay={270}>
-              <div className="flex flex-wrap gap-3">
-                <Link to="/register" className="btn btn-primary btn-lg">Book Appointment</Link>
-                <Link to="/register?role=clinic" className="btn btn-secondary btn-lg">List Your Clinic <ChevronRightIcon className="w-4 h-4 inline ml-1"/></Link>
-              </div>
-            </Reveal>
-            <Reveal variant="blur-fade" delay={400}>
-              <div className="flex items-center gap-4 mt-8 pt-8 border-t border-sky-100/50">
-                <div className="flex -space-x-2">
-                  {['#bae6fd','#7dd3fc','#38bdf8','#0ea5e9'].map((col,i) => (
-                    <div key={i} className="w-8 h-8 rounded-full border-2 border-white/80 flex items-center justify-center text-white text-xs font-bold"
-                      style={{backgroundColor:col}}>{['J','M','A','R'][i]}</div>
-                  ))}
-                </div>
-                <div>
-                  <div className="flex gap-0.5 mb-0.5">
-                    {[1,2,3,4,5].map(s => <StarIcon key={s} className="w-3.5 h-3.5 text-amber-400" filled/>)}
-                  </div>
-                  <p className="text-xs text-slate-500">Rated by our early patients</p>
-                </div>
-              </div>
-            </Reveal>
-          </div>
+          {/* Background image — Dr. Tooth in clinic */}
+          <img
+            src={heroImg}
+            alt="Dr. Tooth at the dentist office"
+            className="absolute inset-0 w-full h-full object-cover object-center"
+          />
 
-          <Reveal variant="pop" delay={200}>
-            <div className="relative flex justify-center md:justify-end">
-              <div className="relative w-full max-w-sm">
-                <div className="relative rounded-3xl overflow-visible flex items-center justify-center h-[520px] bg-gradient-to-br from-sky-200/55 via-cyan-100/45 to-amber-100/20 border border-white/85 backdrop-blur-xl shadow-[0_24px_64px_rgba(14,165,233,0.15),0_8px_24px_rgba(0,0,0,0.05),inset_0_1px_0_rgba(255,255,255,0.9)]">
-                  <div className="w-[90%] h-[90%] relative z-[1]">
-                    <img src={dentalGif} alt="Dental" className="w-full h-full object-contain animate-float"/>
-                  </div>
-                </div>
+          {/* Left gradient overlay so text is readable */}
+          <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/75 to-transparent"/>
+          {/* Bottom fade into page bg */}
+          <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[#e0f2fe] to-transparent"/>
 
-                <div className="absolute -bottom-4 -left-5 rounded-2xl px-4 py-3.5 animate-float bg-white/88 backdrop-blur-xl border border-white/90 shadow-[0_8px_32px_rgba(14,165,233,0.12)]" style={{animationDelay:'0.5s'}}>
-                  <p className="text-xs text-slate-400">Happy patients</p>
-                  <p className="font-display text-xl font-bold text-slate-900">{stats.appointments > 0 ? stats.appointments : '—'}</p>
-                </div>
+          {/* Content — left-aligned text over overlay */}
+          <div className="relative z-[2] max-w-7xl mx-auto px-4 sm:px-6 flex items-center" style={{minHeight:'88vh'}}>
+            <div className="max-w-xl py-20">
 
-                <div className="absolute -top-3 -right-4 rounded-2xl px-3 py-2.5 flex items-center gap-2 animate-float bg-white/88 backdrop-blur-xl border border-white/90 shadow-[0_8px_24px_rgba(14,165,233,0.10)]" style={{animationDelay:'1.5s'}}>
-                  <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-sky-100/80">
-                    <ShieldCheckIcon className="w-4 h-4 text-sky-500"/>
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-slate-800">Verified Clinics</p>
-                    <p className="text-xs text-slate-400">Admin reviewed</p>
-                  </div>
+              <Reveal variant="blur-up" delay={0}>
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold mb-6 bg-[rgba(14,165,233,0.12)] border border-[rgba(14,165,233,0.3)] text-sky-700 backdrop-blur-sm">
+                  <span className="w-1.5 h-1.5 bg-sky-400 rounded-full animate-pulse"/>
+                  Trusted by patients across the Philippines
                 </div>
+              </Reveal>
 
-                <div className="absolute top-1/2 -left-8 rounded-2xl px-3 py-2 flex items-center gap-2 animate-float bg-white/82 backdrop-blur-md border border-amber-200/60 shadow-[0_4px_16px_rgba(251,191,36,0.15)]" style={{animationDelay:'0.8s'}}>
-                  <StarIcon className="w-5 h-5 text-amber-400" filled/>
-                  <div>
-                    <p className="text-xs font-bold text-slate-800">Top Rated</p>
-                    <p className="text-xs text-slate-400">{stats.avgRating ? `${stats.avgRating.toFixed(1)} avg` : 'New platform'}</p>
+              <Reveal variant="blur-up" delay={80}>
+                <h1 className="font-display font-bold text-slate-900 text-5xl sm:text-6xl lg:text-7xl leading-[1.05] mb-6 tracking-[-0.03em]">
+                  Your Smile<br/>Deserves<br/>
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-500 to-cyan-400">
+                    the Best Care
+                  </span>
+                </h1>
+              </Reveal>
+
+              <Reveal variant="blur-up" delay={180}>
+                <p className="text-slate-600 text-lg leading-relaxed max-w-md mb-8">
+                  Book dental appointments instantly. Find top-rated clinics near you, check real-time availability, and never miss a visit.
+                </p>
+              </Reveal>
+
+              <Reveal variant="blur-up" delay={270}>
+                <div className="flex flex-wrap gap-3 mb-10">
+                  <Link to="/register" className="btn btn-primary btn-lg">Book Appointment</Link>
+                  <Link to="/register?role=clinic" className="btn btn-secondary btn-lg">List Your Clinic <ChevronRightIcon className="w-4 h-4 inline ml-1"/></Link>
+                </div>
+              </Reveal>
+
+              <Reveal variant="blur-fade" delay={400}>
+                <div className="flex flex-wrap gap-4">
+                  {/* Stat chips */}
+                  <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/80 backdrop-blur-md border border-white/90 shadow-[0_4px_20px_rgba(14,165,233,0.10)]">
+                    <div className="w-9 h-9 rounded-xl bg-sky-100 flex items-center justify-center">
+                      <BuildingIcon className="w-5 h-5 text-sky-500"/>
+                    </div>
+                    <div>
+                      <p className="font-display font-bold text-slate-900 text-lg leading-none">{stats.clinics > 0 ? stats.clinics : '10+'}</p>
+                      <p className="text-xs text-slate-400 mt-0.5">Verified Clinics</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/80 backdrop-blur-md border border-white/90 shadow-[0_4px_20px_rgba(14,165,233,0.10)]">
+                    <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center">
+                      <StarIcon className="w-5 h-5 text-amber-400" filled/>
+                    </div>
+                    <div>
+                      <p className="font-display font-bold text-slate-900 text-lg leading-none">{stats.avgRating ? `${stats.avgRating.toFixed(1)}★` : '5.0★'}</p>
+                      <p className="text-xs text-slate-400 mt-0.5">Average Rating</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/80 backdrop-blur-md border border-white/90 shadow-[0_4px_20px_rgba(14,165,233,0.10)]">
+                    <div className="w-9 h-9 rounded-xl bg-green-50 flex items-center justify-center">
+                      <ShieldCheckIcon className="w-5 h-5 text-green-500"/>
+                    </div>
+                    <div>
+                      <p className="font-display font-bold text-slate-900 text-lg leading-none">{stats.appointments > 0 ? stats.appointments : '100+'}</p>
+                      <p className="text-xs text-slate-400 mt-0.5">Appointments</p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </Reveal>
             </div>
-          </Reveal>
+          </div>
         </div>
       </section>
 
@@ -1066,7 +1066,7 @@ export default function Landing() {
                   </p>
                 </div>
 
-                <div className="flex flex-wrap items-center justify-between gap-4 py-5 pb-10">
+                <div className="flex flex-wrap items-center justify-between gap-4 py-5 pb-10 border-t border-white/10">
                   <p className="text-white/40 text-[0.8rem]">
                     © {new Date().getFullYear()} BookMyDentist. Dental bookings across the Philippines. All rights reserved.
                   </p>
