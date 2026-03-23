@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { format, isPast } from 'date-fns'
 import toast from 'react-hot-toast'
+import { sendAppointmentEmail } from '../../lib/email'
 
 const TABS = [
   { key: 'pending',   label: 'Pending',   icon: '⏳' },
@@ -38,13 +39,11 @@ function PerformedServicesModal({ appointment, clinicServices, onSave, onClose }
     if (performed.find(p => p.service_id === service.id)) { toast.error('Already added'); return }
     setPerformed(prev => [...prev, { service_id: service.id, name: service.name, price: parseFloat(service.price || 0), custom: false }])
   }
-
   function addCustom() {
     if (!customName.trim()) { toast.error('Enter a procedure name'); return }
     setPerformed(prev => [...prev, { name: customName.trim(), price: parseFloat(customPrice) || 0, custom: true }])
     setCustomName(''); setCustomPrice(''); setShowCustom(false)
   }
-
   function remove(index) { setPerformed(prev => prev.filter((_, i) => i !== index)) }
   function updatePrice(index, value) { setPerformed(prev => prev.map((p, i) => i === index ? { ...p, price: parseFloat(value) || 0 } : p)) }
 
@@ -70,12 +69,10 @@ function PerformedServicesModal({ appointment, clinicServices, onSave, onClose }
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
           </div>
-
           <div className="rounded-xl p-3 mb-4 flex items-center gap-2 flex-wrap">
             <span className="text-slate-400 text-xs shrink-0">Originally booked:</span>
             <span className="badge badge-gray">{appointment.services?.name}</span>
           </div>
-
           <div className="space-y-2 mb-4">
             {performed.map((p, i) => (
               <div key={i} className="flex items-center gap-2 rounded-xl p-3" style={{background:"rgba(255,255,255,0.6)",border:"1px solid rgba(255,255,255,0.8)"}}>
@@ -96,7 +93,6 @@ function PerformedServicesModal({ appointment, clinicServices, onSave, onClose }
               </div>
             ))}
           </div>
-
           <div className="mb-4">
             <p className="text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wide">Add from your services</p>
             <div className="flex flex-wrap gap-1.5">
@@ -112,10 +108,10 @@ function PerformedServicesModal({ appointment, clinicServices, onSave, onClose }
               )}
             </div>
           </div>
-
           {!showCustom ? (
             <button onClick={() => setShowCustom(true)}
-              className="w-full py-2.5 rounded-xl text-sm flex items-center justify-center gap-2 mb-4 transition-all" style={{border:"1.5px dashed rgba(186,230,253,0.8)",color:"#94a3b8",background:"rgba(255,255,255,0.3)"}}>
+              className="w-full py-2.5 rounded-xl text-sm flex items-center justify-center gap-2 mb-4 transition-all"
+              style={{border:"1.5px dashed rgba(186,230,253,0.8)",color:"#94a3b8",background:"rgba(255,255,255,0.3)"}}>
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
               Add custom procedure
             </button>
@@ -139,18 +135,15 @@ function PerformedServicesModal({ appointment, clinicServices, onSave, onClose }
               </div>
             </div>
           )}
-
           <div className="mb-5">
             <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Clinic Notes (optional)</label>
             <textarea value={clinicNotes} onChange={e => setClinicNotes(e.target.value)} rows={2}
               placeholder="e.g. Follow-up in 2 weeks, avoid cold drinks for 24hrs..." className="input resize-none text-sm" />
           </div>
-
           <div className="rounded-xl p-3 mb-5 flex items-center justify-between">
             <span className="text-slate-500 font-medium text-sm">Total Amount</span>
             <span className="font-display font-bold text-lg" style={{color:'var(--color-brand)'}}>₱{total.toLocaleString()}</span>
           </div>
-
           <div className="flex gap-3">
             <button onClick={onClose} className="btn btn-secondary btn-md flex-1">Cancel</button>
             <button onClick={handleSave} disabled={saving || performed.length === 0} className="btn btn-primary btn-md flex-1">
@@ -182,7 +175,7 @@ export default function AppointmentRequests() {
   useEffect(() => { loadData() }, [user])
 
   async function loadData() {
-    const { data: c } = await supabase.from('clinics').select('id').eq('owner_id', user.id).maybeSingle()
+    const { data: c } = await supabase.from('clinics').select('id, name').eq('owner_id', user.id).maybeSingle()
     setClinic(c)
     if (!c) { setLoading(false); return }
     const [appts, services] = await Promise.all([
@@ -200,25 +193,96 @@ export default function AppointmentRequests() {
     if (!actionModal) return
     setProcessing(true)
     const a = actionModal
+    const clinicName = clinic?.name || 'Your clinic'
+    const patientEmail = a.profiles?.email
+    const patientName  = a.profiles?.full_name || 'Patient'
+    const serviceName  = a.services?.name || 'appointment'
+    const dateStr      = format(new Date(a.appointment_date), 'EEEE, MMMM d, yyyy')
+    const timeStr      = a.appointment_time || '—'
+
     const updates = {
-      accept: { status: 'accepted' }, decline: { status: 'rejected' }, complete: { status: 'completed' },
+      accept:     { status: 'accepted' },
+      decline:    { status: 'rejected' },
+      complete:   { status: 'completed' },
       reschedule: { status: 'rescheduled', rescheduled_date: rescheduleDate, rescheduled_time: rescheduleTime },
     }[actionType]
+
     const notifMessages = {
-      accept:     { type: 'accepted',    title: '✅ Appointment Confirmed!',  msg: `Your appointment for ${a.services?.name} on ${format(new Date(a.appointment_date), 'MMM d, yyyy')} has been confirmed.` },
-      decline:    { type: 'rejected',    title: '❌ Appointment Declined',    msg: `Your appointment for ${a.services?.name} was declined.${reason ? ` Reason: ${reason}` : ''}` },
-      complete:   { type: 'completed',   title: '🏆 Appointment Completed',   msg: `Your appointment for ${a.services?.name} is complete. Please leave a review!` },
+      accept:     { type: 'accepted',    title: '✅ Appointment Confirmed!',  msg: `Your appointment for ${serviceName} on ${format(new Date(a.appointment_date), 'MMM d, yyyy')} has been confirmed.` },
+      decline:    { type: 'rejected',    title: '❌ Appointment Declined',    msg: `Your appointment for ${serviceName} was declined.${reason ? ` Reason: ${reason}` : ''}` },
+      complete:   { type: 'completed',   title: '🏆 Appointment Completed',   msg: `Your appointment for ${serviceName} is complete. Please leave a review!` },
       reschedule: { type: 'rescheduled', title: '🔄 Reschedule Proposed',     msg: `Your appointment has been proposed to reschedule to ${format(new Date(rescheduleDate), 'MMM d, yyyy')}${rescheduleTime ? ' at ' + rescheduleTime : ''}.` },
     }[actionType]
+
+    // 1 — Update DB
     await supabase.from('appointments').update(updates).eq('id', a.id)
-    await supabase.from('notifications').insert({ recipient_id: a.customer_id, type: notifMessages.type, title: notifMessages.title, message: notifMessages.msg, related_id: a.id })
-    toast.success({ accept: 'Appointment confirmed!', decline: 'Appointment declined.', complete: 'Marked as completed!', reschedule: 'Reschedule proposed.' }[actionType])
+
+    // 2 — In-app notification
+    await supabase.from('notifications').insert({
+      recipient_id: a.customer_id,
+      type: notifMessages.type,
+      title: notifMessages.title,
+      message: notifMessages.msg,
+      related_id: a.id
+    })
+
+    // 3 — Email to customer (fire-and-forget)
+    if (patientEmail) {
+      const emailConfig = {
+        accept: {
+          subject: `✅ Appointment Confirmed — ${clinicName}`,
+          body:    `Your appointment at <strong>${clinicName}</strong> has been confirmed. We look forward to seeing you!`,
+        },
+        decline: {
+          subject: `Update on your appointment — ${clinicName}`,
+          body:    `Unfortunately, your appointment at <strong>${clinicName}</strong> could not be accommodated at this time.`,
+        },
+        complete: {
+          subject: `🏆 Visit Complete — ${clinicName}`,
+          body:    `Your appointment at <strong>${clinicName}</strong> has been marked as complete. Thank you for choosing us!`,
+        },
+        reschedule: {
+          subject: `🔄 Reschedule Proposed — ${clinicName}`,
+          body:    `<strong>${clinicName}</strong> has proposed a new schedule for your appointment.`,
+        },
+      }[actionType]
+
+      // For reschedule, show the new date/time
+      const displayDate = actionType === 'reschedule' && rescheduleDate
+        ? format(new Date(rescheduleDate), 'EEEE, MMMM d, yyyy')
+        : dateStr
+      const displayTime = actionType === 'reschedule' && rescheduleTime
+        ? rescheduleTime
+        : timeStr
+
+      sendAppointmentEmail({
+        to:          patientEmail,
+        subject:     emailConfig.subject,
+        patientName,
+        clinicName,
+        serviceName,
+        date:        displayDate,
+        time:        displayTime,
+        status:      actionType,
+        reason:      (actionType === 'decline' && reason) ? reason : undefined,
+      }).catch(err => console.warn('Email failed:', err))
+    }
+
+    toast.success({
+      accept:     'Appointment confirmed! ✅',
+      decline:    'Appointment declined.',
+      complete:   'Marked as completed! 🏆',
+      reschedule: 'Reschedule proposed. 🔄',
+    }[actionType])
+
     setActionModal(null); setReason(''); setRescheduleDate(''); setRescheduleTime('')
     loadData(); setProcessing(false)
   }
 
   async function handleSavePerformed(appointmentId, performedServices, clinicNotes) {
-    const { error } = await supabase.from('appointments').update({ performed_services: performedServices, clinic_notes: clinicNotes }).eq('id', appointmentId)
+    const { error } = await supabase.from('appointments')
+      .update({ performed_services: performedServices, clinic_notes: clinicNotes })
+      .eq('id', appointmentId)
     if (error) { toast.error(error.message); return }
     const appt = appointments.find(a => a.id === appointmentId)
     if (appt) {
@@ -253,7 +317,12 @@ export default function AppointmentRequests() {
     all:       appointments.length
   }
 
-  if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{borderColor:'var(--color-brand)',borderTopColor:'transparent'}} /></div>
+  if (loading) return (
+    <div className="flex justify-center py-16">
+      <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin"
+        style={{borderColor:'var(--color-brand)',borderTopColor:'transparent'}} />
+    </div>
+  )
 
   return (
     <div>
@@ -276,12 +345,18 @@ export default function AppointmentRequests() {
       </div>
 
       <div className="relative mb-5">
-        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-        <input type="text" placeholder="Search by patient name or service..." value={search} onChange={e => setSearch(e.target.value)} className="input pl-9" />
+        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <input type="text" placeholder="Search by patient name or service..." value={search}
+          onChange={e => setSearch(e.target.value)} className="input pl-9" />
       </div>
 
       {filtered.length === 0 ? (
-        <div className="card p-12 text-center"><span className="text-4xl">📭</span><p className="text-slate-500 font-medium mt-3">No appointments found</p></div>
+        <div className="card p-12 text-center">
+          <span className="text-4xl">📭</span>
+          <p className="text-slate-500 font-medium mt-3">No appointments found</p>
+        </div>
       ) : (
         <div className="space-y-3">
           {filtered.map(a => {
@@ -312,7 +387,6 @@ export default function AppointmentRequests() {
                       </div>
                       <span className={`badge ${st.class}`}>{st.label}</span>
                     </div>
-
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3">
                       <div className="rounded-xl p-2.5">
                         <p className="text-slate-400 text-xs mb-0.5">Booked</p>
@@ -344,7 +418,6 @@ export default function AppointmentRequests() {
                         </div>
                       )}
                     </div>
-
                     <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-slate-100">
                       {isPending && <>
                         <button onClick={() => openAction(a, 'accept')} className="btn btn-primary btn-sm">✓ Accept</button>
@@ -355,8 +428,7 @@ export default function AppointmentRequests() {
                         <button onClick={() => openAction(a, 'complete')} className="btn btn-primary btn-sm">🏆 Mark Completed</button>
                       )}
                       {canEditProcedures && (
-                        <button onClick={() => setPerformedModal(a)}
-                          className="btn btn-secondary btn-sm flex items-center gap-1.5">
+                        <button onClick={() => setPerformedModal(a)} className="btn btn-secondary btn-sm flex items-center gap-1.5">
                           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                           {hasPerformed ? 'Edit Procedures' : '+ Add Procedures'}
                         </button>
@@ -380,21 +452,42 @@ export default function AppointmentRequests() {
               {actionModal.profiles?.full_name} · {actionModal.services?.name}<br />
               {format(new Date(actionModal.appointment_date), 'EEEE, MMMM d, yyyy')}
             </p>
+            {/* Email notice */}
+            <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl mb-4"
+              style={{background:'rgba(220,252,231,0.5)',border:'1px solid rgba(134,239,172,0.5)'}}>
+              <svg className="w-4 h-4 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+              </svg>
+              <p className="text-green-700 text-xs font-medium">
+                An email notification will be sent to <strong>{actionModal.profiles?.email}</strong>
+              </p>
+            </div>
             {actionType === 'reschedule' && (
               <div className="space-y-3 mb-4">
-                <div><label className="block text-sm font-semibold text-slate-700 mb-1.5">New Date</label>
-                  <input type="date" value={rescheduleDate} onChange={e => setRescheduleDate(e.target.value)} min={format(new Date(), 'yyyy-MM-dd')} className="input" /></div>
-                <div><label className="block text-sm font-semibold text-slate-700 mb-1.5">New Time</label>
-                  <input type="time" value={rescheduleTime} onChange={e => setRescheduleTime(e.target.value)} className="input" /></div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">New Date</label>
+                  <input type="date" value={rescheduleDate} onChange={e => setRescheduleDate(e.target.value)}
+                    min={format(new Date(), 'yyyy-MM-dd')} className="input" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">New Time</label>
+                  <input type="time" value={rescheduleTime} onChange={e => setRescheduleTime(e.target.value)} className="input" />
+                </div>
               </div>
             )}
             {actionType === 'decline' && (
-              <div className="mb-4"><label className="block text-sm font-semibold text-slate-700 mb-1.5">Reason (optional)</label>
-                <textarea value={reason} onChange={e => setReason(e.target.value)} rows={2} placeholder="e.g. Fully booked..." className="input resize-none" /></div>
+              <div className="mb-4">
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Reason (optional)</label>
+                <textarea value={reason} onChange={e => setReason(e.target.value)} rows={2}
+                  placeholder="e.g. Fully booked..." className="input resize-none" />
+              </div>
             )}
             {actionType === 'complete' && (
-              <div className="rounded-xl p-3 mb-4" style={{backgroundColor:'var(--color-brand-light)',border:`1px solid var(--color-brand-border)`}}>
-                <p className="text-xs" style={{color:'var(--color-brand-text)'}}>The patient will be notified. You can add performed procedures after marking complete.</p>
+              <div className="rounded-xl p-3 mb-4"
+                style={{backgroundColor:'var(--color-brand-light)',border:`1px solid var(--color-brand-border)`}}>
+                <p className="text-xs" style={{color:'var(--color-brand-text)'}}>
+                  The patient will be notified. You can add performed procedures after marking complete.
+                </p>
               </div>
             )}
             <div className="flex gap-3">
