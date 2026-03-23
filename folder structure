@@ -10,29 +10,44 @@
  ┃ ┃ ┣ 📜Navbar.jsx
  ┃ ┃ ┣ 📜NotificationsBell.jsx
  ┃ ┃ ┗ 📜ProtectedRoute.jsx
+ ┃ ┃ ┗ 📜Review.jsx
  ┃ ┣ 📂context
  ┃ ┃ ┗ 📜AuthContext.jsx
  ┃ ┣ 📂hooks
  ┃ ┃ ┗ 📜useNotifications.js
  ┃ ┣ 📂lib
+ ┃ ┃ ┗ 📜email.js
  ┃ ┃ ┗ 📜supabase.js
  ┃ ┣ 📂pages
  ┃ ┃ ┣ 📂admin
  ┃ ┃ ┃ ┗ 📜SuperAdminDashboard.jsx
  ┃ ┃ ┣ 📂clinic
  ┃ ┃ ┃ ┣ 📜AppointmentRequest.jsx
+ ┃ ┃ ┃ ┣ 📜ClinicAvailability.jsx
  ┃ ┃ ┃ ┣ 📜ClinicDashboard.jsx
+ ┃ ┃ ┃ ┣ 📜ClinicLayout.jsx
  ┃ ┃ ┃ ┣ 📜ClinicProfile.jsx
- ┃ ┃ ┃ ┗ 📜ManageServices.jsx
+ ┃ ┃ ┃ ┣ 📜ManageServices.jsx
+ ┃ ┃ ┃ ┗ 📜PedingApproval.jsx
  ┃ ┃ ┣ 📂customer
  ┃ ┃ ┃ ┣ 📜BookAppointment.jsx
- ┃ ┃ ┃ ┣ 📜ClinicList.jsx
+ ┃ ┃ ┃ ┣ 📜BrowseClinics.jsx
+ ┃ ┃ ┃ ┣ 📜CustomerClinic.jsx
  ┃ ┃ ┃ ┣ 📜CustomerDashboard.jsx
+ ┃ ┃ ┃ ┣ 📜CustomerLayout.jsx
+ ┃ ┃ ┃ ┣ 📜CustomerProfile.jsx
  ┃ ┃ ┃ ┗ 📜MyAppointment.jsx
+ ┃ ┃ ┣ 📜AboutUs.jsx
+ ┃ ┃ ┣ 📜BrowseServices.jsx
+ ┃ ┃ ┣ 📜ClinicDetail.jsx
+ ┃ ┃ ┣ 📜ContactUs.jsx
  ┃ ┃ ┣ 📜Landing.jsx
  ┃ ┃ ┣ 📜Login.jsx
- ┃ ┃ ┗ 📜Register.jsx
- ┃ ┣ 📜App.css
+ ┃ ┃ ┣ 📜ProfileEdit.jsx
+ ┃ ┃ ┣ 📜Register.jsx
+ ┃ ┃ ┗ 📜VerifyEmail.jsx
+ ┃ ┣ 📂router
+ ┃ ┃ ┗ 📜index.jsx
  ┃ ┣ 📜App.jsx
  ┃ ┣ 📜index.css
  ┃ ┗ 📜main.jsx

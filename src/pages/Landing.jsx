@@ -11,6 +11,7 @@ import cloud3 from '../assets/Cloud3.png'
 import cloud4 from '../assets/Cloud4.png'
 import dentalGif from '../assets/mascotnoBG.png'
 import heroImg from '../assets/heroooo.png'
+import explorerImg from '../assets/Explore.png'
 
 // ── Global animation + paper styles ─────────────────────────────────────────
 const ANIM_STYLES = `
@@ -825,38 +826,52 @@ export default function Landing() {
       </section>
 
       {/* ── CLINICS GRID ── */}
-      <section className="py-12 relative z-[1]">
+      <section className="relative z-[1] py-16 overflow-hidden">
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          {/* Header */}
           <Reveal variant="blur-up">
-            <div className="flex items-baseline justify-between mb-7">
-              <div>
-                <h2 className="font-display font-bold text-slate-900 text-2xl sm:text-3xl tracking-[-0.02em]">
+            <div className="mb-10">
+              <p className="text-xs font-bold uppercase tracking-widest text-sky-500 mb-2">❄️ Dr. Tooth Recommends</p>
+              <div className="flex items-end gap-0">
+                <h2 className="font-display font-bold text-slate-800 text-3xl sm:text-4xl tracking-[-0.02em] shrink-0">
                   {search || city !== 'all' || serviceFilter ? 'Search Results' : 'Featured Clinics'}
                 </h2>
-                <p className="text-slate-400 text-sm mt-1">{filtered.length} clinic{filtered.length !== 1 ? 's' : ''} available</p>
+                {/* Negative margin pulls mascot back so he doesn't push subtitle down */}
+                <img
+                  src={explorerImg}
+                  alt="Dr. Tooth pointing at clinics"
+                  className="w-40 sm:w-56 object-contain drop-shadow-md pointer-events-none shrink-0"
+                  style={{marginBottom:'-3rem', marginLeft:'0.5rem'}}
+                />
               </div>
+              <p className="text-slate-400 text-sm mt-1">{filtered.length} clinic{filtered.length !== 1 ? 's' : ''} available</p>
             </div>
           </Reveal>
+
+          {/* Cards */}
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
               {[...Array(8)].map((_,i) => (
                 <div key={i} className="card overflow-hidden animate-pulse">
-                  <div className="h-36 bg-sky-100/30"/>
+                  <div className="h-32 bg-sky-100/40"/>
                   <div className="p-4 pt-7 space-y-2">
-                    <div className="h-4 rounded-xl w-3/4 bg-sky-100/40"/>
-                    <div className="h-3 rounded-xl w-1/2 bg-sky-100/30"/>
-                    <div className="h-8 rounded-xl mt-3 bg-sky-100/25"/>
+                    <div className="h-4 rounded-xl w-3/4 bg-sky-100/60"/>
+                    <div className="h-3 rounded-xl w-1/2 bg-sky-100/40"/>
+                    <div className="h-8 rounded-xl mt-3 bg-sky-100/30"/>
                   </div>
                 </div>
               ))}
             </div>
           ) : filtered.length === 0 ? (
-            <div className="card p-16 text-center">
-              <div className="flex justify-center mb-4"><SearchIcon className="w-12 h-12 text-slate-200"/></div>
-              <p className="text-slate-600 font-semibold text-lg">No clinics found</p>
-              <p className="text-slate-400 text-sm mt-1 mb-5">Try different filters</p>
+            <div className="max-w-sm py-16">
+              <div className="w-16 h-16 rounded-2xl bg-white/80 border border-sky-100 flex items-center justify-center mb-4 shadow-sm">
+                <SearchIcon className="w-8 h-8 text-sky-300"/>
+              </div>
+              <p className="text-slate-700 font-semibold text-lg mb-1">No clinics found</p>
+              <p className="text-slate-400 text-sm mb-5">Try different filters</p>
               <button onClick={() => { setSearch(''); setCity('all'); setServiceFilter('') }}
-                className="btn btn-primary btn-md mx-auto">Clear Filters</button>
+                className="btn btn-primary btn-md">Clear Filters</button>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
@@ -866,6 +881,17 @@ export default function Landing() {
                 </Reveal>
               ))}
             </div>
+          )}
+
+          {filtered.length > 0 && !search && city === 'all' && !serviceFilter && (
+            <Reveal variant="blur-fade">
+              <div className="mt-8">
+                <Link to="/browse"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm bg-white/80 border border-sky-200/70 text-sky-700 hover:bg-white transition-all shadow-[0_2px_12px_rgba(14,165,233,0.12)]">
+                  View All Clinics <ChevronRightIcon className="w-4 h-4"/>
+                </Link>
+              </div>
+            </Reveal>
           )}
         </div>
       </section>

@@ -1,138 +1,266 @@
-// Email sending via Resend API
-// Install: npm install resend
-// Get your API key from resend.com and add to .env:
-// VITE_RESEND_API_KEY=re_xxxxxxxx
-// VITE_FROM_EMAIL=noreply@yourdomain.com  (must be a verified domain in Resend)
+// Calls our deployed send-email Edge Function
+// Used for: new booking alerts to clinic, status change alerts to customer
 
-const RESEND_API_KEY = import.meta.env.VITE_RESEND_API_KEY
-const FROM_EMAIL = import.meta.env.VITE_FROM_EMAIL || 'onboarding@resend.dev'
-const APP_NAME = 'DentBook'
+const EDGE_URL = 'https://yaiebesffxghizzmrael.supabase.co/functions/v1/send-email'
+const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlhaWViZXNmZnhnaGl6em1yYWVsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1NjcwNTEsImV4cCI6MjA4NzE0MzA1MX0.P6ydIuOItLu87OIcFKNW5hbXvo-5QP93ILG5FacnOb0'
 
-async function sendEmail({ to, subject, html }) {
-  if (!RESEND_API_KEY) {
-    console.warn('Resend API key not set — skipping email')
-    return
-  }
-
+export async function sendEmail({ to, subject, html }) {
   try {
-    const res = await fetch('https://api.resend.com/emails', {
+    await fetch(EDGE_URL, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${RESEND_API_KEY}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${ANON_KEY}`,
       },
-      body: JSON.stringify({ from: `${APP_NAME} <${FROM_EMAIL}>`, to, subject, html })
+      body: JSON.stringify({ to, subject, html }),
     })
-    if (!res.ok) {
-      const err = await res.json()
-      console.error('Resend error:', err)
-    }
   } catch (err) {
-    console.error('Email send failed:', err)
+    // Email is best-effort — don't block the UI if it fails
+    console.warn('Email send failed:', err)
   }
 }
 
-export async function sendClinicApprovedEmail({ to, clinicName, ownerName }) {
+// ── Email Templates ──────────────────────────────────────────────────────────
+
+function emailWrapper(content) {
+  return `
+    <div style="font-family:sans-serif;max-width:520px;margin:0 auto;padding:32px 24px;background:#f0f9ff;border-radius:16px;">
+      <div style="text-align:center;margin-bottom:24px;">
+        <span style="font-size:36px;">🦷</span>
+        <h1 style="color:#0ea5e9;font-size:20px;margin:6px 0 0;">BookMyDentist</h1>
+      </div>
+      <div style="background:white;border-radius:12px;padding:24px 28px;">
+        ${content}
+      </div>
+      <p style="color:#94a3b8;font-size:11px;text-align:center;margin-top:16px;">
+        © ${new Date().getFullYear()} BookMyDentist · You're receiving this because you have an account with us.
+      </p>
+    </div>
+  `
+}
+
+function row(label, value) {
+  return `
+    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;">
+      <span style="color:#94a3b8;font-size:13px;">${label}</span>
+      <span style="color:#0f172a;font-size:13px;font-weight:600;">${value}</span>
+    </div>
+  `
+}
+
+function btn(text, href) {
+  return `
+    <div style="text-align:center;margin-top:20px;">
+      <a href="${href}" style="background:linear-gradient(135deg,#0ea5e9,#06b6d4);color:white;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px;display:inline-block;">
+        ${text}
+      </a>
+    </div>
+  `
+}
+
+// ── To clinic owner: new booking received ────────────────────────────────────
+export function newBookingEmailToClinic({ clinicName, patientName, patientEmail, serviceName, date, time }) {
+  return {
+    subject: `📅 New Booking Request — ${patientName}`,
+    html: emailWrapper(`
+      <h2 style="color:#0f172a;font-size:18px;margin:0 0 4px;">New Appointment Request</h2>
+      <p style="color:#64748b;font-size:13px;margin:0 0 20px;">Someone just booked at <strong>${clinicName}</strong>. Review and confirm below.</p>
+      ${row('Patient', patientName)}
+      ${row('Email', patientEmail)}
+      ${row('Service', serviceName)}
+      ${row('Date', date)}
+      ${row('Time', time)}
+      ${btn('View Appointment →', 'https://book-my-dentist.vercel.app/clinic/appointments')}
+    `)
+  }
+}
+
+// ── To customer: booking confirmed ───────────────────────────────────────────
+export function bookingConfirmedEmail({ patientName, clinicName, serviceName, date, time }) {
+  return {
+    subject: `✅ Appointment Confirmed — ${clinicName}`,
+    html: emailWrapper(`
+      <h2 style="color:#0f172a;font-size:18px;margin:0 0 4px;">Your appointment is confirmed! 🎉</h2>
+      <p style="color:#64748b;font-size:13px;margin:0 0 20px;">Hi ${patientName}, see you at your appointment.</p>
+      ${row('Clinic', clinicName)}
+      ${row('Service', serviceName)}
+      ${row('Date', date)}
+      ${row('Time', time)}
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 16px;margin-top:16px;">
+        <p style="color:#166534;font-size:13px;margin:0;">💡 Please arrive 5–10 minutes early. Contact the clinic if you need to reschedule.</p>
+      </div>
+      ${btn('View My Appointments →', 'https://book-my-dentist.vercel.app/dashboard/appointments')}
+    `)
+  }
+}
+
+// ── To customer: booking declined ────────────────────────────────────────────
+export function bookingDeclinedEmail({ patientName, clinicName, serviceName, date, reason }) {
+  return {
+    subject: `❌ Appointment Declined — ${clinicName}`,
+    html: emailWrapper(`
+      <h2 style="color:#0f172a;font-size:18px;margin:0 0 4px;">Appointment Not Available</h2>
+      <p style="color:#64748b;font-size:13px;margin:0 0 20px;">Hi ${patientName}, unfortunately your request could not be accommodated.</p>
+      ${row('Clinic', clinicName)}
+      ${row('Service', serviceName)}
+      ${row('Date', date)}
+      ${reason ? row('Reason', reason) : ''}
+      <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px 16px;margin-top:16px;">
+        <p style="color:#991b1b;font-size:13px;margin:0;">You can book a different time slot at your convenience.</p>
+      </div>
+      ${btn('Book Again →', 'https://book-my-dentist.vercel.app/dashboard/browse')}
+    `)
+  }
+}
+
+// ── To customer: booking rescheduled ─────────────────────────────────────────
+export function bookingRescheduledEmail({ patientName, clinicName, serviceName, newDate, newTime }) {
+  return {
+    subject: `🔄 Appointment Rescheduled — ${clinicName}`,
+    html: emailWrapper(`
+      <h2 style="color:#0f172a;font-size:18px;margin:0 0 4px;">New Time Proposed</h2>
+      <p style="color:#64748b;font-size:13px;margin:0 0 20px;">Hi ${patientName}, the clinic has proposed a new time for your appointment.</p>
+      ${row('Clinic', clinicName)}
+      ${row('Service', serviceName)}
+      ${row('New Date', newDate)}
+      ${row('New Time', newTime)}
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 16px;margin-top:16px;">
+        <p style="color:#1e40af;font-size:13px;margin:0;">Please log in to accept or decline this new schedule.</p>
+      </div>
+      ${btn('View & Respond →', 'https://book-my-dentist.vercel.app/dashboard/appointments')}
+    `)
+  }
+}
+
+// ── To customer: appointment completed ───────────────────────────────────────
+export function bookingCompletedEmail({ patientName, clinicName, serviceName, date }) {
+  return {
+    subject: `🏆 Visit Complete — ${clinicName}`,
+    html: emailWrapper(`
+      <h2 style="color:#0f172a;font-size:18px;margin:0 0 4px;">Thanks for your visit!</h2>
+      <p style="color:#64748b;font-size:13px;margin:0 0 20px;">Hi ${patientName}, we hope your appointment went well.</p>
+      ${row('Clinic', clinicName)}
+      ${row('Service', serviceName)}
+      ${row('Date', date)}
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 16px;margin-top:16px;">
+        <p style="color:#166534;font-size:13px;margin:0;">⭐ Leave a review to help other patients find great dental care!</p>
+      </div>
+      ${btn('Leave a Review →', 'https://book-my-dentist.vercel.app/dashboard/appointments')}
+    `)
+  }
+}
+
+// ── Sent to CUSTOMER when they submit a booking request ──
+export async function sendBookingRequestedEmail({ to, patientName, clinicName, serviceName, date, time }) {
   await sendEmail({
     to,
-    subject: `🎉 Your clinic has been approved — ${clinicName}`,
+    subject: `📅 Booking Request Sent — ${clinicName}`,
     html: `
-      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #fffbeb; padding: 40px; border-radius: 16px;">
-        <div style="text-align: center; margin-bottom: 32px;">
-          <h1 style="color: #d97706; font-size: 32px; margin: 0;">🦷 DentBook</h1>
+      <div style="font-family:'Segoe UI',sans-serif;max-width:600px;margin:0 auto;background:#f0f9ff;padding:0;border-radius:20px;overflow:hidden;">
+        <!-- Header -->
+        <div style="background:linear-gradient(135deg,#0ea5e9,#06b6d4);padding:36px 40px;text-align:center;">
+          <h1 style="color:white;margin:0;font-size:28px;font-weight:800;letter-spacing:-0.5px;">🦷 BookMyDentistPH</h1>
+          <p style="color:rgba(255,255,255,0.85);margin:8px 0 0;font-size:14px;">Your dental booking platform</p>
         </div>
-        <h2 style="color: #1c1917; font-size: 24px;">Welcome aboard, ${ownerName}! 🎉</h2>
-        <p style="color: #57534e; line-height: 1.6;">
-          Great news! Your clinic <strong>${clinicName}</strong> has been approved and is now live on DentBook.
-          Patients can now find and book appointments with you.
-        </p>
-        <p style="color: #57534e; line-height: 1.6;">
-          Log in to your dashboard to set up your services and start accepting bookings.
-        </p>
-        <div style="text-align: center; margin: 32px 0;">
-          <a href="${window.location.origin}/login"
-            style="background: #f59e0b; color: white; padding: 14px 32px; border-radius: 50px; text-decoration: none; font-weight: bold; font-size: 16px;">
-            Go to Dashboard →
-          </a>
+        <!-- Body -->
+        <div style="padding:40px;">
+          <h2 style="color:#0f172a;font-size:22px;margin:0 0 8px;font-weight:700;">Booking Request Sent! 🎉</h2>
+          <p style="color:#64748b;font-size:15px;line-height:1.6;margin:0 0 28px;">
+            Hi <strong>${patientName}</strong>, your appointment request has been sent to <strong>${clinicName}</strong>.
+            You'll receive a notification once the clinic confirms.
+          </p>
+          <!-- Details card -->
+          <div style="background:white;border-radius:16px;padding:24px;border:1px solid #e0f2fe;margin-bottom:28px;">
+            <p style="color:#0ea5e9;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 16px;">Appointment Details</p>
+            ${[
+              ['🏥', 'Clinic',   clinicName],
+              ['🦷', 'Service',  serviceName],
+              ['📅', 'Date',     date],
+              ['🕐', 'Time',     time],
+            ].map(([icon, label, value]) => `
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f0f9ff;">
+                <span style="color:#94a3b8;font-size:13px;">${icon} ${label}</span>
+                <span style="color:#0f172a;font-size:13px;font-weight:600;">${value}</span>
+              </div>
+            `).join('')}
+          </div>
+          <!-- Status badge -->
+          <div style="background:#fef9c3;border:1px solid #fde047;border-radius:12px;padding:14px 18px;margin-bottom:28px;display:flex;align-items:center;gap:10px;">
+            <span style="font-size:18px;">⏳</span>
+            <p style="margin:0;color:#854d0e;font-size:13px;font-weight:500;">
+              Status: <strong>Pending Confirmation</strong> — the clinic will review and respond shortly.
+            </p>
+          </div>
+          <!-- CTA -->
+          <div style="text-align:center;">
+            <a href="${typeof window !== 'undefined' ? window.location.origin : 'https://book-my-dentist.vercel.app'}/dashboard/appointments"
+              style="display:inline-block;background:linear-gradient(135deg,#0ea5e9,#06b6d4);color:white;padding:14px 36px;border-radius:50px;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 4px 14px rgba(14,165,233,0.35);">
+              View My Appointments →
+            </a>
+          </div>
         </div>
-        <p style="color: #a8a29e; font-size: 13px; text-align: center;">
-          If you have any questions, please contact our support team.
-        </p>
+        <!-- Footer -->
+        <div style="padding:20px 40px;text-align:center;border-top:1px solid #e0f2fe;">
+          <p style="color:#94a3b8;font-size:12px;margin:0;">— The BookMyDentistPH Team</p>
+        </div>
       </div>
     `
   })
 }
 
-export async function sendClinicRejectedEmail({ to, clinicName, ownerName, reason }) {
+// ── Sent to CLINIC OWNER when a new booking request arrives ──
+export async function sendNewBookingAlertEmail({ to, ownerName, clinicName, patientName, serviceName, date, time }) {
   await sendEmail({
     to,
-    subject: `Update on your DentBook clinic application — ${clinicName}`,
+    subject: `📅 New Appointment Request — ${patientName}`,
     html: `
-      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #fffbeb; padding: 40px; border-radius: 16px;">
-        <div style="text-align: center; margin-bottom: 32px;">
-          <h1 style="color: #d97706; font-size: 32px; margin: 0;">🦷 DentBook</h1>
+      <div style="font-family:'Segoe UI',sans-serif;max-width:600px;margin:0 auto;background:#f0f9ff;padding:0;border-radius:20px;overflow:hidden;">
+        <!-- Header -->
+        <div style="background:linear-gradient(135deg,#0ea5e9,#06b6d4);padding:36px 40px;text-align:center;">
+          <h1 style="color:white;margin:0;font-size:28px;font-weight:800;letter-spacing:-0.5px;">🦷 BookMyDentistPH</h1>
+          <p style="color:rgba(255,255,255,0.85);margin:8px 0 0;font-size:14px;">Clinic Dashboard Notification</p>
         </div>
-        <h2 style="color: #1c1917; font-size: 24px;">Hi ${ownerName},</h2>
-        <p style="color: #57534e; line-height: 1.6;">
-          Thank you for applying to join DentBook with <strong>${clinicName}</strong>.
-          After reviewing your application, we're unable to approve it at this time.
-        </p>
-        ${reason ? `
-        <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 16px; margin: 24px 0;">
-          <p style="color: #dc2626; font-weight: bold; margin: 0 0 8px 0;">Reason:</p>
-          <p style="color: #7f1d1d; margin: 0;">${reason}</p>
+        <!-- Body -->
+        <div style="padding:40px;">
+          <h2 style="color:#0f172a;font-size:22px;margin:0 0 8px;font-weight:700;">New Booking Request 🔔</h2>
+          <p style="color:#64748b;font-size:15px;line-height:1.6;margin:0 0 28px;">
+            Hi <strong>${ownerName}</strong>, a patient has requested an appointment at <strong>${clinicName}</strong>.
+            Please review and respond as soon as possible.
+          </p>
+          <!-- Details card -->
+          <div style="background:white;border-radius:16px;padding:24px;border:1px solid #e0f2fe;margin-bottom:28px;">
+            <p style="color:#0ea5e9;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;margin:0 0 16px;">Request Details</p>
+            ${[
+              ['👤', 'Patient',  patientName],
+              ['🦷', 'Service',  serviceName],
+              ['📅', 'Date',     date],
+              ['🕐', 'Time',     time],
+            ].map(([icon, label, value]) => `
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f0f9ff;">
+                <span style="color:#94a3b8;font-size:13px;">${icon} ${label}</span>
+                <span style="color:#0f172a;font-size:13px;font-weight:600;">${value}</span>
+              </div>
+            `).join('')}
+          </div>
+          <!-- Urgency note -->
+          <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:14px 18px;margin-bottom:28px;display:flex;align-items:center;gap:10px;">
+            <span style="font-size:18px;">⚡</span>
+            <p style="margin:0;color:#9a3412;font-size:13px;font-weight:500;">
+              Respond promptly — patients are more likely to follow through when confirmed quickly.
+            </p>
+          </div>
+          <!-- CTA -->
+          <div style="text-align:center;">
+            <a href="${typeof window !== 'undefined' ? window.location.origin : 'https://book-my-dentist.vercel.app'}/clinic/appointments"
+              style="display:inline-block;background:linear-gradient(135deg,#0ea5e9,#06b6d4);color:white;padding:14px 36px;border-radius:50px;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 4px 14px rgba(14,165,233,0.35);">
+              Review Request →
+            </a>
+          </div>
         </div>
-        ` : ''}
-        <p style="color: #57534e; line-height: 1.6;">
-          If you believe this is a mistake or have addressed the issue, feel free to contact us.
-        </p>
-        <p style="color: #a8a29e; font-size: 13px; text-align: center; margin-top: 32px;">
-          — The DentBook Team
-        </p>
-      </div>
-    `
-  })
-}
-
-export async function sendAppointmentEmail({ to, subject, patientName, clinicName, serviceName, date, time, status, reason }) {
-  const statusColors = {
-    accepted: '#16a34a',
-    rejected: '#dc2626',
-    rescheduled: '#2563eb',
-    completed: '#7c3aed'
-  }
-  const color = statusColors[status] || '#d97706'
-
-  await sendEmail({
-    to,
-    subject,
-    html: `
-      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #fffbeb; padding: 40px; border-radius: 16px;">
-        <div style="text-align: center; margin-bottom: 32px;">
-          <h1 style="color: #d97706; font-size: 32px; margin: 0;">🦷 DentBook</h1>
+        <!-- Footer -->
+        <div style="padding:20px 40px;text-align:center;border-top:1px solid #e0f2fe;">
+          <p style="color:#94a3b8;font-size:12px;margin:0;">— The BookMyDentistPH Team</p>
         </div>
-        <h2 style="color: #1c1917;">Hi ${patientName},</h2>
-        <p style="color: #57534e; line-height: 1.6;">${subject}</p>
-        <div style="background: white; border: 1px solid #fde68a; border-radius: 12px; padding: 20px; margin: 24px 0;">
-          <table style="width: 100%; border-collapse: collapse;">
-            <tr><td style="color: #a8a29e; padding: 6px 0; font-size: 13px;">Clinic</td><td style="color: #1c1917; font-weight: bold;">${clinicName}</td></tr>
-            <tr><td style="color: #a8a29e; padding: 6px 0; font-size: 13px;">Service</td><td style="color: #1c1917;">${serviceName}</td></tr>
-            <tr><td style="color: #a8a29e; padding: 6px 0; font-size: 13px;">Date</td><td style="color: #1c1917;">${date}</td></tr>
-            <tr><td style="color: #a8a29e; padding: 6px 0; font-size: 13px;">Time</td><td style="color: #1c1917;">${time}</td></tr>
-          </table>
-        </div>
-        ${reason ? `
-        <div style="background: #fef2f2; border-radius: 12px; padding: 16px; margin-top: 16px;">
-          <p style="color: #dc2626; font-weight: bold; margin: 0 0 6px;">Reason: </p>
-          <p style="color: #7f1d1d; margin: 0;">${reason}</p>
-        </div>` : ''}
-        <div style="text-align: center; margin: 32px 0;">
-          <a href="${window.location.origin}/dashboard/appointments"
-            style="background: #f59e0b; color: white; padding: 14px 32px; border-radius: 50px; text-decoration: none; font-weight: bold;">
-            View My Appointments →
-          </a>
-        </div>
-        <p style="color: #a8a29e; font-size: 13px; text-align: center;">— The DentBook Team</p>
       </div>
     `
   })

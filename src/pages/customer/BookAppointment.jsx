@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import { format, addDays, startOfToday, addHours, getDay } from 'date-fns'
 import toast from 'react-hot-toast'
+import { sendBookingRequestedEmail, sendNewBookingAlertEmail } from '../../lib/email'
 
 const DAY_KEYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday']
 
@@ -20,7 +21,6 @@ function Step({ number, label, active, done }) {
   )
 }
 
-// Glass pill for step connectors
 function StepLine({ done }) {
   return <div className="flex-1 max-w-[60px] h-0.5 rounded-full" style={{background: done ? 'linear-gradient(90deg,#0ea5e9,#06b6d4)' : 'rgba(226,232,240,0.7)'}}/>
 }
@@ -121,19 +121,62 @@ export default function BookAppointment() {
   async function handleConfirmBooking() {
     if (!selectedService || !selectedDate || !selectedTime) { toast.error('Please complete all steps'); return }
     setBooking(true)
+
+    // 1 — Insert appointment
     const { error } = await supabase.from('appointments').insert({
       clinic_id: clinicId, customer_id: user.id, service_id: selectedService.id,
       appointment_date: format(selectedDate, 'yyyy-MM-dd'),
       appointment_time: selectedTime.value, notes, status: 'pending'
     })
     if (error) { toast.error(error.message); setBooking(false); return }
-    const { data: cd } = await supabase.from('clinics').select('owner_id').eq('id', clinicId).single()
-    await supabase.from('notifications').insert({
-      recipient_id: cd.owner_id, type:'new_booking', title:'📅 New Appointment Request',
-      message:`${profile?.full_name} booked ${selectedService.name} for ${format(selectedDate,'MMMM d, yyyy')} at ${selectedTime.label}.`,
-      related_id: clinicId
-    })
-    setBooking(false); setDone(true)
+
+    // 2 — Fetch clinic owner profile (need email + name)
+    const { data: cd } = await supabase
+      .from('clinics')
+      .select('owner_id, profiles!clinics_owner_id_fkey(full_name, email)')
+      .eq('id', clinicId)
+      .single()
+
+    const ownerName  = cd?.profiles?.full_name || 'Clinic Owner'
+    const ownerEmail = cd?.profiles?.email
+
+    // 3 — In-app notification to clinic owner
+    if (cd?.owner_id) {
+      await supabase.from('notifications').insert({
+        recipient_id: cd.owner_id, type: 'new_booking', title: '📅 New Appointment Request',
+        message: `${profile?.full_name} booked ${selectedService.name} for ${format(selectedDate,'MMMM d, yyyy')} at ${selectedTime.label}.`,
+        related_id: clinicId
+      })
+    }
+
+    const formattedDate = format(selectedDate, 'EEEE, MMMM d, yyyy')
+    const formattedTime = selectedTime.label
+
+    // 4 — Email to CUSTOMER (fire-and-forget, don't block UI)
+    sendBookingRequestedEmail({
+      to: user.email,
+      patientName: profile?.full_name || 'there',
+      clinicName:  clinic?.name,
+      serviceName: selectedService.name,
+      date:        formattedDate,
+      time:        formattedTime,
+    }).catch(err => console.warn('Customer email failed:', err))
+
+    // 5 — Email to CLINIC OWNER
+    if (ownerEmail) {
+      sendNewBookingAlertEmail({
+        to:          ownerEmail,
+        ownerName,
+        clinicName:  clinic?.name,
+        patientName: profile?.full_name || 'A patient',
+        serviceName: selectedService.name,
+        date:        formattedDate,
+        time:        formattedTime,
+      }).catch(err => console.warn('Clinic email failed:', err))
+    }
+
+    setBooking(false)
+    setDone(true)
   }
 
   const availableDates = getAvailableDates()
@@ -150,7 +193,6 @@ export default function BookAppointment() {
   if (done) return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="text-center max-w-md animate-fade-in w-full">
-        {/* Confetti orbs */}
         <div className="pointer-events-none fixed top-0 left-0 w-full h-full overflow-hidden" style={{zIndex:-1}}>
           <div className="absolute top-10 left-1/4 w-64 h-64 rounded-full opacity-30 animate-float"
             style={{background:'radial-gradient(circle, rgba(14,165,233,0.4) 0%, transparent 70%)'}}/>
@@ -163,7 +205,15 @@ export default function BookAppointment() {
         </div>
         <h1 className="font-display font-bold text-slate-900 text-2xl mb-2" style={{letterSpacing:'-0.02em'}}>Booking Requested!</h1>
         <p className="text-slate-500 mb-2">Your request has been sent to <strong>{clinic?.name}</strong>.</p>
-        <p className="text-slate-400 text-sm mb-8">You'll get a notification once the clinic confirms.</p>
+        <p className="text-slate-400 text-sm mb-2">You'll get a notification once the clinic confirms.</p>
+        {/* Email sent notice */}
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold mb-8"
+          style={{background:'rgba(220,252,231,0.7)',border:'1px solid rgba(134,239,172,0.6)',color:'#15803d'}}>
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+          </svg>
+          Confirmation email sent to {user?.email}
+        </div>
         <div className="card p-5 text-left mb-6">
           <div className="space-y-3">
             {[
@@ -172,7 +222,7 @@ export default function BookAppointment() {
               { label:'Date',     value: format(selectedDate, 'EEEE, MMMM d, yyyy') },
               { label:'Time',     value: selectedTime?.label },
             ].map(r => (
-              <div key={r.label} className="flex justify-between text-sm" style={{borderBottom:'1px solid rgba(186,230,253,0.3)',paddingBottom:'0.6rem',lastChild:{border:'none'}}}>
+              <div key={r.label} className="flex justify-between text-sm" style={{borderBottom:'1px solid rgba(186,230,253,0.3)',paddingBottom:'0.6rem'}}>
                 <span className="text-slate-400">{r.label}</span>
                 <span className="font-semibold text-slate-800">{r.value}</span>
               </div>
@@ -188,7 +238,6 @@ export default function BookAppointment() {
 
   return (
     <div className="min-h-screen">
-      {/* Glass nav */}
       <header className="glass-header sticky top-0 z-40">
         <div className="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
           <button onClick={() => step > 1 ? setStep(step-1) : navigate(-1)} className="btn btn-secondary btn-sm">
@@ -206,7 +255,6 @@ export default function BookAppointment() {
       </header>
 
       <div className="max-w-3xl mx-auto px-4 py-8">
-        {/* Step indicator */}
         <div className="flex items-center justify-center gap-3 mb-10">
           <Step number={1} label="Service"  active={step===1} done={step>1}/>
           <StepLine done={step>1}/>
@@ -220,7 +268,6 @@ export default function BookAppointment() {
           <div className="animate-fade-in">
             <h2 className="font-display font-bold text-slate-900 text-2xl mb-1" style={{letterSpacing:'-0.02em'}}>Choose a Service</h2>
             <p className="text-slate-400 text-sm mb-6">Select the treatment you need</p>
-
             {isOnVacation && (
               <div className="card p-4 mb-5" style={{background:'rgba(254,243,199,0.7)',border:'1px solid rgba(253,230,138,0.8)'}}>
                 <div className="flex items-center gap-2 mb-1">
@@ -234,14 +281,13 @@ export default function BookAppointment() {
                 <p className="text-amber-500 text-xs mt-2 font-semibold">Bookings are temporarily unavailable.</p>
               </div>
             )}
-
             {services.length === 0 ? (
               <div className="card p-10 text-center"><p className="text-slate-400">No services available yet.</p></div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {services.map(s => (
                   <button key={s.id} onClick={() => { setSelectedService(s); setStep(2) }}
-                    className={`card p-4 text-left group transition-all ${selectedService?.id === s.id ? '' : ''}`}
+                    className="card p-4 text-left group transition-all"
                     style={selectedService?.id===s.id ? {border:'1.5px solid rgba(14,165,233,0.6)',background:'rgba(224,242,254,0.5)'} : {}}>
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1">
@@ -268,8 +314,6 @@ export default function BookAppointment() {
           <div className="animate-fade-in">
             <h2 className="font-display font-bold text-slate-900 text-2xl mb-1" style={{letterSpacing:'-0.02em'}}>Pick a Schedule</h2>
             <p className="text-slate-400 text-sm mb-6">Select your preferred date and time</p>
-
-            {/* Service summary chip */}
             <div className="card p-4 mb-6 flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
                 style={{background:'rgba(224,242,254,0.7)',border:'1px solid rgba(186,230,253,0.8)'}}>🦷</div>
@@ -279,8 +323,6 @@ export default function BookAppointment() {
               </div>
               <button onClick={() => setStep(1)} className="text-xs font-semibold" style={{color:'var(--color-brand)'}}>Change</button>
             </div>
-
-            {/* Dates */}
             <div className="mb-6">
               <p className="font-semibold text-slate-700 text-sm mb-3">Available Dates</p>
               {availableDates.length === 0 ? (
@@ -304,8 +346,6 @@ export default function BookAppointment() {
                 </div>
               )}
             </div>
-
-            {/* Times */}
             {selectedDate && (
               <div className="mb-6">
                 <p className="font-semibold text-slate-700 text-sm mb-3">Available Times — {format(selectedDate, 'EEEE, MMM d')}</p>
@@ -329,9 +369,7 @@ export default function BookAppointment() {
                 )}
               </div>
             )}
-
-            <button disabled={!selectedDate || !selectedTime} onClick={() => setStep(3)}
-              className="btn btn-primary btn-lg w-full">
+            <button disabled={!selectedDate || !selectedTime} onClick={() => setStep(3)} className="btn btn-primary btn-lg w-full">
               Continue →
             </button>
           </div>
@@ -342,7 +380,6 @@ export default function BookAppointment() {
           <div className="animate-fade-in">
             <h2 className="font-display font-bold text-slate-900 text-2xl mb-1" style={{letterSpacing:'-0.02em'}}>Confirm Booking</h2>
             <p className="text-slate-400 text-sm mb-6">Review your appointment details</p>
-
             <div className="card p-5 mb-5">
               {[
                 { icon:'🏥', label:'Clinic',   value: clinic?.name },
@@ -351,7 +388,7 @@ export default function BookAppointment() {
                 { icon:'🕐', label:'Time',     value: selectedTime?.label },
                 { icon:'👤', label:'Patient',  value: profile?.full_name },
               ].map((r,i,arr) => (
-                <div key={r.label} className={`flex items-center gap-3 py-3 ${i < arr.length-1 ? '' : ''}`}
+                <div key={r.label} className="flex items-center gap-3 py-3"
                   style={i < arr.length-1 ? {borderBottom:'1px solid rgba(186,230,253,0.35)'} : {}}>
                   <span className="text-xl w-7 text-center">{r.icon}</span>
                   <div className="flex-1 flex justify-between items-center gap-2 flex-wrap">
@@ -361,20 +398,27 @@ export default function BookAppointment() {
                 </div>
               ))}
             </div>
-
             <div className="card p-4 mb-5">
               <label className="block text-sm font-semibold text-slate-700 mb-2">Additional Notes <span className="text-slate-300 font-normal">(optional)</span></label>
               <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3}
                 placeholder="Allergies, concerns, or anything we should know..." className="input resize-none"/>
             </div>
-
+            {/* Email notice */}
+            <div className="card p-4 mb-5 flex items-center gap-3"
+              style={{background:'rgba(220,252,231,0.5)',border:'1px solid rgba(134,239,172,0.5)'}}>
+              <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+              </svg>
+              <p className="text-green-700 text-xs font-medium">
+                A confirmation email will be sent to <strong>{user?.email}</strong> once you confirm.
+              </p>
+            </div>
             <div className="card p-4 mb-5" style={{background:'rgba(224,242,254,0.5)',border:'1px solid rgba(186,230,253,0.6)'}}>
               <p className="text-sky-700 text-xs font-medium">ℹ️ Your appointment will be sent as a request. The clinic will confirm it shortly.</p>
             </div>
-
             <button onClick={handleConfirmBooking} disabled={booking} className="btn btn-primary btn-lg w-full">
               {booking
-                ? <><span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin"/>Booking...</>
+                ? <><span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block mr-2"/>Booking...</>
                 : '🦷 Confirm Appointment'}
             </button>
           </div>
