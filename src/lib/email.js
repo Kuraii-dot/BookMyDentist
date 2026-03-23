@@ -265,3 +265,101 @@ export async function sendNewBookingAlertEmail({ to, ownerName, clinicName, pati
     `
   })
 }
+
+export async function sendClinicApprovedEmail({ to, clinicName, ownerName }) {
+  await sendEmail({
+    to,
+    subject: `🎉 Your clinic has been approved — ${clinicName}`,
+    html: `
+      <div style="font-family:'Segoe UI',sans-serif;max-width:600px;margin:0 auto;background:#f0f9ff;padding:0;border-radius:20px;overflow:hidden;">
+        <div style="background:linear-gradient(135deg,#0ea5e9,#06b6d4);padding:36px 40px;text-align:center;">
+          <h1 style="color:white;margin:0;font-size:28px;font-weight:800;">🦷 BookMyDentistPH</h1>
+        </div>
+        <div style="padding:40px;">
+          <h2 style="color:#0f172a;font-size:22px;margin:0 0 12px;">Welcome aboard, ${ownerName}! 🎉</h2>
+          <p style="color:#64748b;font-size:15px;line-height:1.6;margin:0 0 24px;">
+            Your clinic <strong>${clinicName}</strong> has been approved and is now live on BookMyDentistPH.
+            Patients can now find and book appointments with you.
+          </p>
+          <div style="text-align:center;margin:32px 0;">
+            <a href="https://book-my-dentist.vercel.app/clinic"
+              style="display:inline-block;background:linear-gradient(135deg,#0ea5e9,#06b6d4);color:white;padding:14px 36px;border-radius:50px;text-decoration:none;font-weight:700;font-size:15px;">
+              Go to Dashboard →
+            </a>
+          </div>
+        </div>
+        <div style="padding:20px 40px;text-align:center;border-top:1px solid #e0f2fe;">
+          <p style="color:#94a3b8;font-size:12px;margin:0;">— The BookMyDentistPH Team</p>
+        </div>
+      </div>
+    `
+  })
+}
+
+export async function sendClinicRejectedEmail({ to, clinicName, ownerName, reason }) {
+  await sendEmail({
+    to,
+    subject: `Update on your BookMyDentistPH application — ${clinicName}`,
+    html: `
+      <div style="font-family:'Segoe UI',sans-serif;max-width:600px;margin:0 auto;background:#f0f9ff;padding:0;border-radius:20px;overflow:hidden;">
+        <div style="background:linear-gradient(135deg,#0ea5e9,#06b6d4);padding:36px 40px;text-align:center;">
+          <h1 style="color:white;margin:0;font-size:28px;font-weight:800;">🦷 BookMyDentistPH</h1>
+        </div>
+        <div style="padding:40px;">
+          <h2 style="color:#0f172a;font-size:22px;margin:0 0 12px;">Hi ${ownerName},</h2>
+          <p style="color:#64748b;font-size:15px;line-height:1.6;margin:0 0 24px;">
+            Thank you for applying with <strong>${clinicName}</strong>. Unfortunately we're unable to approve it at this time.
+          </p>
+          ${reason ? `
+          <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:16px;margin-bottom:24px;">
+            <p style="color:#dc2626;font-weight:700;margin:0 0 6px;">Reason:</p>
+            <p style="color:#7f1d1d;margin:0;">${reason}</p>
+          </div>` : ''}
+          <p style="color:#64748b;font-size:14px;">If you believe this is a mistake, please contact our support team.</p>
+        </div>
+        <div style="padding:20px 40px;text-align:center;border-top:1px solid #e0f2fe;">
+          <p style="color:#94a3b8;font-size:12px;margin:0;">— The BookMyDentistPH Team</p>
+        </div>
+      </div>
+    `
+  })
+}
+
+export async function sendAppointmentEmail({ to, subject, patientName, clinicName, serviceName, date, time, status, reason }) {
+  await sendEmail({
+    to,
+    subject,
+    html: `
+      <div style="font-family:'Segoe UI',sans-serif;max-width:600px;margin:0 auto;background:#f0f9ff;padding:0;border-radius:20px;overflow:hidden;">
+        <div style="background:linear-gradient(135deg,#0ea5e9,#06b6d4);padding:36px 40px;text-align:center;">
+          <h1 style="color:white;margin:0;font-size:28px;font-weight:800;">🦷 BookMyDentistPH</h1>
+        </div>
+        <div style="padding:40px;">
+          <h2 style="color:#0f172a;font-size:22px;margin:0 0 12px;">Hi ${patientName},</h2>
+          <p style="color:#64748b;font-size:15px;line-height:1.6;margin:0 0 24px;">${subject}</p>
+          <div style="background:white;border-radius:16px;padding:24px;border:1px solid #e0f2fe;margin-bottom:24px;">
+            ${[['Clinic',clinicName],['Service',serviceName],['Date',date],['Time',time]].map(([l,v])=>`
+              <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f0f9ff;">
+                <span style="color:#94a3b8;font-size:13px;">${l}</span>
+                <span style="color:#0f172a;font-size:13px;font-weight:600;">${v}</span>
+              </div>`).join('')}
+          </div>
+          ${reason ? `
+          <div style="background:#fef2f2;border-radius:12px;padding:16px;margin-bottom:24px;">
+            <p style="color:#dc2626;font-weight:700;margin:0 0 6px;">Reason:</p>
+            <p style="color:#7f1d1d;margin:0;">${reason}</p>
+          </div>` : ''}
+          <div style="text-align:center;">
+            <a href="https://book-my-dentist.vercel.app/dashboard/appointments"
+              style="display:inline-block;background:linear-gradient(135deg,#0ea5e9,#06b6d4);color:white;padding:14px 36px;border-radius:50px;text-decoration:none;font-weight:700;font-size:15px;">
+              View My Appointments →
+            </a>
+          </div>
+        </div>
+        <div style="padding:20px 40px;text-align:center;border-top:1px solid #e0f2fe;">
+          <p style="color:#94a3b8;font-size:12px;margin:0;">— The BookMyDentistPH Team</p>
+        </div>
+      </div>
+    `
+  })
+}
