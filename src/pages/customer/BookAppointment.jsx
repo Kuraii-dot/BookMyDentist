@@ -42,6 +42,7 @@ export default function BookAppointment() {
   const [notes, setNotes] = useState('')
   const [booking, setBooking] = useState(false)
   const [done, setDone] = useState(false)
+  const [bookedTimes, setBookedTimes] = useState([]) // times already taken on selected date
 
   useEffect(() => {
     async function load() {
@@ -61,22 +62,44 @@ export default function BookAppointment() {
     load()
   }, [clinicId])
 
+  // Fetch already-booked times whenever the selected date changes
+  useEffect(() => {
+    if (!selectedDate || !clinicId) return
+    const dateStr = format(selectedDate, 'yyyy-MM-dd')
+    supabase
+      .from('appointments')
+      .select('appointment_time')
+      .eq('clinic_id', clinicId)
+      .eq('appointment_date', dateStr)
+      .not('status', 'in', '(cancelled,rejected)')
+      .then(({ data }) => {
+        // Normalize to HH:MM — Postgres returns HH:MM:SS but slots use HH:MM
+        setBookedTimes(
+          (data || [])
+            .map(a => a.appointment_time)
+            .filter(Boolean)
+            .map(t => t.slice(0, 5))
+        )
+      })
+  }, [selectedDate, clinicId])
+
   function getAvailableDates() {
     const dates = []
     const today = startOfToday()
     const window = availability?.booking_window_days || 30
-    const advanceHours = availability?.advance_notice_hours ?? 2
     const blocked = (availability?.blocked_dates||[]).map(b=>b.date)
     const special = (availability?.special_dates||[]).map(s=>s.date)
     for (let i = 0; i <= window; i++) {
       const d = addDays(today, i)
       const dateStr = format(d, 'yyyy-MM-dd')
       if (blocked.includes(dateStr)) continue
-      const cutoff = addHours(new Date(), advanceHours)
-      if (d < cutoff && !special.includes(dateStr)) continue
+      // Always include special override dates
       if (special.includes(dateStr)) { dates.push(d); continue }
+      // Check if day is enabled in weekly schedule
       if (!availability?.schedule) { dates.push(d); continue }
       if (availability.schedule[DAY_KEYS[getDay(d)]]?.enabled) dates.push(d)
+      // Note: we no longer skip today based on advance notice here —
+      // getTimeSlots handles per-slot filtering so today shows if any slots remain
     }
     return dates.slice(0, 21)
   }
@@ -86,7 +109,8 @@ export default function BookAppointment() {
     const dateStr = format(date, 'yyyy-MM-dd')
     const dayKey = DAY_KEYS[getDay(date)]
     const advanceHours = availability?.advance_notice_hours ?? 2
-    const nowPlusNotice = addHours(new Date(), advanceHours)
+    const now = new Date()
+    const nowPlusNotice = addHours(now, advanceHours)
     const specialDate = (availability?.special_dates||[]).find(s=>s.date===dateStr)
     const sched = specialDate
       ? { enabled:true, open:specialDate.open, close:specialDate.close }
@@ -103,16 +127,27 @@ export default function BookAppointment() {
     while (current+duration <= end) {
       const hh = Math.floor(current/60).toString().padStart(2,'0')
       const mm = (current%60).toString().padStart(2,'0')
+      // Skip break window
       if (breakStart && breakEnd) {
         const [bsh,bsm] = breakStart.split(':').map(Number)
         const [beh,bem] = breakEnd.split(':').map(Number)
         if (current >= bsh*60+bsm && current < beh*60+bem) { current+=duration; continue }
       }
-      const slotDT = new Date(date); slotDT.setHours(Math.floor(current/60), current%60, 0, 0)
+      // Build exact datetime for this slot
+      const slotDT = new Date(date)
+      slotDT.setHours(Math.floor(current/60), current%60, 0, 0)
+      // ALWAYS block slots already in the past (regardless of advance notice)
+      if (slotDT <= now) { current+=duration; continue }
+      // Block slots within advance notice window
       if (slotDT < nowPlusNotice) { current+=duration; continue }
       const h12 = current >= 720 ? Math.floor(current/60)-12||12 : Math.floor(current/60)||12
       const ampm = current >= 720 ? 'PM' : 'AM'
-      slots.push({ value:`${hh}:${mm}`, label:`${h12}:${mm} ${ampm}` })
+      // Skip if this slot is already booked by another patient
+      const slotVal = `${hh}:${mm}`
+      const alreadyBooked = bookedTimes.filter(t => t === slotVal).length
+      const maxSlots = availability?.max_per_slot || 1
+      if (alreadyBooked >= maxSlots) { current+=duration; continue }
+      slots.push({ value: slotVal, label:`${h12}:${mm} ${ampm}` })
       current += duration
     }
     return slots
@@ -332,7 +367,7 @@ export default function BookAppointment() {
                   {availableDates.map(d => {
                     const isSelected = selectedDate?.toDateString() === d.toDateString()
                     return (
-                      <button key={d.toISOString()} onClick={() => { setSelectedDate(d); setSelectedTime(null) }}
+                      <button key={d.toISOString()} onClick={() => { setSelectedDate(d); setSelectedTime(null); setBookedTimes([]) }}
                         className="p-2.5 rounded-2xl text-center transition-all"
                         style={isSelected
                           ? {background:'linear-gradient(135deg,#0ea5e9,#06b6d4)',color:'white',boxShadow:'0 4px 12px rgba(14,165,233,0.4)',border:'none'}

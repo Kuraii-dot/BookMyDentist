@@ -353,14 +353,6 @@ export default function ClinicDashboard() {
           </Link>
         ))}
       </div>
-
-      {/* ── Mascot placeholder (bottom-right, fixed) ── */}
-      <div className="fixed bottom-24 right-5 md:bottom-6 md:right-6 z-40 pointer-events-none">
-        <div className="w-16 h-16 rounded-2xl bg-white/70 backdrop-blur-xl border-2 border-sky-200/60 shadow-[0_8px_24px_rgba(14,165,233,0.2)] flex items-center justify-center">
-          {/* TODO: replace with 3D mascot image */}
-          <span className="text-2xl">🦷</span>
-        </div>
-      </div>
     </div>
   )
 }

@@ -837,13 +837,6 @@ export default function Landing() {
                 <h2 className="font-display font-bold text-slate-800 text-3xl sm:text-4xl tracking-[-0.02em] shrink-0">
                   {search || city !== 'all' || serviceFilter ? 'Search Results' : 'Featured Clinics'}
                 </h2>
-                {/* Negative margin pulls mascot back so he doesn't push subtitle down */}
-                <img
-                  src={explorerImg}
-                  alt="Dr. Tooth pointing at clinics"
-                  className="w-40 sm:w-56 object-contain drop-shadow-md pointer-events-none shrink-0"
-                  style={{marginBottom:'-3rem', marginLeft:'0.5rem'}}
-                />
               </div>
               <p className="text-slate-400 text-sm mt-1">{filtered.length} clinic{filtered.length !== 1 ? 's' : ''} available</p>
             </div>
