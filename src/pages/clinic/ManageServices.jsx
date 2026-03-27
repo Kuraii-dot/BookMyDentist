@@ -2,181 +2,211 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import toast from 'react-hot-toast'
+import { Wrench, Clock, Plus, ToggleLeft, ToggleRight, Pencil, Trash2 } from 'lucide-react'
+import { PageHeader, EmptyState, Modal, Field, Alert, SkeletonRows, TableWrapper, TableHead } from '../../components/ui/shared'
 
-const EMPTY_SERVICE = { name: '', description: '', duration_minutes: 60, price: '' }
+const EMPTY = { name:'', description:'', duration_minutes:60, price:'' }
+
+function ServiceForm({ service, onClose, onSaved }) {
+  const [form, setForm]   = useState(service ? {
+    name: service.name, description: service.description||'',
+    duration_minutes: service.duration_minutes, price: service.price||''
+  } : EMPTY)
+  const [saving, setSaving] = useState(false)
+  const [error, setError]   = useState('')
+
+  function set(k){ return e => setForm(p=>({...p,[k]:e.target.value})) }
+
+  async function handleSave() {
+    if (!form.name.trim()) { setError('Service name is required'); return }
+    setSaving(true); setError('')
+    const payload = { ...form, price: form.price ? parseFloat(form.price) : null }
+    try {
+      if (service) {
+        const { error:err } = await supabase.from('services').update(payload).eq('id', service.id)
+        if (err) throw err
+      } else {
+        // clinic_id added by caller via onSaved
+        const res = await onSaved(payload, false)
+        if (res?.error) throw res.error
+        return
+      }
+      await onSaved(payload, true)
+    } catch(err) {
+      setError(err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <Modal open onClose={onClose} title={service ? 'Edit Service' : 'Add New Service'}>
+      <div className="space-y-4">
+        <Field label="Service Name" required>
+          <input value={form.name} onChange={set('name')} placeholder="e.g. Dental Cleaning" className="input" autoFocus/>
+        </Field>
+        <Field label="Description">
+          <textarea value={form.description} onChange={set('description')}
+            placeholder="Brief description..." rows={2} className="input resize-none"/>
+        </Field>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Duration (mins)">
+            <input type="number" value={form.duration_minutes} onChange={set('duration_minutes')}
+              min={15} step={15} className="input"/>
+          </Field>
+          <Field label="Price (₱)">
+            <input type="number" value={form.price} onChange={set('price')}
+              placeholder="0.00" min={0} step={0.01} className="input"/>
+          </Field>
+        </div>
+        {error && <Alert type="error">{error}</Alert>}
+        <div className="flex gap-3 pt-1">
+          <button onClick={onClose} className="btn btn-secondary btn-md flex-1">Cancel</button>
+          <button onClick={handleSave} disabled={saving} className="btn btn-primary btn-md flex-1">
+            {saving ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"/>Saving...</> : service ? 'Save Changes' : 'Add Service'}
+          </button>
+        </div>
+      </div>
+    </Modal>
+  )
+}
 
 export default function ManageServices() {
   const { user } = useAuth()
-  const [clinic, setClinic] = useState(null)
+  const [clinic, setClinic]     = useState(null)
   const [services, setServices] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [modal, setModal] = useState(null) // null | 'add' | service object (edit)
-  const [form, setForm] = useState(EMPTY_SERVICE)
-  const [saving, setSaving] = useState(false)
+  const [loading, setLoading]   = useState(true)
+  const [editing, setEditing]   = useState(null)   // null = closed, 'new' = add, obj = edit
+  const [deleteId, setDeleteId] = useState(null)
 
-  useEffect(() => {
+  useEffect(()=>{
     async function load() {
-      const { data: c } = await supabase.from('clinics').select('*').eq('owner_id', user.id).single()
+      const { data:c } = await supabase.from('clinics').select('*').eq('owner_id',user.id).single()
       setClinic(c)
       if (c) {
-        const { data: s } = await supabase.from('services').select('*').eq('clinic_id', c.id).order('created_at')
-        setServices(s || [])
+        const { data:s } = await supabase.from('services').select('*').eq('clinic_id',c.id).order('created_at')
+        setServices(s||[])
       }
       setLoading(false)
     }
     load()
-  }, [user])
+  },[user])
 
-  function openAdd() { setForm(EMPTY_SERVICE); setModal('add') }
-  function openEdit(s) { setForm({ name: s.name, description: s.description || '', duration_minutes: s.duration_minutes, price: s.price || '' }); setModal(s) }
+  async function reload() {
+    const { data:s } = await supabase.from('services').select('*').eq('clinic_id',clinic.id).order('created_at')
+    setServices(s||[])
+  }
 
-  async function handleSave() {
-    if (!form.name.trim()) { toast.error('Service name required'); return }
-    setSaving(true)
-
-    const payload = { ...form, price: form.price ? parseFloat(form.price) : null, clinic_id: clinic.id }
-
-    if (modal === 'add') {
-      const { error } = await supabase.from('services').insert(payload)
-      if (error) { toast.error(error.message); setSaving(false); return }
-      toast.success('Service added!')
+  async function handleSaved(payload, isEdit) {
+    if (isEdit) {
+      await reload(); setEditing(null); toast.success('Service updated!')
     } else {
-      const { error } = await supabase.from('services').update(payload).eq('id', modal.id)
-      if (error) { toast.error(error.message); setSaving(false); return }
-      toast.success('Service updated!')
+      const { error } = await supabase.from('services').insert({...payload, clinic_id:clinic.id})
+      if (error) return { error }
+      await reload(); setEditing(null); toast.success('Service added!')
     }
-
-    const { data: s } = await supabase.from('services').select('*').eq('clinic_id', clinic.id).order('created_at')
-    setServices(s || [])
-    setModal(null)
-    setSaving(false)
   }
 
-  async function toggleActive(service) {
-    await supabase.from('services').update({ is_active: !service.is_active }).eq('id', service.id)
-    setServices(prev => prev.map(s => s.id === service.id ? { ...s, is_active: !s.is_active } : s))
+  async function toggleActive(svc) {
+    await supabase.from('services').update({is_active:!svc.is_active}).eq('id',svc.id)
+    setServices(p=>p.map(s=>s.id===svc.id?{...s,is_active:!s.is_active}:s))
+    toast.success(svc.is_active ? 'Service deactivated' : 'Service activated')
   }
 
-  async function deleteService(id) {
-    if (!confirm('Delete this service?')) return
-    await supabase.from('services').delete().eq('id', id)
-    setServices(prev => prev.filter(s => s.id !== id))
-    toast.success('Service deleted')
+  async function confirmDelete() {
+    await supabase.from('services').delete().eq('id',deleteId)
+    setServices(p=>p.filter(s=>s.id!==deleteId))
+    setDeleteId(null); toast.success('Service deleted')
   }
 
-  if (loading) return <div className="flex items-center justify-center h-48"><div className="w-8 h-8 border-4 border-sky-400 border-t-transparent rounded-full animate-spin" /></div>
+  if (loading) return (
+    <div>
+      <div className="skeleton h-8 w-32 mb-6"/>
+      <TableWrapper>
+        <TableHead cols={['Name','Duration','Price','Status','']}/>
+        <tbody><SkeletonRows n={4} cols={5}/></tbody>
+      </TableWrapper>
+    </div>
+  )
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-black text-stone-800">Services</h1>
-          <p className="text-stone-500 mt-1">Manage what your clinic offers</p>
-        </div>
-        <button onClick={openAdd} className="bg-sky-500 hover:bg-sky-600 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-colors flex items-center gap-2">
-          + Add Service
-        </button>
-      </div>
+    <div className="animate-fade-in">
+      <PageHeader
+        title="Services"
+        subtitle={`${services.length} service${services.length!==1?'s':''} configured`}
+        action={
+          <button onClick={()=>setEditing('new')} className="btn btn-primary btn-md flex items-center gap-2">
+            <Plus className="w-4 h-4"/> Add Service
+          </button>
+        }
+      />
 
-      {services.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-2xl border border-amber-100">
-          <span className="text-4xl">🔧</span>
-          <p className="text-stone-500 mt-4 font-medium">No services yet</p>
-          <p className="text-stone-400 text-sm mt-1">Add your first service to start receiving bookings</p>
-          <button onClick={openAdd} className="mt-5 bg-sky-500 hover:bg-sky-600 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition-colors">Add Service</button>
-        </div>
+      {services.length===0 ? (
+        <EmptyState
+          icon={<Wrench className="w-7 h-7 text-slate-300"/>}
+          title="No services yet"
+          description="Add your first service so patients can book appointments with you"
+          action={<button onClick={()=>setEditing('new')} className="btn btn-primary btn-sm">Add Service</button>}
+        />
       ) : (
-        <div className="space-y-3">
-          {services.map(s => (
-            <div key={s.id} className={`bg-white rounded-2xl border p-4 flex items-center gap-4 ${s.is_active ? 'border-sky-100' : 'border-stone-100 opacity-60'}`}>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="font-bold text-stone-800">{s.name}</p>
-                  {!s.is_active && <span className="text-xs bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">Inactive</span>}
-                </div>
-                {s.description && <p className="text-stone-500 text-sm mt-0.5 truncate">{s.description}</p>}
-                <div className="flex gap-4 mt-1.5 text-xs text-stone-400">
-                  <span>⏱ {s.duration_minutes} mins</span>
-                  {s.price && <span className="text-amber-600 font-semibold">₱{parseFloat(s.price).toLocaleString()}</span>}
-                </div>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <button onClick={() => toggleActive(s)} className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-colors ${s.is_active ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-stone-100 text-stone-500 hover:bg-amber-100 hover:text-amber-700'}`}>
-                  {s.is_active ? 'Active' : 'Inactive'}
-                </button>
-                <button onClick={() => openEdit(s)} className="text-xs bg-amber-50 hover:bg-amber-100 text-amber-700 px-3 py-1.5 rounded-lg font-medium transition-colors">Edit</button>
-                <button onClick={() => deleteService(s.id)} className="text-xs bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg font-medium transition-colors">Delete</button>
-              </div>
-            </div>
-          ))}
-        </div>
+        <TableWrapper>
+          <TableHead cols={['Service','Duration','Price','Status','']}/>
+          <tbody className="divide-y divide-slate-100">
+            {services.map(s=>(
+              <tr key={s.id} className="hover:bg-slate-50 transition-colors group">
+                <td className="px-4 py-3">
+                  <p className="font-semibold text-slate-800 text-sm">{s.name}</p>
+                  {s.description && <p className="text-slate-400 text-xs mt-0.5 max-w-xs truncate">{s.description}</p>}
+                </td>
+                <td className="px-4 py-3 text-slate-500 text-sm">
+                  <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5"/>{s.duration_minutes} min</span>
+                </td>
+                <td className="px-4 py-3 font-bold text-slate-800 text-sm">
+                  {s.price ? `₱${parseFloat(s.price).toLocaleString()}` : '—'}
+                </td>
+                <td className="px-4 py-3">
+                  <button onClick={()=>toggleActive(s)} className="flex items-center gap-1.5 text-xs font-semibold transition-colors">
+                    {s.is_active
+                      ? <><ToggleRight className="w-5 h-5 text-emerald-500"/><span className="text-emerald-600">Active</span></>
+                      : <><ToggleLeft className="w-5 h-5 text-slate-300"/><span className="text-slate-400">Inactive</span></>
+                    }
+                  </button>
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={()=>setEditing(s)} className="text-xs text-sky-600 hover:underline flex items-center gap-1">
+                      <Pencil className="w-3 h-3"/>Edit
+                    </button>
+                    <button onClick={()=>setDeleteId(s.id)} className="text-xs text-red-500 hover:underline flex items-center gap-1">
+                      <Trash2 className="w-3 h-3"/>Delete
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </TableWrapper>
       )}
 
-      {/* Add/Edit Modal */}
-      {modal !== null && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center p-4" onClick={() => setModal(null)}>
-          <div className="bg-white rounded-3xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
-            <h3 className="font-bold text-stone-800 text-lg mb-5">{modal === 'add' ? 'Add New Service' : 'Edit Service'}</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-stone-700 mb-1.5">Service Name</label>
-                <input
-                  type="text"
-                  value={form.name}
-                  onChange={e => setForm({ ...form, name: e.target.value })}
-                  placeholder="e.g. Dental Cleaning"
-                  className="w-full border border-cyan-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-stone-700 mb-1.5">Description</label>
-                <textarea
-                  value={form.description}
-                  onChange={e => setForm({ ...form, description: e.target.value })}
-                  placeholder="Brief description of the service..."
-                  rows={2}
-                  className="w-full border border-cyan-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300 resize-none"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-semibold text-stone-700 mb-1.5">Duration (mins)</label>
-                  <input
-                    type="number"
-                    value={form.duration_minutes}
-                    onChange={e => setForm({ ...form, duration_minutes: parseInt(e.target.value) })}
-                    min={15}
-                    step={15}
-                    className="w-full border border-cyan-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-stone-700 mb-1.5">Price (₱)</label>
-                  <input
-                    type="number"
-                    value={form.price}
-                    onChange={e => setForm({ ...form, price: e.target.value })}
-                    placeholder="0.00"
-                    min={0}
-                    className="w-full border border-cyan-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300"
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="flex gap-3 mt-6">
-              <button onClick={() => setModal(null)} className="flex-1 border border-cyan-200 text-stone-600 font-semibold py-2.5 rounded-xl text-sm hover:bg-cyan-50 transition-colors">
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="flex-1 bg-sky-500 hover:bg-sky-600 disabled:opacity-50 text-white font-bold py-2.5 rounded-xl text-sm transition-colors"
-              >
-                {saving ? 'Saving...' : modal === 'add' ? 'Add Service' : 'Save Changes'}
-              </button>
-            </div>
+      {/* Add/Edit modal */}
+      {editing && (
+        <ServiceForm
+          service={editing==='new' ? null : editing}
+          onClose={()=>setEditing(null)}
+          onSaved={handleSaved}
+        />
+      )}
+
+      {/* Delete confirm modal */}
+      {deleteId && (
+        <Modal open onClose={()=>setDeleteId(null)} title="Delete Service">
+          <p className="text-slate-600 text-sm mb-5">This will permanently delete this service. Any existing appointments using it won't be affected.</p>
+          <Alert type="warning">This cannot be undone.</Alert>
+          <div className="flex gap-3 mt-5">
+            <button onClick={()=>setDeleteId(null)} className="btn btn-secondary btn-md flex-1">Cancel</button>
+            <button onClick={confirmDelete} className="btn btn-danger btn-md flex-1">Delete</button>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   )

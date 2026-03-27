@@ -2,223 +2,193 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import toast from 'react-hot-toast'
+import { Upload, Building2, CheckCircle2, Clock, XCircle } from 'lucide-react'
+import { PageHeader, Field, Alert } from '../../components/ui/shared'
+
+const STATUS_CONFIG = {
+  approved: { Icon:CheckCircle2, cls:'text-emerald-600', bg:'bg-emerald-50', border:'border-emerald-200', label:'Clinic approved and active' },
+  pending:  { Icon:Clock,        cls:'text-sky-600',     bg:'bg-sky-50',     border:'border-sky-200',     label:'Pending admin approval — you can update your info while waiting' },
+  rejected: { Icon:XCircle,      cls:'text-red-600',     bg:'bg-red-50',     border:'border-red-200',     label:'Application rejected — update your info and contact support' },
+}
 
 export default function ClinicProfile() {
   const { user } = useAuth()
-  const [form, setForm] = useState({ name: '', address: '', city: '', phone: '', email: '', description: '' })
-  const [clinic, setClinic] = useState(null)
-  const [logoUrl, setLogoUrl] = useState(null)
+  const [form, setForm]           = useState({name:'',address:'',city:'',phone:'',email:'',description:''})
+  const [clinic, setClinic]       = useState(null)
+  const [logoUrl, setLogoUrl]     = useState(null)
   const [bannerUrl, setBannerUrl] = useState(null)
-  const [logoFile, setLogoFile] = useState(null)
+  const [logoFile, setLogoFile]   = useState(null)
   const [bannerFile, setBannerFile] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
+  const [loading, setLoading]     = useState(true)
+  const [saving, setSaving]       = useState(false)
+  const [error, setError]         = useState('')
 
-  useEffect(() => {
+  useEffect(()=>{
     async function load() {
-      const { data } = await supabase.from('clinics').select('*').eq('owner_id', user.id).maybeSingle()
+      const { data } = await supabase.from('clinics').select('*').eq('owner_id',user.id).maybeSingle()
       if (data) {
         setClinic(data)
-        setForm({ name: data.name || '', address: data.address || '', city: data.city || '', phone: data.phone || '', email: data.email || '', description: data.description || '' })
-        setLogoUrl(data.logo_url)
-        setBannerUrl(data.banner_url)
+        setForm({name:data.name||'',address:data.address||'',city:data.city||'',phone:data.phone||'',email:data.email||'',description:data.description||''})
+        setLogoUrl(data.logo_url); setBannerUrl(data.banner_url)
       }
       setLoading(false)
     }
     load()
-  }, [user])
+  },[user])
 
   async function uploadImage(file, path) {
     const ext = file.name.split('.').pop()
     const fileName = `${user.id}/${path}-${Date.now()}.${ext}`
-    const { error } = await supabase.storage.from('clinic-images').upload(fileName, file, { upsert: true })
+    const { error } = await supabase.storage.from('clinic-images').upload(fileName, file, {upsert:true})
     if (error) throw error
-    const { data } = supabase.storage.from('clinic-images').getPublicUrl(fileName)
-    return data.publicUrl
+    return supabase.storage.from('clinic-images').getPublicUrl(fileName).data.publicUrl
   }
 
   async function handleSave(e) {
     e.preventDefault()
-    if (!form.name.trim()) { toast.error('Clinic name is required'); return }
-    setSaving(true)
-
+    if (!form.name.trim()) { setError('Clinic name is required'); return }
+    setSaving(true); setError('')
     try {
-      let newLogoUrl = logoUrl
-      let newBannerUrl = bannerUrl
-      if (logoFile) newLogoUrl = await uploadImage(logoFile, 'logo')
-      if (bannerFile) newBannerUrl = await uploadImage(bannerFile, 'banner')
-
-      const payload = { ...form, logo_url: newLogoUrl, banner_url: newBannerUrl }
-
+      let newLogo = logoUrl, newBanner = bannerUrl
+      if (logoFile)   newLogo   = await uploadImage(logoFile,'logo')
+      if (bannerFile) newBanner = await uploadImage(bannerFile,'banner')
+      const payload = {...form, logo_url:newLogo, banner_url:newBanner}
       if (clinic) {
-        // Existing clinic — just update info, don't change verification status
-        await supabase.from('clinics').update(payload).eq('id', clinic.id)
+        await supabase.from('clinics').update(payload).eq('id',clinic.id)
         toast.success('Clinic profile updated!')
       } else {
-        // New clinic — set as pending, notify super admin
-        const { data: newClinic, error } = await supabase.from('clinics').insert({
-          ...payload,
-          owner_id: user.id,
-          is_active: false,
-          verification_status: 'pending',
-          subscription_status: 'unpaid'
+        const { data:newClinic, error:err } = await supabase.from('clinics').insert({
+          ...payload, owner_id:user.id, is_active:false,
+          verification_status:'pending', subscription_status:'unpaid'
         }).select().single()
-
-        if (error) throw error
+        if (err) throw err
         setClinic(newClinic)
-
-        // Notify all super admins
-        const { data: admins } = await supabase.from('profiles').select('id').eq('role', 'super_admin')
+        const { data:admins } = await supabase.from('profiles').select('id').eq('role','super_admin')
         if (admins?.length) {
           await supabase.from('notifications').insert(
-            admins.map(admin => ({
-              recipient_id: admin.id,
-              appointment_id: null,
-              type: 'new_booking', // reusing type — super admin sees it as a clinic registration
-              title: '🏥 New Clinic Registration',
-              message: `${form.name} has submitted a clinic registration and is pending your approval.`
-            }))
+            admins.map(a=>({recipient_id:a.id, type:'new_booking', title:'New Clinic Registration',
+              message:`${form.name} has submitted a clinic registration and is pending approval.`}))
           )
         }
-
-        toast.success('Clinic profile submitted! Awaiting admin approval.')
+        toast.success('Clinic submitted! Awaiting admin approval.')
       }
-
-      setLogoUrl(newLogoUrl)
-      setBannerUrl(newBannerUrl)
-      setLogoFile(null)
-      setBannerFile(null)
-    } catch (err) {
-      toast.error(err.message || 'Failed to save')
+      setLogoUrl(newLogo); setBannerUrl(newBanner)
+      setLogoFile(null); setBannerFile(null)
+    } catch(err) {
+      setError(err.message||'Failed to save')
     } finally {
       setSaving(false)
     }
   }
 
-  function handleImagePreview(file, setter) {
-    if (!file) return
-    setter(URL.createObjectURL(file))
-  }
+  function preview(file, setter) { if (file) setter(URL.createObjectURL(file)) }
 
-  if (loading) return <div className="flex items-center justify-center h-48"><div className="w-8 h-8 border-4 border-amber-400 border-t-transparent rounded-full animate-spin" /></div>
+  if (loading) return (
+    <div className="space-y-4">
+      <div className="skeleton h-8 w-40 mb-6"/>
+      <div className="skeleton h-32 w-full rounded-xl"/>
+      <div className="skeleton h-96 w-full rounded-xl"/>
+    </div>
+  )
+
+  const status = clinic ? STATUS_CONFIG[clinic.verification_status] : null
 
   return (
-    <div className="max-w-full">
-      <h1 className="text-2xl font-black text-stone-800 mb-2">Clinic Profile</h1>
+    <div className="max-w-2xl animate-fade-in">
+      <PageHeader title="Clinic Profile" subtitle={clinic ? 'Update your clinic information' : 'Set up your clinic to start accepting bookings'}/>
 
-      {/* Verification status badge */}
-      {clinic && (
-        <div className={`mb-6 rounded-xl px-4 py-3 border text-sm font-medium flex items-center gap-2 ${
-          clinic.verification_status === 'approved' ? 'bg-green-50 border-green-100 text-green-700' :
-          clinic.verification_status === 'rejected' ? 'bg-red-50 border-red-100 text-red-600' :
-          'bg-sky-50 border-sky-100 text-sky-700'
-        }`}>
-          {clinic.verification_status === 'approved' && '✅ Clinic approved and active'}
-          {clinic.verification_status === 'pending' && '⏳ Pending admin approval — you can update your info while waiting'}
-          {clinic.verification_status === 'rejected' && '❌ Application rejected — update your info and contact support'}
+      {/* Status banner */}
+      {status && (
+        <div className={`flex items-center gap-3 ${status.bg} border ${status.border} rounded-xl px-4 py-3 mb-5`}>
+          <status.Icon className={`w-5 h-5 ${status.cls} shrink-0`}/>
+          <p className={`text-sm font-medium ${status.cls}`}>{status.label}</p>
         </div>
       )}
 
-      <div className="bg-white rounded-2xl border border-sky-100 p-6">
+      <div className="card p-6">
         <form onSubmit={handleSave} className="space-y-5">
 
           {/* Banner */}
-          <div>
-            <label className="block text-sm font-semibold text-stone-700 mb-2">Banner Image</label>
-            <div className="relative h-36 rounded-xl overflow-hidden bg-gradient-to-br from-sky-100 to-cyan-100 border-2 border-dashed border-sky-200 flex items-center justify-center group cursor-pointer"
-              onClick={() => document.getElementById('banner-input').click()}>
+          <Field label="Banner Image" hint="Recommended: 1200×400px">
+            <div className="relative h-36 rounded-xl overflow-hidden bg-slate-100 border-2 border-dashed border-slate-200 flex items-center justify-center group cursor-pointer"
+              onClick={()=>document.getElementById('banner-input').click()}>
               {bannerUrl
-                ? <img src={bannerUrl} alt="Banner" className="w-full h-full object-cover" />
-                : <div className="text-center"><p className="text-2xl mb-1">🖼️</p><p className="text-sky-600 text-sm font-medium">Upload Banner</p><p className="text-stone-400 text-xs">Recommended: 1200×400px</p></div>
+                ? <img src={bannerUrl} alt="" className="w-full h-full object-cover"/>
+                : <div className="text-center text-slate-400">
+                    <Upload className="w-8 h-8 mx-auto mb-1.5"/>
+                    <p className="text-sm font-medium">Upload Banner</p>
+                  </div>
               }
               <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <span className="text-white font-semibold text-sm">Change Banner</span>
+                <span className="text-white font-semibold text-sm flex items-center gap-2"><Upload className="w-4 h-4"/> Change Banner</span>
               </div>
             </div>
             <input id="banner-input" type="file" accept="image/*" className="hidden"
-              onChange={e => { const f = e.target.files[0]; if (f) { setBannerFile(f); handleImagePreview(f, setBannerUrl) } }} />
-          </div>
+              onChange={e=>{const f=e.target.files[0];if(f){setBannerFile(f);preview(f,setBannerUrl)}}}/>
+          </Field>
 
           {/* Logo */}
-          <div>
-            <label className="block text-sm font-semibold text-stone-700 mb-2">Clinic Logo</label>
+          <Field label="Clinic Logo" hint="Square image recommended">
             <div className="flex items-center gap-4">
-              <div className="w-20 h-20 rounded-2xl overflow-hidden bg-sky-100 border-2 border-dashed border-sky-200 flex items-center justify-center cursor-pointer group relative shrink-0"
-                onClick={() => document.getElementById('logo-input').click()}>
-                {logoUrl ? <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" /> : <span className="text-3xl">🦷</span>}
-                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-2xl">
-                  <span className="text-white text-xs font-semibold">Change</span>
+              <div className="w-20 h-20 rounded-xl overflow-hidden bg-slate-100 border-2 border-dashed border-slate-200 flex items-center justify-center cursor-pointer group relative shrink-0"
+                onClick={()=>document.getElementById('logo-input').click()}>
+                {logoUrl
+                  ? <img src={logoUrl} alt="" className="w-full h-full object-cover"/>
+                  : <Building2 className="w-8 h-8 text-slate-300"/>
+                }
+                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center">
+                  <Upload className="w-4 h-4 text-white"/>
                 </div>
               </div>
-              <div>
-                <p className="font-medium text-stone-700 text-sm">Clinic Logo</p>
-                <p className="text-xs text-stone-400 mt-0.5">Square image recommended</p>
-                <button type="button" onClick={() => document.getElementById('logo-input').click()}
-                  className="mt-2 text-xs bg-sky-100 hover:bg-sky-200 text-sky-700 font-semibold px-3 py-1.5 rounded-lg transition-colors">
-                  Upload Logo
-                </button>
-              </div>
+              <button type="button" onClick={()=>document.getElementById('logo-input').click()}
+                className="btn btn-secondary btn-sm">Upload Logo</button>
             </div>
             <input id="logo-input" type="file" accept="image/*" className="hidden"
-              onChange={e => { const f = e.target.files[0]; if (f) { setLogoFile(f); handleImagePreview(f, setLogoUrl) } }} />
-          </div>
+              onChange={e=>{const f=e.target.files[0];if(f){setLogoFile(f);preview(f,setLogoUrl)}}}/>
+          </Field>
 
-          <hr className="border-amber-100" />
+          <hr className="border-slate-100"/>
 
-          <div>
-            <label className="block text-sm font-semibold text-stone-700 mb-1.5">Clinic Name *</label>
-            <input type="text" required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
-              placeholder="e.g. Bright Smiles Dental Clinic"
-              className="w-full border border-sky-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-300" />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-stone-700 mb-1.5">Address</label>
-            <input type="text" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })}
-              placeholder="123 Main Street, Barangay..."
-              className="w-full border border-sky-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-300" />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-stone-700 mb-1.5">City</label>
-            <input type="text" value={form.city} onChange={e => setForm({ ...form, city: e.target.value })}
-              placeholder="Quezon City"
-              className="w-full border border-sky-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-300" />
-          </div>
+          <Field label="Clinic Name" required>
+            <input type="text" required value={form.name} onChange={e=>setForm({...form,name:e.target.value})}
+              placeholder="e.g. Bright Smiles Dental Clinic" className="input"/>
+          </Field>
+          <Field label="Address">
+            <input value={form.address} onChange={e=>setForm({...form,address:e.target.value})}
+              placeholder="123 Main Street, Barangay..." className="input"/>
+          </Field>
+          <Field label="City">
+            <input value={form.city} onChange={e=>setForm({...form,city:e.target.value})}
+              placeholder="Quezon City" className="input"/>
+          </Field>
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-semibold text-stone-700 mb-1.5">Phone</label>
-              <input type="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })}
-                placeholder="+63 9XX XXX XXXX"
-                className="w-full border border-sky-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-300" />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-stone-700 mb-1.5">Email</label>
-              <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
-                placeholder="clinic@email.com"
-                className="w-full border border-sky-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-300" />
-            </div>
+            <Field label="Phone">
+              <input type="tel" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})}
+                placeholder="+63 9XX XXX XXXX" className="input"/>
+            </Field>
+            <Field label="Email">
+              <input type="email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})}
+                placeholder="clinic@email.com" className="input"/>
+            </Field>
           </div>
-          <div>
-            <label className="block text-sm font-semibold text-stone-700 mb-1.5">Description</label>
-            <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })}
-              placeholder="Tell patients about your clinic, specializations, etc..."
-              rows={3} className="w-full border border-sky-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-300 resize-none" />
-          </div>
+          <Field label="Description" hint="Tell patients about your clinic, specializations, etc.">
+            <textarea value={form.description} onChange={e=>setForm({...form,description:e.target.value})}
+              rows={3} className="input resize-none"/>
+          </Field>
 
-          <button type="submit" disabled={saving}
-            className="w-full bg-sky-400 hover:bg-sky-500 disabled:opacity-60 text-white font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2">
+          {error && <Alert type="error">{error}</Alert>}
+
+          <button type="submit" disabled={saving} className="btn btn-primary btn-lg w-full">
             {saving
-              ? <><span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Saving...</>
-              : clinic ? 'Save Changes' : '📋 Submit for Approval'
-            }
+              ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"/>Saving...</>
+              : clinic ? 'Save Changes' : 'Submit for Approval'}
           </button>
         </form>
       </div>
 
       {!clinic && (
-        <div className="mt-4 bg-amber-50 rounded-xl p-3 border border-amber-100">
-          <p className="text-amber-700 text-xs">
-            📋 After submitting, your clinic will be reviewed by our admin team. You'll be notified once approved and your subscription is confirmed.
-          </p>
+        <div className="mt-4">
+          <Alert type="info">After submitting, your clinic will be reviewed by our admin team. You'll be notified once approved.</Alert>
         </div>
       )}
     </div>

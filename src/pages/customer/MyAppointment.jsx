@@ -5,102 +5,99 @@ import { format } from 'date-fns'
 import toast from 'react-hot-toast'
 import { SubmitReview } from '../../components/Reviews'
 import {
-  Calendar, Clock, AlertCircle, CheckCircle2, XCircle,
-  RefreshCw, Trophy, Ban, Building2, ChevronDown, DollarSign
+  Calendar, Clock, ChevronDown, Building2, RefreshCw,
+  CheckCircle2, XCircle, AlertCircle, Trophy, Ban, DollarSign, User
 } from 'lucide-react'
+import { PageHeader, EmptyState, StatusBadge, SkeletonCard } from '../../components/ui/shared'
 
-const STATUS_CONFIG = {
-  pending:             { label: 'Pending',             bg: 'bg-amber-50',  text: 'text-amber-600',  border:'border-amber-200',  Icon: AlertCircle,  iconClass:'text-amber-500 animate-pulse' },
-  accepted:            { label: 'Confirmed',           bg: 'bg-green-50',  text: 'text-green-700',  border:'border-green-200',  Icon: CheckCircle2, iconClass:'text-green-500' },
-  rejected:            { label: 'Declined',            bg: 'bg-red-50',    text: 'text-red-600',    border:'border-red-200',    Icon: XCircle,      iconClass:'text-red-500' },
-  rescheduled:         { label: 'Rescheduled',         bg: 'bg-blue-50',   text: 'text-blue-700',   border:'border-blue-200',   Icon: RefreshCw,    iconClass:'text-blue-500 animate-spin' },
-  reschedule_accepted: { label: 'Reschedule Confirmed',bg: 'bg-green-50',  text: 'text-green-700',  border:'border-green-200',  Icon: CheckCircle2, iconClass:'text-green-500' },
-  reschedule_declined: { label: 'Reschedule Declined', bg: 'bg-red-50',    text: 'text-red-600',    border:'border-red-200',    Icon: XCircle,      iconClass:'text-red-500' },
-  completed:           { label: 'Completed',           bg: 'bg-violet-50', text: 'text-violet-700', border:'border-violet-200', Icon: Trophy,       iconClass:'text-violet-500' },
-  cancelled:           { label: 'Cancelled',           bg: 'bg-slate-50',  text: 'text-slate-500',  border:'border-slate-200',  Icon: Ban,          iconClass:'text-slate-400' },
+const STATUS_ICON = {
+  pending:             { Icon: AlertCircle,  cls: 'text-amber-500 animate-pulse' },
+  accepted:            { Icon: CheckCircle2, cls: 'text-emerald-500' },
+  rejected:            { Icon: XCircle,      cls: 'text-red-500' },
+  rescheduled:         { Icon: RefreshCw,    cls: 'text-blue-500 animate-spin' },
+  reschedule_accepted: { Icon: CheckCircle2, cls: 'text-emerald-500' },
+  reschedule_declined: { Icon: XCircle,      cls: 'text-red-500' },
+  completed:           { Icon: Trophy,       cls: 'text-violet-500' },
+  cancelled:           { Icon: Ban,          cls: 'text-slate-400' },
 }
 
 export default function MyAppointments() {
   const { user } = useAuth()
   const [appointments, setAppointments] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading]           = useState(true)
   const [actionLoading, setActionLoading] = useState(null)
+  const [expanded, setExpanded]         = useState(null)
   const [reviewRefresh, setReviewRefresh] = useState(0)
-  const [expanded, setExpanded] = useState(null)
 
-  useEffect(() => { fetchAppointments() }, [user])
+  useEffect(()=>{ fetchAppointments() },[user])
 
   async function fetchAppointments() {
     const { data } = await supabase
-      .from('appointments')
-      .select('*, clinics(*), services(*)')
-      .eq('customer_id', user.id)
-      .order('created_at', { ascending: false })
-    setAppointments(data || [])
+      .from('appointments').select('*, clinics(*), services(*)')
+      .eq('customer_id', user.id).order('created_at',{ascending:false})
+    setAppointments(data||[])
     setLoading(false)
   }
 
   async function respondToReschedule(appt, accept) {
     setActionLoading(appt.id)
     const newStatus = accept ? 'reschedule_accepted' : 'reschedule_declined'
-    const { error } = await supabase.from('appointments').update({ status: newStatus }).eq('id', appt.id)
+    const { error } = await supabase.from('appointments').update({status:newStatus}).eq('id',appt.id)
     if (error) { toast.error('Failed to respond'); setActionLoading(null); return }
-    const { data: clinicData } = await supabase.from('clinics').select('owner_id').eq('id', appt.clinic_id).single()
+    const { data: clinicData } = await supabase.from('clinics').select('owner_id').eq('id',appt.clinic_id).single()
     await supabase.from('notifications').insert({
       recipient_id: clinicData.owner_id,
       appointment_id: appt.id,
-      type: accept ? 'reschedule_accepted' : 'reschedule_declined',
-      title: accept ? 'Reschedule Accepted' : 'Reschedule Declined',
+      type: accept?'reschedule_accepted':'reschedule_declined',
+      title: accept?'Reschedule Accepted':'Reschedule Declined',
       message: accept
-        ? `The patient accepted the rescheduled appointment on ${format(new Date(appt.rescheduled_date), 'MMM d, yyyy')} at ${appt.rescheduled_time}.`
+        ? `The patient accepted the rescheduled appointment on ${format(new Date(appt.rescheduled_date),'MMM d, yyyy')} at ${appt.rescheduled_time}.`
         : 'The patient declined the rescheduled appointment.'
     })
-    toast.success(accept ? 'Reschedule accepted!' : 'Reschedule declined.')
+    toast.success(accept?'Reschedule accepted!':'Reschedule declined.')
     fetchAppointments()
     setActionLoading(null)
   }
 
   if (loading) return (
-    <div className="flex items-center justify-center h-48">
-      <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin" style={{borderColor:'var(--color-brand)',borderTopColor:'transparent'}}/>
+    <div className="space-y-3">
+      <div className="skeleton h-8 w-40 mb-6"/>
+      {[1,2,3].map(i=><SkeletonCard key={i}/>)}
     </div>
   )
 
   return (
     <div className="animate-fade-in">
-      <div className="page-header">
-        <h1 className="page-title flex items-center gap-2">
-          <Calendar className="w-6 h-6 text-sky-500"/> My Appointments
-        </h1>
-        <p className="page-subtitle">{appointments.length} appointment{appointments.length !== 1 ? 's' : ''} total</p>
-      </div>
+      <PageHeader title="My Appointments" subtitle={`${appointments.length} appointment${appointments.length!==1?'s':''} total`}/>
 
-      {appointments.length === 0 ? (
-        <div className="card p-14 text-center">
-          <div className="w-16 h-16 bg-sky-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
-            <Calendar className="w-8 h-8 text-sky-200"/>
-          </div>
-          <p className="text-slate-600 font-semibold">No appointments yet</p>
-          <p className="text-slate-400 text-sm mt-1">Book your first appointment to get started</p>
-        </div>
+      {appointments.length===0 ? (
+        <EmptyState
+          icon={<Calendar className="w-7 h-7 text-slate-300"/>}
+          title="No appointments yet"
+          description="Book your first appointment to get started"/>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {appointments.map(appt => {
-            const st = STATUS_CONFIG[appt.status] || STATUS_CONFIG.pending
+            const si = STATUS_ICON[appt.status] || STATUS_ICON.pending
             const isExpanded = expanded === appt.id
             const needsRescheduleResponse = appt.status === 'rescheduled'
 
             return (
-              <div key={appt.id} className={`card overflow-hidden transition-all hover:shadow-md ${needsRescheduleResponse ? 'border-blue-200 border-l-4 border-l-blue-400' : ''}`}>
+              <div key={appt.id}
+                className={`card overflow-hidden transition-all
+                  ${needsRescheduleResponse ? 'border-l-4 border-l-blue-400' : ''}
+                `}>
 
-                {/* ── Compact header row (always visible) ── */}
-                <div className="flex items-center gap-3 p-4 cursor-pointer" onClick={() => setExpanded(isExpanded ? null : appt.id)}>
+                {/* ── Compact header row ── */}
+                <div
+                  className="flex items-center gap-3 p-4 cursor-pointer hover:bg-slate-50 transition-colors"
+                  onClick={()=>setExpanded(isExpanded ? null : appt.id)}>
 
                   {/* Clinic logo */}
-                  <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 flex items-center justify-center bg-sky-50 border border-sky-100">
+                  <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 overflow-hidden border border-slate-200">
                     {appt.clinics?.logo_url
                       ? <img src={appt.clinics.logo_url} alt="" className="w-full h-full object-cover"/>
-                      : <Building2 className="w-5 h-5 text-sky-400"/>
+                      : <Building2 className="w-4 h-4 text-slate-400"/>
                     }
                   </div>
 
@@ -109,70 +106,86 @@ export default function MyAppointments() {
                     <p className="font-semibold text-slate-900 text-sm truncate">{appt.clinics?.name}</p>
                     <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5 flex-wrap">
                       <span className="text-sky-600 font-medium">{appt.services?.name}</span>
-                      <span className="flex items-center gap-0.5"><Calendar className="w-3 h-3"/>{format(new Date(appt.appointment_date), 'MMM d, yyyy')}</span>
-                      {appt.appointment_time && <span className="flex items-center gap-0.5"><Clock className="w-3 h-3"/>{appt.appointment_time}</span>}
+                      <span className="flex items-center gap-0.5">
+                        <Calendar className="w-3 h-3"/>
+                        {format(new Date(appt.appointment_date),'MMM d, yyyy')}
+                      </span>
+                      {appt.appointment_time && (
+                        <span className="flex items-center gap-0.5">
+                          <Clock className="w-3 h-3"/>{appt.appointment_time}
+                        </span>
+                      )}
                     </div>
                   </div>
 
                   {/* Status + chevron */}
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className={`${st.bg} ${st.text} border ${st.border} text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1`}>
-                      <st.Icon className={`w-3 h-3 ${st.iconClass}`}/>
-                      {st.label}
-                    </span>
-                    <ChevronDown className={`w-4 h-4 text-slate-300 transition-transform ${isExpanded ? 'rotate-180' : ''}`}/>
+                    <div className="flex items-center gap-1.5">
+                      <si.Icon className={`w-3.5 h-3.5 ${si.cls}`}/>
+                      <StatusBadge status={appt.status}/>
+                    </div>
+                    <ChevronDown className={`w-4 h-4 text-slate-300 transition-transform duration-200 ${isExpanded?'rotate-180':''}`}/>
                   </div>
                 </div>
 
-                {/* ── Expanded details ── */}
+                {/* ── Expanded detail panel ── */}
                 {isExpanded && (
-                  <div className="px-4 pb-4 border-t border-slate-100 pt-3 space-y-3 animate-fade-in">
+                  <div className="border-t border-slate-100 px-4 pb-4 pt-3 space-y-3 animate-fade-in bg-slate-50/50">
 
                     {/* Date grid */}
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div className="bg-sky-50 rounded-xl p-3">
-                        <p className="text-slate-400 text-xs mb-0.5 flex items-center gap-1"><Calendar className="w-3 h-3"/>Requested</p>
-                        <p className="font-semibold text-slate-700">{format(new Date(appt.appointment_date), 'MMM d, yyyy')}</p>
-                        {appt.appointment_time && <p className="text-slate-500 text-xs flex items-center gap-1"><Clock className="w-3 h-3"/>{appt.appointment_time}</p>}
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="bg-white rounded-xl p-3 border border-slate-100">
+                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Requested</p>
+                        <p className="font-semibold text-slate-800 text-sm">{format(new Date(appt.appointment_date),'EEEE, MMM d, yyyy')}</p>
+                        {appt.appointment_time && (
+                          <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
+                            <Clock className="w-3 h-3"/>{appt.appointment_time}
+                          </p>
+                        )}
                       </div>
                       {appt.rescheduled_date && (
-                        <div className="bg-blue-50 rounded-xl p-3">
-                          <p className="text-blue-400 text-xs mb-0.5 flex items-center gap-1"><RefreshCw className="w-3 h-3"/>Rescheduled To</p>
-                          <p className="font-semibold text-blue-700">{format(new Date(appt.rescheduled_date), 'MMM d, yyyy')}</p>
-                          {appt.rescheduled_time && <p className="text-blue-500 text-xs">{appt.rescheduled_time}</p>}
+                        <div className="bg-blue-50 rounded-xl p-3 border border-blue-100">
+                          <p className="text-xs font-semibold text-blue-400 uppercase tracking-wide mb-1">Rescheduled To</p>
+                          <p className="font-semibold text-blue-800 text-sm">{format(new Date(appt.rescheduled_date),'EEEE, MMM d, yyyy')}</p>
+                          {appt.rescheduled_time && (
+                            <p className="text-xs text-blue-500 mt-0.5">{appt.rescheduled_time}</p>
+                          )}
                         </div>
                       )}
                     </div>
 
                     {/* Price */}
                     {appt.services?.price && (
-                      <p className="text-sm text-slate-500 flex items-center gap-1">
-                        <DollarSign className="w-3.5 h-3.5 text-sky-400"/>
+                      <p className="text-sm text-slate-500 flex items-center gap-1.5">
+                        <DollarSign className="w-3.5 h-3.5 text-slate-400"/>
                         ₱{parseFloat(appt.services.price).toLocaleString()}
                       </p>
                     )}
 
-                    {/* Decline reason */}
+                    {/* Rejection reason */}
                     {appt.rejection_reason && (
                       <div className="bg-red-50 rounded-xl p-3 border border-red-100">
-                        <p className="text-red-600 text-xs font-semibold mb-0.5">Reason for decline:</p>
+                        <p className="text-xs font-semibold text-red-600 mb-0.5">Reason for decline</p>
                         <p className="text-red-500 text-sm">{appt.rejection_reason}</p>
                       </div>
                     )}
 
                     {/* Reschedule response */}
-                    {appt.status === 'rescheduled' && (
-                      <div className="p-3 bg-blue-50 rounded-xl border border-blue-100">
-                        <p className="text-blue-700 text-sm font-semibold mb-2 flex items-center gap-1.5">
-                          <RefreshCw className="w-3.5 h-3.5 animate-spin"/> Clinic proposed a new time. Accept?
+                    {appt.status==='rescheduled' && (
+                      <div className="bg-blue-50 rounded-xl p-3 border border-blue-100">
+                        <p className="text-blue-800 text-sm font-semibold mb-2 flex items-center gap-1.5">
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin"/>
+                          Clinic proposed a new time — do you accept?
                         </p>
                         <div className="flex gap-2">
-                          <button onClick={() => respondToReschedule(appt, true)} disabled={actionLoading === appt.id}
-                            className="flex-1 btn btn-primary btn-sm">
+                          <button onClick={()=>respondToReschedule(appt,true)}
+                            disabled={actionLoading===appt.id}
+                            className="flex-1 btn btn-primary btn-sm flex items-center justify-center gap-1">
                             <CheckCircle2 className="w-3.5 h-3.5"/> Accept
                           </button>
-                          <button onClick={() => respondToReschedule(appt, false)} disabled={actionLoading === appt.id}
-                            className="flex-1 btn btn-secondary btn-sm text-red-500 hover:bg-red-50">
+                          <button onClick={()=>respondToReschedule(appt,false)}
+                            disabled={actionLoading===appt.id}
+                            className="flex-1 btn btn-secondary btn-sm text-red-500 hover:bg-red-50 flex items-center justify-center gap-1">
                             <XCircle className="w-3.5 h-3.5"/> Decline
                           </button>
                         </div>
@@ -180,18 +193,18 @@ export default function MyAppointments() {
                     )}
 
                     {/* Review */}
-                    {appt.status === 'completed' && (
+                    {appt.status==='completed' && (
                       <div className="pt-2 border-t border-slate-100">
                         <SubmitReview
                           appointmentId={appt.id}
                           clinicId={appt.clinic_id}
                           customerId={user.id}
-                          onSubmitted={() => setReviewRefresh(r => r + 1)}
+                          onSubmitted={()=>setReviewRefresh(r=>r+1)}
                         />
                       </div>
                     )}
 
-                    <p className="text-xs text-slate-400">Booked on {format(new Date(appt.created_at), 'MMM d, yyyy')}</p>
+                    <p className="text-xs text-slate-400">Booked on {format(new Date(appt.created_at),'MMM d, yyyy')}</p>
                   </div>
                 )}
               </div>

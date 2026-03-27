@@ -45,18 +45,7 @@ const ANIM_STYLES = `
     background-size: 200px 200px;
   }
 
-  /* Warm card + nav overrides */
-  .card {
-    background: rgba(255,252,245,0.82) !important;
-    border: 1px solid rgba(210,190,155,0.35) !important;
-    box-shadow: 0 4px 24px rgba(139,109,56,0.08), 0 1px 0 rgba(255,255,255,0.9) inset !important;
-    backdrop-filter: blur(16px) !important;
-  }
-  .glass-header {
-    background: rgba(253,248,240,0.88) !important;
-    border-bottom: 1px solid rgba(210,190,155,0.3) !important;
-    backdrop-filter: blur(20px) !important;
-  }
+  /* Landing uses global card/header styles */
 `
 
 // ── useInView ────────────────────────────────────────────────────────────────
@@ -608,14 +597,14 @@ export default function Landing() {
   return (
     <div className="min-h-screen paper-grain relative" style={{
       fontFamily:"'DM Sans', sans-serif",
-      background:'linear-gradient(160deg, #e0f2fe 0%, #e0f2fe 20%, #ffffff 40%, #e0f2fe 60%, #e0f2fe 80%, #e0f2fe 100%)',
+      background:'linear-gradient(160deg, #e0f2fe 0%, #e0f2fe 20%, #ffffff 40%)'
     }}>
       <style>{ANIM_STYLES}</style>
       <BackgroundScene/>
 
       {/* ── NAV ── */}
       <nav className="glass-header fixed top-0 inset-x-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <LOGO/>
             <div className="hidden md:flex items-center">
@@ -832,11 +821,11 @@ export default function Landing() {
           {/* Header */}
           <Reveal variant="blur-up">
             <div className="mb-10">
-              <p className="text-xs font-bold uppercase tracking-widest text-sky-500 mb-2">❄️ Dr. Tooth Recommends</p>
               <div className="flex items-end gap-0">
                 <h2 className="font-display font-bold text-slate-800 text-3xl sm:text-4xl tracking-[-0.02em] shrink-0">
                   {search || city !== 'all' || serviceFilter ? 'Search Results' : 'Featured Clinics'}
                 </h2>
+                {/* Negative margin pulls mascot back so he doesn't push subtitle down */}
               </div>
               <p className="text-slate-400 text-sm mt-1">{filtered.length} clinic{filtered.length !== 1 ? 's' : ''} available</p>
             </div>

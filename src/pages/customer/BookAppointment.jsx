@@ -1,28 +1,45 @@
 import { useEffect, useState } from 'react'
-import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import { format, addDays, startOfToday, addHours, getDay } from 'date-fns'
 import toast from 'react-hot-toast'
 import { sendBookingRequestedEmail, sendNewBookingAlertEmail } from '../../lib/email'
+import { ChevronLeft, CheckCircle2, Calendar, Clock, Building2, User, Mail, Stethoscope } from 'lucide-react'
+import { Alert, Field } from '../../components/ui/shared'
 
 const DAY_KEYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday']
 
-function Step({ number, label, active, done }) {
+function StepIndicator({ current, done }) {
+  const steps = ['Service','Schedule','Confirm']
   return (
-    <div className={`flex items-center gap-2 ${active ? 'text-sky-600' : done ? 'text-sky-400' : 'text-slate-300'}`}>
-      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all ${
-        active ? 'text-white border-transparent' : done ? 'text-white border-transparent' : 'border-slate-200 text-slate-300'
-      }`} style={active ? {background:'linear-gradient(135deg,#0ea5e9,#06b6d4)',boxShadow:'0 2px 8px rgba(14,165,233,0.4)'} : done ? {background:'rgba(14,165,233,0.6)',borderColor:'transparent'} : {}}>
-        {done ? '✓' : number}
-      </div>
-      <span className="text-sm font-semibold hidden sm:block">{label}</span>
+    <div className="flex items-center justify-center gap-2 mb-8">
+      {steps.map((label, i) => {
+        const num = i + 1
+        const isActive = current === num
+        const isDone   = done || current > num
+        return (
+          <div key={label} className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
+              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all
+                ${isActive ? 'bg-sky-500 border-sky-500 text-white shadow-md shadow-sky-200'
+                  : isDone  ? 'bg-sky-100 border-sky-300 text-sky-600'
+                  : 'border-slate-200 text-slate-400 bg-white'}`}>
+                {isDone && !isActive ? '✓' : num}
+              </div>
+              <span className={`text-xs font-semibold hidden sm:block transition-colors
+                ${isActive?'text-sky-600':isDone?'text-sky-400':'text-slate-300'}`}>
+                {label}
+              </span>
+            </div>
+            {i < steps.length - 1 && (
+              <div className={`w-8 h-0.5 rounded-full transition-colors ${current > num ? 'bg-sky-300' : 'bg-slate-200'}`}/>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
-}
-
-function StepLine({ done }) {
-  return <div className="flex-1 max-w-[60px] h-0.5 rounded-full" style={{background: done ? 'linear-gradient(90deg,#0ea5e9,#06b6d4)' : 'rgba(226,232,240,0.7)'}}/>
 }
 
 export default function BookAppointment() {
@@ -31,187 +48,134 @@ export default function BookAppointment() {
   const navigate = useNavigate()
   const { user, profile } = useAuth()
 
-  const [step, setStep] = useState(1)
-  const [clinic, setClinic] = useState(null)
-  const [services, setServices] = useState([])
-  const [availability, setAvailability] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [step, setStep]                   = useState(1)
+  const [clinic, setClinic]               = useState(null)
+  const [services, setServices]           = useState([])
+  const [availability, setAvailability]   = useState(null)
+  const [loading, setLoading]             = useState(true)
   const [selectedService, setSelectedService] = useState(null)
-  const [selectedDate, setSelectedDate] = useState(null)
-  const [selectedTime, setSelectedTime] = useState(null)
-  const [notes, setNotes] = useState('')
-  const [booking, setBooking] = useState(false)
-  const [done, setDone] = useState(false)
-  const [bookedTimes, setBookedTimes] = useState([]) // times already taken on selected date
+  const [selectedDate, setSelectedDate]   = useState(null)
+  const [selectedTime, setSelectedTime]   = useState(null)
+  const [bookedTimes, setBookedTimes]     = useState([])
+  const [notes, setNotes]                 = useState('')
+  const [booking, setBooking]             = useState(false)
+  const [done, setDone]                   = useState(false)
 
-  useEffect(() => {
+  useEffect(()=>{
     async function load() {
       const [c, s] = await Promise.all([
-        supabase.from('clinics').select('*').eq('id', clinicId).single(),
-        supabase.from('services').select('*').eq('clinic_id', clinicId).eq('is_active', true).order('price')
+        supabase.from('clinics').select('*').eq('id',clinicId).single(),
+        supabase.from('services').select('*').eq('clinic_id',clinicId).eq('is_active',true).order('price')
       ])
-      setClinic(c.data); setServices(s.data || [])
-      setAvailability(c.data?.availability || null)
+      setClinic(c.data); setServices(s.data||[])
+      setAvailability(c.data?.availability||null)
       const preService = searchParams.get('service')
       if (preService && s.data) {
-        const found = s.data.find(sv => sv.id === preService)
+        const found = s.data.find(sv=>sv.id===preService)
         if (found) { setSelectedService(found); setStep(2) }
       }
       setLoading(false)
     }
     load()
-  }, [clinicId])
+  },[clinicId])
 
-  // Fetch already-booked times whenever the selected date changes
-  useEffect(() => {
-    if (!selectedDate || !clinicId) return
-    const dateStr = format(selectedDate, 'yyyy-MM-dd')
-    supabase
-      .from('appointments')
-      .select('appointment_time')
-      .eq('clinic_id', clinicId)
-      .eq('appointment_date', dateStr)
-      .not('status', 'in', '(cancelled,rejected)')
-      .then(({ data }) => {
-        // Normalize to HH:MM — Postgres returns HH:MM:SS but slots use HH:MM
-        setBookedTimes(
-          (data || [])
-            .map(a => a.appointment_time)
-            .filter(Boolean)
-            .map(t => t.slice(0, 5))
-        )
+  useEffect(()=>{
+    if (!selectedDate||!clinicId) return
+    const dateStr = format(selectedDate,'yyyy-MM-dd')
+    supabase.from('appointments').select('appointment_time')
+      .eq('clinic_id',clinicId).eq('appointment_date',dateStr)
+      .not('status','in','(cancelled,rejected)')
+      .then(({data})=>{
+        setBookedTimes((data||[]).map(a=>a.appointment_time).filter(Boolean).map(t=>t.slice(0,5)))
       })
-  }, [selectedDate, clinicId])
+  },[selectedDate,clinicId])
 
   function getAvailableDates() {
     const dates = []
     const today = startOfToday()
-    const window = availability?.booking_window_days || 30
+    const window = availability?.booking_window_days||30
     const blocked = (availability?.blocked_dates||[]).map(b=>b.date)
     const special = (availability?.special_dates||[]).map(s=>s.date)
-    for (let i = 0; i <= window; i++) {
-      const d = addDays(today, i)
-      const dateStr = format(d, 'yyyy-MM-dd')
+    for (let i=0; i<=window; i++) {
+      const d = addDays(today,i)
+      const dateStr = format(d,'yyyy-MM-dd')
       if (blocked.includes(dateStr)) continue
-      // Always include special override dates
       if (special.includes(dateStr)) { dates.push(d); continue }
-      // Check if day is enabled in weekly schedule
       if (!availability?.schedule) { dates.push(d); continue }
       if (availability.schedule[DAY_KEYS[getDay(d)]]?.enabled) dates.push(d)
-      // Note: we no longer skip today based on advance notice here —
-      // getTimeSlots handles per-slot filtering so today shows if any slots remain
     }
-    return dates.slice(0, 21)
+    return dates.slice(0,21)
   }
 
   function getTimeSlots(date) {
     if (!date) return []
-    const dateStr = format(date, 'yyyy-MM-dd')
+    const dateStr = format(date,'yyyy-MM-dd')
     const dayKey = DAY_KEYS[getDay(date)]
     const advanceHours = availability?.advance_notice_hours ?? 2
     const now = new Date()
     const nowPlusNotice = addHours(now, advanceHours)
     const specialDate = (availability?.special_dates||[]).find(s=>s.date===dateStr)
     const sched = specialDate
-      ? { enabled:true, open:specialDate.open, close:specialDate.close }
+      ? {enabled:true,open:specialDate.open,close:specialDate.close}
       : availability?.schedule?.[dayKey]
     if (!sched?.enabled) return []
     const slots = []
-    const [oh, om] = (sched.open||'09:00').split(':').map(Number)
-    const [ch, cm] = (sched.close||'18:00').split(':').map(Number)
-    const duration = availability?.slot_duration || 30
+    const [oh,om] = (sched.open||'09:00').split(':').map(Number)
+    const [ch,cm] = (sched.close||'18:00').split(':').map(Number)
+    const duration = availability?.slot_duration||30
     const breakStart = availability?.has_break ? availability.break_start : null
     const breakEnd   = availability?.has_break ? availability.break_end   : null
     let current = oh*60+om
     const end = ch*60+cm
-    while (current+duration <= end) {
+    while (current+duration<=end) {
       const hh = Math.floor(current/60).toString().padStart(2,'0')
       const mm = (current%60).toString().padStart(2,'0')
-      // Skip break window
-      if (breakStart && breakEnd) {
+      if (breakStart&&breakEnd) {
         const [bsh,bsm] = breakStart.split(':').map(Number)
         const [beh,bem] = breakEnd.split(':').map(Number)
-        if (current >= bsh*60+bsm && current < beh*60+bem) { current+=duration; continue }
+        if (current>=bsh*60+bsm&&current<beh*60+bem) { current+=duration; continue }
       }
-      // Build exact datetime for this slot
-      const slotDT = new Date(date)
-      slotDT.setHours(Math.floor(current/60), current%60, 0, 0)
-      // ALWAYS block slots already in the past (regardless of advance notice)
-      if (slotDT <= now) { current+=duration; continue }
-      // Block slots within advance notice window
-      if (slotDT < nowPlusNotice) { current+=duration; continue }
-      const h12 = current >= 720 ? Math.floor(current/60)-12||12 : Math.floor(current/60)||12
-      const ampm = current >= 720 ? 'PM' : 'AM'
-      // Skip if this slot is already booked by another patient
+      const slotDT = new Date(date); slotDT.setHours(Math.floor(current/60),current%60,0,0)
+      if (slotDT<=now) { current+=duration; continue }
+      if (slotDT<nowPlusNotice) { current+=duration; continue }
       const slotVal = `${hh}:${mm}`
-      const alreadyBooked = bookedTimes.filter(t => t === slotVal).length
-      const maxSlots = availability?.max_per_slot || 1
-      if (alreadyBooked >= maxSlots) { current+=duration; continue }
-      slots.push({ value: slotVal, label:`${h12}:${mm} ${ampm}` })
-      current += duration
+      const alreadyBooked = bookedTimes.filter(t=>t===slotVal).length
+      const maxSlots = availability?.max_per_slot||1
+      if (alreadyBooked>=maxSlots) { current+=duration; continue }
+      const h12 = current>=720 ? Math.floor(current/60)-12||12 : Math.floor(current/60)||12
+      const ampm = current>=720?'PM':'AM'
+      slots.push({value:slotVal, label:`${h12}:${mm} ${ampm}`})
+      current+=duration
     }
     return slots
   }
 
   async function handleConfirmBooking() {
-    if (!selectedService || !selectedDate || !selectedTime) { toast.error('Please complete all steps'); return }
+    if (!selectedService||!selectedDate||!selectedTime) { toast.error('Please complete all steps'); return }
     setBooking(true)
-
-    // 1 — Insert appointment
     const { error } = await supabase.from('appointments').insert({
-      clinic_id: clinicId, customer_id: user.id, service_id: selectedService.id,
-      appointment_date: format(selectedDate, 'yyyy-MM-dd'),
-      appointment_time: selectedTime.value, notes, status: 'pending'
+      clinic_id:clinicId, customer_id:user.id, service_id:selectedService.id,
+      appointment_date:format(selectedDate,'yyyy-MM-dd'),
+      appointment_time:selectedTime.value, notes, status:'pending'
     })
     if (error) { toast.error(error.message); setBooking(false); return }
 
-    // 2 — Fetch clinic owner profile (need email + name)
-    const { data: cd } = await supabase
-      .from('clinics')
-      .select('owner_id, profiles!clinics_owner_id_fkey(full_name, email)')
-      .eq('id', clinicId)
-      .single()
-
-    const ownerName  = cd?.profiles?.full_name || 'Clinic Owner'
+    const { data:cd } = await supabase.from('clinics')
+      .select('owner_id, profiles!clinics_owner_id_fkey(full_name,email)')
+      .eq('id',clinicId).single()
+    const ownerName  = cd?.profiles?.full_name||'Clinic Owner'
     const ownerEmail = cd?.profiles?.email
-
-    // 3 — In-app notification to clinic owner
     if (cd?.owner_id) {
       await supabase.from('notifications').insert({
-        recipient_id: cd.owner_id, type: 'new_booking', title: '📅 New Appointment Request',
-        message: `${profile?.full_name} booked ${selectedService.name} for ${format(selectedDate,'MMMM d, yyyy')} at ${selectedTime.label}.`,
-        related_id: clinicId
+        recipient_id:cd.owner_id, type:'new_booking', title:'New Appointment Request',
+        message:`${profile?.full_name} booked ${selectedService.name} for ${format(selectedDate,'MMMM d, yyyy')} at ${selectedTime.label}.`,
+        related_id:clinicId
       })
     }
-
-    const formattedDate = format(selectedDate, 'EEEE, MMMM d, yyyy')
-    const formattedTime = selectedTime.label
-
-    // 4 — Email to CUSTOMER (fire-and-forget, don't block UI)
-    sendBookingRequestedEmail({
-      to: user.email,
-      patientName: profile?.full_name || 'there',
-      clinicName:  clinic?.name,
-      serviceName: selectedService.name,
-      date:        formattedDate,
-      time:        formattedTime,
-    }).catch(err => console.warn('Customer email failed:', err))
-
-    // 5 — Email to CLINIC OWNER
-    if (ownerEmail) {
-      sendNewBookingAlertEmail({
-        to:          ownerEmail,
-        ownerName,
-        clinicName:  clinic?.name,
-        patientName: profile?.full_name || 'A patient',
-        serviceName: selectedService.name,
-        date:        formattedDate,
-        time:        formattedTime,
-      }).catch(err => console.warn('Clinic email failed:', err))
-    }
-
-    setBooking(false)
-    setDone(true)
+    const formattedDate = format(selectedDate,'EEEE, MMMM d, yyyy')
+    sendBookingRequestedEmail({to:user.email, patientName:profile?.full_name||'there', clinicName:clinic?.name, serviceName:selectedService.name, date:formattedDate, time:selectedTime.label}).catch(console.warn)
+    if (ownerEmail) sendNewBookingAlertEmail({to:ownerEmail, ownerName, clinicName:clinic?.name, patientName:profile?.full_name||'A patient', serviceName:selectedService.name, date:formattedDate, time:selectedTime.label}).catch(console.warn)
+    setBooking(false); setDone(true)
   }
 
   const availableDates = getAvailableDates()
@@ -219,52 +183,41 @@ export default function BookAppointment() {
   const isOnVacation = clinic?.availability?.vacation_mode
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="w-8 h-8 border-4 rounded-full animate-spin" style={{borderColor:'var(--color-brand)',borderTopColor:'transparent'}}/>
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="w-7 h-7 border-4 rounded-full animate-spin" style={{borderColor:'var(--color-brand)',borderTopColor:'transparent'}}/>
     </div>
   )
 
   // ── Success screen ──
   if (done) return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="text-center max-w-md animate-fade-in w-full">
-        <div className="pointer-events-none fixed top-0 left-0 w-full h-full overflow-hidden" style={{zIndex:-1}}>
-          <div className="absolute top-10 left-1/4 w-64 h-64 rounded-full opacity-30 animate-float"
-            style={{background:'radial-gradient(circle, rgba(14,165,233,0.4) 0%, transparent 70%)'}}/>
-          <div className="absolute bottom-10 right-1/4 w-48 h-48 rounded-full opacity-25 animate-float"
-            style={{background:'radial-gradient(circle, rgba(251,191,36,0.4) 0%, transparent 70%)',animationDelay:'1.5s'}}/>
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
+      <div className="w-full max-w-md text-center animate-fade-in">
+        <div className="w-20 h-20 rounded-3xl bg-emerald-100 flex items-center justify-center mx-auto mb-5">
+          <CheckCircle2 className="w-10 h-10 text-emerald-500"/>
         </div>
-        <div className="w-24 h-24 rounded-3xl flex items-center justify-center text-5xl mx-auto mb-6 animate-float"
-          style={{background:'linear-gradient(135deg,rgba(14,165,233,0.15),rgba(6,182,212,0.10))',border:'1px solid rgba(186,230,253,0.7)',backdropFilter:'blur(12px)',boxShadow:'0 8px 32px rgba(14,165,233,0.15)'}}>
-          ✅
-        </div>
-        <h1 className="font-display font-bold text-slate-900 text-2xl mb-2" style={{letterSpacing:'-0.02em'}}>Booking Requested!</h1>
-        <p className="text-slate-500 mb-2">Your request has been sent to <strong>{clinic?.name}</strong>.</p>
+        <h1 className="font-display font-bold text-slate-900 text-2xl mb-2">Booking Requested!</h1>
+        <p className="text-slate-500 mb-1">Your request has been sent to <strong>{clinic?.name}</strong>.</p>
         <p className="text-slate-400 text-sm mb-2">You'll get a notification once the clinic confirms.</p>
-        {/* Email sent notice */}
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold mb-8"
-          style={{background:'rgba(220,252,231,0.7)',border:'1px solid rgba(134,239,172,0.6)',color:'#15803d'}}>
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-          </svg>
-          Confirmation email sent to {user?.email}
+
+        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold mb-6 bg-emerald-50 border border-emerald-200 text-emerald-700">
+          <Mail className="w-3.5 h-3.5"/> Confirmation email sent to {user?.email}
         </div>
-        <div className="card p-5 text-left mb-6">
-          <div className="space-y-3">
-            {[
-              { label:'Clinic',   value: clinic?.name },
-              { label:'Service',  value: selectedService?.name },
-              { label:'Date',     value: format(selectedDate, 'EEEE, MMMM d, yyyy') },
-              { label:'Time',     value: selectedTime?.label },
-            ].map(r => (
-              <div key={r.label} className="flex justify-between text-sm" style={{borderBottom:'1px solid rgba(186,230,253,0.3)',paddingBottom:'0.6rem'}}>
-                <span className="text-slate-400">{r.label}</span>
-                <span className="font-semibold text-slate-800">{r.value}</span>
-              </div>
-            ))}
-          </div>
+
+        <div className="card p-5 text-left mb-5">
+          {[
+            {Icon:Building2, label:'Clinic',  value:clinic?.name},
+            {Icon:Stethoscope, label:'Service', value:selectedService?.name},
+            {Icon:Calendar,  label:'Date',    value:format(selectedDate,'EEEE, MMMM d, yyyy')},
+            {Icon:Clock,     label:'Time',    value:selectedTime?.label},
+          ].map((r,i,arr)=>(
+            <div key={r.label} className={`flex items-center gap-3 py-3 ${i<arr.length-1?'border-b border-slate-100':''}`}>
+              <r.Icon className="w-4 h-4 text-slate-400 shrink-0"/>
+              <span className="text-slate-400 text-sm w-16">{r.label}</span>
+              <span className="font-semibold text-slate-800 text-sm">{r.value}</span>
+            </div>
+          ))}
         </div>
-        <button onClick={() => navigate('/dashboard')} className="btn btn-primary btn-lg w-full">
+        <button onClick={()=>navigate('/dashboard')} className="btn btn-primary btn-lg w-full">
           View My Appointments →
         </button>
       </div>
@@ -272,68 +225,62 @@ export default function BookAppointment() {
   )
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-slate-50">
+      {/* Header */}
       <header className="glass-header sticky top-0 z-40">
-        <div className="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
-          <button onClick={() => step > 1 ? setStep(step-1) : navigate(-1)} className="btn btn-secondary btn-sm">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-            {step > 1 ? 'Back' : 'Cancel'}
+        <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
+          <button onClick={()=>step>1?setStep(step-1):navigate(-1)}
+            className="btn btn-ghost btn-sm flex items-center gap-1.5">
+            <ChevronLeft className="w-4 h-4"/>{step>1?'Back':'Cancel'}
           </button>
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{background:'linear-gradient(135deg,#0ea5e9,#06b6d4)'}}>
+            <div className="w-6 h-6 rounded-lg bg-sky-500 flex items-center justify-center">
               <span className="text-white text-xs">🦷</span>
             </div>
             <span className="font-display font-bold text-slate-900 text-sm">{clinic?.name}</span>
           </div>
-          <div className="w-20"/>
+          <div className="w-16"/>
         </div>
       </header>
 
-      <div className="max-w-3xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-center gap-3 mb-10">
-          <Step number={1} label="Service"  active={step===1} done={step>1}/>
-          <StepLine done={step>1}/>
-          <Step number={2} label="Schedule" active={step===2} done={step>2}/>
-          <StepLine done={step>2}/>
-          <Step number={3} label="Confirm"  active={step===3} done={done}/>
-        </div>
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        <StepIndicator current={step} done={done}/>
 
         {/* ── Step 1: Service ── */}
-        {step === 1 && (
+        {step===1 && (
           <div className="animate-fade-in">
-            <h2 className="font-display font-bold text-slate-900 text-2xl mb-1" style={{letterSpacing:'-0.02em'}}>Choose a Service</h2>
-            <p className="text-slate-400 text-sm mb-6">Select the treatment you need</p>
+            <div className="mb-6">
+              <h2 className="font-display font-bold text-slate-900 text-2xl">Choose a Service</h2>
+              <p className="text-slate-500 text-sm mt-1">Select the treatment you need</p>
+            </div>
+
             {isOnVacation && (
-              <div className="card p-4 mb-5" style={{background:'rgba(254,243,199,0.7)',border:'1px solid rgba(253,230,138,0.8)'}}>
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xl">🏖️</span>
+                  <span className="text-lg">🏖️</span>
                   <p className="font-bold text-amber-700 text-sm">This clinic is currently on vacation</p>
                 </div>
-                {clinic.availability.vacation_from && clinic.availability.vacation_to && (
+                {clinic.availability.vacation_from&&clinic.availability.vacation_to&&(
                   <p className="text-amber-600 text-xs mb-1">{clinic.availability.vacation_from} – {clinic.availability.vacation_to}</p>
                 )}
-                {clinic.availability.vacation_message && <p className="text-amber-600 text-xs">{clinic.availability.vacation_message}</p>}
+                {clinic.availability.vacation_message&&<p className="text-amber-600 text-xs">{clinic.availability.vacation_message}</p>}
                 <p className="text-amber-500 text-xs mt-2 font-semibold">Bookings are temporarily unavailable.</p>
               </div>
             )}
-            {services.length === 0 ? (
-              <div className="card p-10 text-center"><p className="text-slate-400">No services available yet.</p></div>
+
+            {services.length===0 ? (
+              <div className="card p-10 text-center text-slate-400 text-sm">No services available yet.</div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {services.map(s => (
-                  <button key={s.id} onClick={() => { setSelectedService(s); setStep(2) }}
-                    className="card p-4 text-left group transition-all"
-                    style={selectedService?.id===s.id ? {border:'1.5px solid rgba(14,165,233,0.6)',background:'rgba(224,242,254,0.5)'} : {}}>
+                {services.map(s=>(
+                  <button key={s.id} onClick={()=>{setSelectedService(s);setStep(2)}}
+                    className={`card p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-md group
+                      ${selectedService?.id===s.id?'border-sky-400 ring-2 ring-sky-100':''}`}>
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1">
-                        <p className="font-semibold text-slate-900 group-hover:text-sky-600 transition-colors text-sm">{s.name}</p>
-                        {s.description && <p className="text-slate-400 text-xs mt-1 leading-relaxed">{s.description}</p>}
-                        {s.duration_minutes && (
-                          <p className="text-slate-400 text-xs mt-1.5 flex items-center gap-1">
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            {s.duration_minutes} min
-                          </p>
-                        )}
+                        <p className="font-semibold text-slate-900 text-sm group-hover:text-sky-600 transition-colors">{s.name}</p>
+                        {s.description&&<p className="text-slate-400 text-xs mt-1 leading-relaxed">{s.description}</p>}
+                        {s.duration_minutes&&<p className="text-slate-400 text-xs mt-1.5 flex items-center gap-1"><Clock className="w-3 h-3"/>{s.duration_minutes} min</p>}
                       </div>
                       <span className="font-display font-bold text-sky-600 text-lg shrink-0">₱{parseFloat(s.price||0).toLocaleString()}</span>
                     </div>
@@ -344,34 +291,40 @@ export default function BookAppointment() {
           </div>
         )}
 
-        {/* ── Step 2: Date & Time ── */}
-        {step === 2 && (
+        {/* ── Step 2: Schedule ── */}
+        {step===2 && (
           <div className="animate-fade-in">
-            <h2 className="font-display font-bold text-slate-900 text-2xl mb-1" style={{letterSpacing:'-0.02em'}}>Pick a Schedule</h2>
-            <p className="text-slate-400 text-sm mb-6">Select your preferred date and time</p>
-            <div className="card p-4 mb-6 flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
-                style={{background:'rgba(224,242,254,0.7)',border:'1px solid rgba(186,230,253,0.8)'}}>🦷</div>
+            <div className="mb-6">
+              <h2 className="font-display font-bold text-slate-900 text-2xl">Pick a Schedule</h2>
+              <p className="text-slate-500 text-sm mt-1">Select your preferred date and time</p>
+            </div>
+
+            {/* Selected service chip */}
+            <div className="card p-3 mb-5 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-sky-50 flex items-center justify-center border border-sky-100">
+                <Stethoscope className="w-4 h-4 text-sky-500"/>
+              </div>
               <div className="flex-1">
                 <p className="font-semibold text-slate-900 text-sm">{selectedService?.name}</p>
                 <p className="text-sky-600 text-xs font-bold">₱{parseFloat(selectedService?.price||0).toLocaleString()}</p>
               </div>
-              <button onClick={() => setStep(1)} className="text-xs font-semibold" style={{color:'var(--color-brand)'}}>Change</button>
+              <button onClick={()=>setStep(1)} className="text-xs font-semibold text-sky-500 hover:text-sky-600">Change</button>
             </div>
-            <div className="mb-6">
-              <p className="font-semibold text-slate-700 text-sm mb-3">Available Dates</p>
-              {availableDates.length === 0 ? (
-                <div className="card p-6 text-center"><p className="text-slate-400 text-sm">No available dates. Contact the clinic directly.</p></div>
+
+            {/* Date picker */}
+            <div className="mb-5">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Available Dates</p>
+              {availableDates.length===0 ? (
+                <div className="card p-6 text-center text-slate-400 text-sm">No available dates. Contact the clinic directly.</div>
               ) : (
                 <div className="grid grid-cols-4 sm:grid-cols-7 gap-2">
-                  {availableDates.map(d => {
-                    const isSelected = selectedDate?.toDateString() === d.toDateString()
+                  {availableDates.map(d=>{
+                    const isSelected = selectedDate?.toDateString()===d.toDateString()
                     return (
-                      <button key={d.toISOString()} onClick={() => { setSelectedDate(d); setSelectedTime(null); setBookedTimes([]) }}
-                        className="p-2.5 rounded-2xl text-center transition-all"
-                        style={isSelected
-                          ? {background:'linear-gradient(135deg,#0ea5e9,#06b6d4)',color:'white',boxShadow:'0 4px 12px rgba(14,165,233,0.4)',border:'none'}
-                          : {background:'rgba(255,255,255,0.55)',backdropFilter:'blur(8px)',border:'1px solid rgba(255,255,255,0.8)',color:'#475569'}}>
+                      <button key={d.toISOString()}
+                        onClick={()=>{setSelectedDate(d);setSelectedTime(null);setBookedTimes([])}}
+                        className={`py-2.5 rounded-xl text-center border transition-all hover:-translate-y-0.5
+                          ${isSelected?'bg-sky-500 text-white border-sky-500 shadow-md shadow-sky-200':'bg-white border-slate-200 text-slate-600 hover:border-sky-300'}`}>
                         <p className="text-xs opacity-70">{format(d,'EEE')}</p>
                         <p className="font-display font-bold text-lg leading-tight">{format(d,'d')}</p>
                         <p className="text-xs opacity-70">{format(d,'MMM')}</p>
@@ -381,21 +334,23 @@ export default function BookAppointment() {
                 </div>
               )}
             </div>
+
+            {/* Time slots */}
             {selectedDate && (
-              <div className="mb-6">
-                <p className="font-semibold text-slate-700 text-sm mb-3">Available Times — {format(selectedDate, 'EEEE, MMM d')}</p>
-                {timeSlots.length === 0 ? (
-                  <div className="card p-4 text-center"><p className="text-slate-400 text-sm">No time slots for this day.</p></div>
+              <div className="mb-5">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">
+                  Available Times — {format(selectedDate,'EEEE, MMM d')}
+                </p>
+                {timeSlots.length===0 ? (
+                  <div className="card p-4 text-center text-slate-400 text-sm">No time slots for this day.</div>
                 ) : (
                   <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-                    {timeSlots.map(t => {
-                      const isSelected = selectedTime?.value === t.value
+                    {timeSlots.map(t=>{
+                      const isSelected = selectedTime?.value===t.value
                       return (
-                        <button key={t.value} onClick={() => setSelectedTime(t)}
-                          className="py-2.5 px-3 rounded-xl text-sm font-semibold text-center transition-all"
-                          style={isSelected
-                            ? {background:'linear-gradient(135deg,#0ea5e9,#06b6d4)',color:'white',boxShadow:'0 2px 8px rgba(14,165,233,0.35)',border:'none'}
-                            : {background:'rgba(255,255,255,0.55)',backdropFilter:'blur(8px)',border:'1px solid rgba(255,255,255,0.8)',color:'#475569'}}>
+                        <button key={t.value} onClick={()=>setSelectedTime(t)}
+                          className={`py-2.5 px-3 rounded-xl text-sm font-semibold text-center border transition-all hover:-translate-y-0.5
+                            ${isSelected?'bg-sky-500 text-white border-sky-500 shadow-md shadow-sky-200':'bg-white border-slate-200 text-slate-600 hover:border-sky-300'}`}>
                           {t.label}
                         </button>
                       )
@@ -404,56 +359,60 @@ export default function BookAppointment() {
                 )}
               </div>
             )}
-            <button disabled={!selectedDate || !selectedTime} onClick={() => setStep(3)} className="btn btn-primary btn-lg w-full">
+
+            <button disabled={!selectedDate||!selectedTime} onClick={()=>setStep(3)}
+              className="btn btn-primary btn-lg w-full">
               Continue →
             </button>
           </div>
         )}
 
         {/* ── Step 3: Confirm ── */}
-        {step === 3 && (
+        {step===3 && (
           <div className="animate-fade-in">
-            <h2 className="font-display font-bold text-slate-900 text-2xl mb-1" style={{letterSpacing:'-0.02em'}}>Confirm Booking</h2>
-            <p className="text-slate-400 text-sm mb-6">Review your appointment details</p>
-            <div className="card p-5 mb-5">
+            <div className="mb-6">
+              <h2 className="font-display font-bold text-slate-900 text-2xl">Confirm Booking</h2>
+              <p className="text-slate-500 text-sm mt-1">Review your appointment details</p>
+            </div>
+
+            {/* Summary card */}
+            <div className="card p-5 mb-4">
               {[
-                { icon:'🏥', label:'Clinic',   value: clinic?.name },
-                { icon:'🦷', label:'Service',  value: `${selectedService?.name} — ₱${parseFloat(selectedService?.price||0).toLocaleString()}` },
-                { icon:'📅', label:'Date',     value: format(selectedDate,'EEEE, MMMM d, yyyy') },
-                { icon:'🕐', label:'Time',     value: selectedTime?.label },
-                { icon:'👤', label:'Patient',  value: profile?.full_name },
-              ].map((r,i,arr) => (
-                <div key={r.label} className="flex items-center gap-3 py-3"
-                  style={i < arr.length-1 ? {borderBottom:'1px solid rgba(186,230,253,0.35)'} : {}}>
-                  <span className="text-xl w-7 text-center">{r.icon}</span>
-                  <div className="flex-1 flex justify-between items-center gap-2 flex-wrap">
-                    <span className="text-slate-400 text-sm">{r.label}</span>
-                    <span className="font-semibold text-slate-800 text-sm text-right">{r.value}</span>
-                  </div>
+                {Icon:Building2,   label:'Clinic',   value:clinic?.name},
+                {Icon:Stethoscope, label:'Service',  value:`${selectedService?.name} — ₱${parseFloat(selectedService?.price||0).toLocaleString()}`},
+                {Icon:Calendar,    label:'Date',     value:format(selectedDate,'EEEE, MMMM d, yyyy')},
+                {Icon:Clock,       label:'Time',     value:selectedTime?.label},
+                {Icon:User,        label:'Patient',  value:profile?.full_name},
+              ].map((r,i,arr)=>(
+                <div key={r.label} className={`flex items-center gap-3 py-3 ${i<arr.length-1?'border-b border-slate-100':''}`}>
+                  <r.Icon className="w-4 h-4 text-slate-400 shrink-0"/>
+                  <span className="text-slate-400 text-sm w-16 shrink-0">{r.label}</span>
+                  <span className="font-semibold text-slate-800 text-sm">{r.value}</span>
                 </div>
               ))}
             </div>
-            <div className="card p-4 mb-5">
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Additional Notes <span className="text-slate-300 font-normal">(optional)</span></label>
-              <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3}
-                placeholder="Allergies, concerns, or anything we should know..." className="input resize-none"/>
+
+            {/* Notes */}
+            <div className="card p-4 mb-4">
+              <Field label="Additional Notes">
+                <textarea value={notes} onChange={e=>setNotes(e.target.value)} rows={3}
+                  placeholder="Allergies, concerns, or anything we should know..." className="input resize-none"/>
+              </Field>
             </div>
+
             {/* Email notice */}
-            <div className="card p-4 mb-5 flex items-center gap-3"
-              style={{background:'rgba(220,252,231,0.5)',border:'1px solid rgba(134,239,172,0.5)'}}>
-              <svg className="w-5 h-5 text-green-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-              </svg>
-              <p className="text-green-700 text-xs font-medium">
-                A confirmation email will be sent to <strong>{user?.email}</strong> once you confirm.
-              </p>
+            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 mb-4 flex items-center gap-2.5 text-sm text-emerald-700">
+              <Mail className="w-4 h-4 shrink-0"/>
+              A confirmation email will be sent to <strong>{user?.email}</strong>
             </div>
-            <div className="card p-4 mb-5" style={{background:'rgba(224,242,254,0.5)',border:'1px solid rgba(186,230,253,0.6)'}}>
-              <p className="text-sky-700 text-xs font-medium">ℹ️ Your appointment will be sent as a request. The clinic will confirm it shortly.</p>
+
+            <div className="bg-sky-50 border border-sky-200 rounded-xl p-3 mb-5 text-xs text-sky-700">
+              ℹ️ Your appointment will be sent as a request. The clinic will confirm it shortly.
             </div>
+
             <button onClick={handleConfirmBooking} disabled={booking} className="btn btn-primary btn-lg w-full">
               {booking
-                ? <><span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block mr-2"/>Booking...</>
+                ? <><span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin"/>Booking...</>
                 : '🦷 Confirm Appointment'}
             </button>
           </div>

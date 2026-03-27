@@ -70,7 +70,7 @@ export function newBookingEmailToClinic({ clinicName, patientName, patientEmail,
       ${row('Service', serviceName)}
       ${row('Date', date)}
       ${row('Time', time)}
-      ${btn('View Appointment →', 'https://book-my-dentist.vercel.app/clinic/appointments')}
+      ${btn('View Appointment →', 'https://bookmydentistph.com/clinic/appointments')}
     `)
   }
 }
@@ -89,7 +89,7 @@ export function bookingConfirmedEmail({ patientName, clinicName, serviceName, da
       <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 16px;margin-top:16px;">
         <p style="color:#166534;font-size:13px;margin:0;">💡 Please arrive 5–10 minutes early. Contact the clinic if you need to reschedule.</p>
       </div>
-      ${btn('View My Appointments →', 'https://book-my-dentist.vercel.app/dashboard/appointments')}
+      ${btn('View My Appointments →', 'https://bookmydentistph.com/dashboard/appointments')}
     `)
   }
 }
@@ -108,7 +108,7 @@ export function bookingDeclinedEmail({ patientName, clinicName, serviceName, dat
       <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:12px 16px;margin-top:16px;">
         <p style="color:#991b1b;font-size:13px;margin:0;">You can book a different time slot at your convenience.</p>
       </div>
-      ${btn('Book Again →', 'https://book-my-dentist.vercel.app/dashboard/browse')}
+      ${btn('Book Again →', 'https://bookmydentistph.com/dashboard/browse')}
     `)
   }
 }
@@ -127,7 +127,7 @@ export function bookingRescheduledEmail({ patientName, clinicName, serviceName, 
       <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 16px;margin-top:16px;">
         <p style="color:#1e40af;font-size:13px;margin:0;">Please log in to accept or decline this new schedule.</p>
       </div>
-      ${btn('View & Respond →', 'https://book-my-dentist.vercel.app/dashboard/appointments')}
+      ${btn('View & Respond →', 'https://bookmydentistph.com/dashboard/appointments')}
     `)
   }
 }
@@ -145,7 +145,7 @@ export function bookingCompletedEmail({ patientName, clinicName, serviceName, da
       <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 16px;margin-top:16px;">
         <p style="color:#166534;font-size:13px;margin:0;">⭐ Leave a review to help other patients find great dental care!</p>
       </div>
-      ${btn('Leave a Review →', 'https://book-my-dentist.vercel.app/dashboard/appointments')}
+      ${btn('Leave a Review →', 'https://bookmydentistph.com/dashboard/appointments')}
     `)
   }
 }
@@ -193,7 +193,7 @@ export async function sendBookingRequestedEmail({ to, patientName, clinicName, s
           </div>
           <!-- CTA -->
           <div style="text-align:center;">
-            <a href="${typeof window !== 'undefined' ? window.location.origin : 'https://book-my-dentist.vercel.app'}/dashboard/appointments"
+            <a href="${typeof window !== 'undefined' ? window.location.origin : 'https://bookmydentistph.com'}/dashboard/appointments"
               style="display:inline-block;background:linear-gradient(135deg,#0ea5e9,#06b6d4);color:white;padding:14px 36px;border-radius:50px;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 4px 14px rgba(14,165,233,0.35);">
               View My Appointments →
             </a>
@@ -251,7 +251,7 @@ export async function sendNewBookingAlertEmail({ to, ownerName, clinicName, pati
           </div>
           <!-- CTA -->
           <div style="text-align:center;">
-            <a href="${typeof window !== 'undefined' ? window.location.origin : 'https://book-my-dentist.vercel.app'}/clinic/appointments"
+            <a href="${typeof window !== 'undefined' ? window.location.origin : 'https://bookmydentistph.com'}/clinic/appointments"
               style="display:inline-block;background:linear-gradient(135deg,#0ea5e9,#06b6d4);color:white;padding:14px 36px;border-radius:50px;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 4px 14px rgba(14,165,233,0.35);">
               Review Request →
             </a>
@@ -282,7 +282,7 @@ export async function sendClinicApprovedEmail({ to, clinicName, ownerName }) {
             Patients can now find and book appointments with you.
           </p>
           <div style="text-align:center;margin:32px 0;">
-            <a href="https://book-my-dentist.vercel.app/clinic"
+            <a href="https://bookmydentistph.com/clinic"
               style="display:inline-block;background:linear-gradient(135deg,#0ea5e9,#06b6d4);color:white;padding:14px 36px;border-radius:50px;text-decoration:none;font-weight:700;font-size:15px;">
               Go to Dashboard →
             </a>
@@ -350,7 +350,7 @@ export async function sendAppointmentEmail({ to, subject, patientName, clinicNam
             <p style="color:#7f1d1d;margin:0;">${reason}</p>
           </div>` : ''}
           <div style="text-align:center;">
-            <a href="https://book-my-dentist.vercel.app/dashboard/appointments"
+            <a href="https://bookmydentistph.com/dashboard/appointments"
               style="display:inline-block;background:linear-gradient(135deg,#0ea5e9,#06b6d4);color:white;padding:14px 36px;border-radius:50px;text-decoration:none;font-weight:700;font-size:15px;">
               View My Appointments →
             </a>

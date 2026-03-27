@@ -4,7 +4,7 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')!
-const FROM_EMAIL     = 'BookMyDentist <noreply@bookmydentist.com>'
+const FROM_EMAIL     = 'BookMyDentistPH <hello@bookmydentistph.com>'
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin':  '*',
