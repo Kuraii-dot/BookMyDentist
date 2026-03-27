@@ -23,8 +23,8 @@ export default function CustomerLayout() {
       <header className="glass-header sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-sky-500 flex items-center justify-center">
-              <span className="text-white text-xs">🦷</span>
+          <div className="w-20 h-20 rounded-lg flex items-center justify-center">
+          <img src="/Logo.png" alt="BookMyDentistPH" className="w-20 h-20 rounded-lg object-contain"/>
             </div>
             <span className="font-display font-bold text-slate-900 text-sm">BookMyDentistPH</span>
           </div>

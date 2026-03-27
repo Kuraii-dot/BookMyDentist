@@ -11,7 +11,6 @@ import cloud3 from '../assets/Cloud3.png'
 import cloud4 from '../assets/Cloud4.png'
 import dentalGif from '../assets/mascotnoBG.png'
 import heroImg from '../assets/heroooo.png'
-import explorerImg from '../assets/Explore.png'
 
 // ── Global animation + paper styles ─────────────────────────────────────────
 const ANIM_STYLES = `
@@ -538,11 +537,17 @@ function BrowseDropdown() {
 
 // ── Logo ─────────────────────────────────────────────────────────────────────
 const LOGO = () => (
-  <div className="flex items-center gap-2.5">
-    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-sky-400 to-cyan-500 flex items-center justify-center shadow-[0_4px_12px_rgba(14,165,233,0.35)]">
-      <ToothIcon className="w-4 h-4 text-white"/>
+<div className="flex items-center">
+    <div className="w-20 h-20 flex items-center justify-center">
+      <img
+        src="/Logo.png"
+        alt="BookMyDentistPH"
+        className="w-20 h-20 object-contain"
+      />
     </div>
-    <span className="font-display font-bold text-slate-900 text-lg">BookMyDentist</span>
+    <span className="font-display font-bold text-slate-900 text-lg">
+      BookMyDentist
+    </span>
   </div>
 )
 
@@ -597,7 +602,7 @@ export default function Landing() {
   return (
     <div className="min-h-screen paper-grain relative" style={{
       fontFamily:"'DM Sans', sans-serif",
-      background:'linear-gradient(160deg, #e0f2fe 0%, #e0f2fe 20%, #ffffff 40%)'
+      background:'linear-gradient(160deg, #e0f2fe 0%, #e0f2fe 20%, #ffffff 40%, #e0f2fe)'
     }}>
       <style>{ANIM_STYLES}</style>
       <BackgroundScene/>
@@ -1032,10 +1037,14 @@ export default function Landing() {
                 <div className="footer-grid grid gap-10 pb-12">
 
                   <div>
-                    <div className="flex items-center gap-2.5 mb-4">
-                      <div className="w-9 h-9 rounded-[10px] bg-gradient-to-br from-sky-400 to-sky-500 flex items-center justify-center shadow-[0_4px_12px_rgba(14,165,233,0.4)]">
-                        <ToothIcon className="w-4 h-4 text-white"/>
-                      </div>
+                    <div className="flex items-center mb-4">
+                    <div className="w-20 h-20 flex items-center justify-center">
+                      <img
+                        src="/Logo.png"
+                        alt="BookMyDentistPH"
+                        className="w-20 h-20 object-contain"
+                      />
+                    </div>
                       <span className="font-display font-extrabold text-[1.1rem] text-white">BookMyDentist</span>
                     </div>
                     <p className="text-white/60 text-sm leading-[1.7] max-w-[260px] mb-6">

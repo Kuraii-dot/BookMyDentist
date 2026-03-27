@@ -17,11 +17,9 @@ export default function Navbar({ showNotifications = false }) {
 
   if (loading) return (
     <nav className="glass-header sticky top-0 z-40">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+      <div className="max-w-full mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-sky-500 flex items-center justify-center">
-            <span className="text-white text-xs">🦷</span>
-          </div>
+          <img src="/Logo.png" alt="BookMyDentistPH" className="w-20 h-20 rounded-2xl mx-auto mb-4 object-contain"/>
           <span className="font-display font-bold text-slate-900 text-sm">BookMyDentistPH</span>
         </div>
         <div className="skeleton h-8 w-24 rounded-lg"/>
@@ -34,9 +32,7 @@ export default function Navbar({ showNotifications = false }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-sky-500 flex items-center justify-center">
-            <span className="text-white text-xs">🦷</span>
-          </div>
+          <img src="/Logo.png" alt="BookMyDentistPH" className="w-20 h-20 rounded-lg object-contain"/>
           <span className="font-display font-bold text-slate-900 text-sm">BookMyDentistPH</span>
         </Link>
 

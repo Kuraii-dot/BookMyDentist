@@ -17,8 +17,14 @@ export default function AboutUs() {
 
         {/* Hero */}
         <div className="text-center mb-12">
-          <div className="w-16 h-16 rounded-2xl bg-sky-500 flex items-center justify-center mx-auto mb-5 shadow-lg">
-            <span className="text-3xl">🦷</span>
+          <div className="w-20 h-20  flex items-center justify-center mx-auto">
+                <div className="w-20 h-20 flex items-center justify-center">
+      <img
+        src="/Logo.png"
+        alt="BookMyDentistPH"
+        className="w-20 h-20 object-contain"
+      />
+    </div>
           </div>
           <p className="section-label mb-3">Our Story</p>
           <h1 className="font-display font-bold text-slate-900 text-3xl sm:text-4xl mb-4">
