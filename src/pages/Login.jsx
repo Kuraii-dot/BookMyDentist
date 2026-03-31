@@ -31,7 +31,7 @@ export default function Login() {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
-          <img src="/Logo.png" alt="BookMyDentistPH" className="w-20 h-20 rounded-2xl mx-auto mb-4 object-contain"/>
+          <img src="/Logo.png" alt="BookMyDentistPH" className="w-20 h-20 rounded-2xl mx-auto object-contain"/>
           <h1 className="font-display font-bold text-slate-900 text-2xl">Welcome back</h1>
           <p className="text-slate-500 text-sm mt-1">Sign in to BookMyDentistPH</p>
         </div>

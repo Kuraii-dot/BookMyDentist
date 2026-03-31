@@ -542,11 +542,14 @@ const LOGO = () => (
       <img
         src="/Logo.png"
         alt="BookMyDentistPH"
-        className="w-20 h-20 object-contain"
+        className="w-17 h-15 object-contain"
       />
     </div>
+        <span className="font-display font-bold text-sky-400 text-lg">
+      Book
+    </span>
     <span className="font-display font-bold text-slate-900 text-lg">
-      BookMyDentist
+      MyDentist
     </span>
   </div>
 )
@@ -633,7 +636,7 @@ export default function Landing() {
       </nav>
 
       {/* ── HERO ── */}
-      <section className="relative z-[1] pt-16 overflow-hidden">
+      <section className="relative z-[1] overflow-hidden">
         {/* Full-bleed hero image */}
         <div className="relative w-full" style={{minHeight:'88vh'}}>
 
@@ -1008,8 +1011,13 @@ export default function Landing() {
             <div className="card p-12 text-center relative overflow-hidden">
               <div className="pointer-events-none absolute top-0 left-0 w-64 h-64 rounded-full opacity-40 bg-[radial-gradient(circle,rgba(186,230,253,0.8)_0%,transparent_70%)]"/>
               <div className="pointer-events-none absolute bottom-0 right-0 w-64 h-64 rounded-full opacity-30 bg-[radial-gradient(circle,rgba(251,191,36,0.4)_0%,transparent_70%)]"/>
-              <div className="relative">
-                <div className="w-20 h-20 mx-auto mb-6 animate-float"><HeroIllustration/></div>
+              <div className="flex flex-col items-center relative z-[1]">
+                    <div className="w-20 h-20 flex items-center justify-center">
+      <img
+        src="/Logo.png"
+        alt="BookMyDentistPH"
+        className="w-20 h-20 object-contain"
+      /></div>
                 <h2 className="font-display font-bold text-slate-900 text-3xl sm:text-4xl mb-4 tracking-[-0.02em]">
                   Ready to Book Your Visit?
                 </h2>
@@ -1038,14 +1046,15 @@ export default function Landing() {
 
                   <div>
                     <div className="flex items-center mb-4">
-                    <div className="w-20 h-20 flex items-center justify-center">
+                    <div className="w-17 h-15 flex items-center justify-center">
                       <img
                         src="/Logo.png"
                         alt="BookMyDentistPH"
                         className="w-20 h-20 object-contain"
                       />
                     </div>
-                      <span className="font-display font-extrabold text-[1.1rem] text-white">BookMyDentist</span>
+                    <span className="font-display font-bold text-[1.1rem] text-slate-900">Book</span>
+                      <span className="font-display font-bold text-[1.1rem] text-white">MyDentist</span>
                     </div>
                     <p className="text-white/60 text-sm leading-[1.7] max-w-[260px] mb-6">
                       Connecting patients with verified, affordable dental clinics across the Philippines. Book in minutes, smile with confidence.
@@ -1062,7 +1071,7 @@ export default function Landing() {
                     { title:'Product',   links:[['Browse Clinics','/browse'],['Book Appointment','/register'],['List Your Clinic','/register?role=clinic'],['How It Works','/#how-it-works']] },
                     { title:'Resources', links:[['Help Centre','/contact'],['FAQ','/contact'],['Contact Us','/contact'],['For Clinics','/register?role=clinic']] },
                     { title:'Company',   links:[['About Us','/about'],['Blog','/about'],['Careers','/contact']] },
-                    { title:'Legal',     links:[['Privacy Policy','/contact'],['Terms of Service','/contact'],['Accessibility','/contact']] },
+                    { title:'Legal',     links:[['Privacy Policy','/privacy'],['Terms of Service','/terms'],['Accessibility','/contact']] },
                   ].map(col => (
                     <div key={col.title}>
                       <p className="text-white font-bold text-[0.85rem] mb-4 tracking-[0.03em]">{col.title}</p>
@@ -1079,7 +1088,7 @@ export default function Landing() {
                 <div className="py-6">
                   <p className="text-white/35 text-[0.75rem] leading-[1.7] max-w-[720px]">
                     BookMyDentist is a booking platform connecting patients and dental clinics. We do not own or operate any dental practice. We are not liable for the quality of care, disputes, or outcomes — see our{' '}
-                    <Link to="/contact" className="text-white/55 underline">Terms of Service</Link>.
+                    <Link to="/terms" className="text-white/55 underline">Terms of Service</Link>.
                   </p>
                 </div>
 

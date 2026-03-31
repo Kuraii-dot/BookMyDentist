@@ -10,6 +10,9 @@ import ProfileEdit from '../pages/ProfileEdit'
 import AboutUs from '../pages/AboutUs'
 import ContactUs from '../pages/ContactUs'
 import BrowseServices from '../pages/BrowseServices'
+import PrivacyPolicy  from '../pages/PrivacyPolicy'
+import TermsOfService from '../pages/TermsOfService'
+
 
 // Customer
 import CustomerLayout from '../pages/customer/CustomerLayout'
@@ -38,6 +41,8 @@ const router = createBrowserRouter([
   { path: '/contact', element: <ContactUs /> },
   { path: '/browse', element: <BrowseServices /> },
   { path: '/clinic/:id', element: <ClinicDetail /> },
+  { path: '/terms',   element: <TermsOfService/> },
+  { path: '/privacy', element: <PrivacyPolicy/>  },
 
   // Customer routes
   {

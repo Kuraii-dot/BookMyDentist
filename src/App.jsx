@@ -1,11 +1,14 @@
+import OnboardingModal from './components/OnboardingModal'
 import { AuthProvider } from './context/AuthContext'
 import { RouterProvider } from 'react-router-dom'
 import router from './router' 
 import { Toaster } from 'react-hot-toast'
 
+
 export default function App() {
   return (
     <AuthProvider>
+      <OnboardingModal />
       <RouterProvider router={router} />
       <Toaster
         position="top-right"

@@ -9,7 +9,8 @@
  ┃ ┃ ┣ 📂ui
  ┃ ┃ ┣ 📜Navbar.jsx
  ┃ ┃ ┣ 📜NotificationsBell.jsx
- ┃ ┃ ┗ 📜ProtectedRoute.jsx
+ ┃ ┃ ┣ 📜OnboardingModal.jsx
+ ┃ ┃ ┣ 📜ProtectedRoute.jsx
  ┃ ┃ ┗ 📜Review.jsx
  ┃ ┣ 📂context
  ┃ ┃ ┗ 📜AuthContext.jsx

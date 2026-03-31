@@ -32,7 +32,7 @@ export default function Navbar({ showNotifications = false }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
-          <img src="/Logo.png" alt="BookMyDentistPH" className="w-20 h-20 rounded-lg object-contain"/>
+          <img src="/Logo.png" alt="BookMyDentistPH" className="w-17 h-15 rounded-lg object-contain"/>
           <span className="font-display font-bold text-slate-900 text-sm">BookMyDentistPH</span>
         </Link>
 
