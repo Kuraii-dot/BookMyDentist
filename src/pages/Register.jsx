@@ -43,7 +43,7 @@ export default function Register() {
       options: { data: { full_name: form.full_name, role: form.role } }
     })
     if (err) { setError(err.message); setLoading(false); return }
-    navigate(isClinic ? '/clinic' : '/dashboard')
+    navigate('/verify-email', { state: { email: form.email } })
   }
 
   return (
