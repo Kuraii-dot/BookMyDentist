@@ -52,8 +52,7 @@ export default function Login() {
         {/* Logo */}
         <div className="relative">
           <Link to="/" className="flex items-center gap-2.5">
-            <img src="/logo.png" alt="BookMyDentistPH" className="w-9 h-9 rounded-xl object-contain bg-white/10 p-1"/>
-            <span className="font-display font-bold text-white text-xl">BookMyDentistPH</span>
+            <span className="font-display font-bold text-white text-3xl">BookMyDentist</span>
           </Link>
         </div>
 

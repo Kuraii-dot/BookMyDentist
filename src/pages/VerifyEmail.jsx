@@ -32,9 +32,12 @@ export default function VerifyEmail() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-sky-400 to-cyan-500 flex items-center justify-center shadow-sm">
-              <span className="text-white text-sm">🦷</span>
-            </div>
+        <span className="font-display font-bold text-sky-400 text-3xl">
+      Book
+    </span>
+    <span className="font-display font-bold text-slate-900 text-3xl">
+      MyDentist
+    </span>
             <span className="font-display font-bold text-slate-900">BookMyDentist</span>
           </Link>
         </div>
