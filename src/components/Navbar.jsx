@@ -19,8 +19,12 @@ export default function Navbar({ showNotifications = false }) {
     <nav className="glass-header sticky top-0 z-40">
       <div className="max-w-full mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <img src="/Logo.png" alt="BookMyDentistPH" className="w-20 h-20 rounded-2xl mx-auto mb-4 object-contain"/>
-          <span className="font-display font-bold text-slate-900 text-sm">BookMyDentistPH</span>
+        <span className="font-display font-bold text-sky-400 text-3xl">
+      Book
+    </span>
+    <span className="font-display font-bold text-slate-900 text-3xl">
+      MyDentist
+    </span>
         </div>
         <div className="skeleton h-8 w-24 rounded-lg"/>
       </div>
@@ -30,7 +34,6 @@ export default function Navbar({ showNotifications = false }) {
   return (
     <nav className="glass-header sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-        {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
 <div className="flex items-center">
     <div className="w-20 h-20 flex items-center justify-center">

@@ -38,7 +38,6 @@ export default function VerifyEmail() {
     <span className="font-display font-bold text-slate-900 text-3xl">
       MyDentist
     </span>
-            <span className="font-display font-bold text-slate-900">BookMyDentist</span>
           </Link>
         </div>
 

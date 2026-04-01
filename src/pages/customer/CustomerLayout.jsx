@@ -21,21 +21,13 @@ export default function CustomerLayout() {
     <div className="min-h-screen flex flex-col bg-slate-50">
       {/* Header */}
       <header className="glass-header sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-<div className="flex items-center">
-    <div className="w-20 h-20 flex items-center justify-center">
-    </div>
-    <span className="font-display font-bold text-sky-800 text-lg">
-      Book
-    </span>
-        <span className="font-display font-bold text-sky-400 text-lg">
-      My
-    </span>
-        <span className="font-display font-bold text-sky-400 text-lg">
-      Dentist
-    </span>
-  </div>
+          <span className="font-display font-bold text-sky-400 text-3xl">
+          Book
+          <span className="font-display font-bold text-slate-900 text-3xl">
+            MyDentist
+          </span></span>
           </div>
           <div className="flex items-center gap-3">
             <NotificationBell/>
