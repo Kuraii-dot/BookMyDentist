@@ -65,8 +65,7 @@ export default function Register() {
         {/* Logo */}
         <div className="relative">
           <Link to="/" className="flex items-center gap-2.5">
-            <img src="Logo.png" alt="BookMyDentistPH" className="w-20 h-20 object-contain"/>
-            <span className="font-display font-bold text-white text-xl">BookMyDentistPH</span>
+            <span className="font-display font-bold text-white text-3xl">BookMyDentist</span>
           </Link>
         </div>
 
@@ -140,8 +139,10 @@ export default function Register() {
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
             <Link to="/" className="inline-flex items-center gap-2">
-              <img src="/Logo.png" alt="BookMyDentist" className="w-17 h-15 object-contain"/>
-              <span className="font-display font-bold text-slate-900">BookMyDentist</span>
+            <span className="font-display font-bold text-sky-400 text-3xl">Book
+            <span className="font-display font-bold text-slate-900 text-3xl">
+              MyDentist
+            </span></span>
             </Link>
           </div>
 

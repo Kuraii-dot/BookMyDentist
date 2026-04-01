@@ -5,9 +5,9 @@ import { Mail, MessageSquare, Building2, CheckCircle2 } from 'lucide-react'
 import { Field, Alert } from '../components/ui/shared'
 
 const CONTACTS = [
-  { Icon:Mail,          label:'Email Us',     value:'hello@bookmydentistph.com',   note:'We reply within 24 hours' },
-  { Icon:Building2,     label:'For Clinics',  value:'clinics@bookmydentistph.com', note:'Partnership & onboarding' },
-  { Icon:MessageSquare, label:'Support',      value:'support@bookmydentistph.com', note:'Technical issues & help' },
+  { Icon:Mail,          label:'Email Us',     value:'hello@bookmydentistph.com', note:'We reply within 24 hours' },
+  { Icon:Building2,     label:'For Clinics',  value:'hello@bookmydentistph.com', note:'Clinic partnerships & onboarding' },
+  { Icon:MessageSquare, label:'Support',      value:'hello@bookmydentistph.com', note:'Technical issues & support' },
 ]
 
 export default function ContactUs() {

@@ -32,8 +32,16 @@ export default function Navbar({ showNotifications = false }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
-          <img src="/Logo.png" alt="BookMyDentistPH" className="w-17 h-15 rounded-lg object-contain"/>
-          <span className="font-display font-bold text-slate-900 text-sm">BookMyDentistPH</span>
+<div className="flex items-center">
+    <div className="w-20 h-20 flex items-center justify-center">
+    </div>
+        <span className="font-display font-bold text-sky-400 text-3xl">
+      Book
+    </span>
+    <span className="font-display font-bold text-slate-900 text-3xl">
+      MyDentist
+    </span>
+  </div>
         </Link>
 
         {/* Right */}

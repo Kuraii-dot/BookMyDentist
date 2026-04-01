@@ -539,16 +539,11 @@ function BrowseDropdown() {
 const LOGO = () => (
 <div className="flex items-center">
     <div className="w-20 h-20 flex items-center justify-center">
-      <img
-        src="/Logo.png"
-        alt="BookMyDentistPH"
-        className="w-17 h-15 object-contain"
-      />
     </div>
-        <span className="font-display font-bold text-sky-400 text-lg">
+        <span className="font-display font-bold text-sky-400 text-3xl">
       Book
     </span>
-    <span className="font-display font-bold text-slate-900 text-lg">
+    <span className="font-display font-bold text-slate-900 text-3xl">
       MyDentist
     </span>
   </div>
@@ -719,6 +714,88 @@ export default function Landing() {
               </Reveal>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* ── VIDEO TUTORIALS ── */}
+      <section className="py-20 relative z-[1]">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6">
+          <Reveal variant="blur-up">
+            <div className="text-center mb-12">
+              <p className="text-xs font-bold uppercase tracking-widest text-sky-500 mb-3">Get Started Quickly</p>
+              <h2 className="font-display font-bold text-slate-900 text-3xl sm:text-4xl mb-3 tracking-[-0.02em]">See How It Works</h2>
+              <p className="text-slate-500 text-base max-w-md mx-auto">Watch these short guides to get started in minutes — whether you're a patient or a clinic.</p>
+            </div>
+          </Reveal>
+ 
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {/* Patient tutorial */}
+            <Reveal variant="blur-up" delay={0}>
+              <div className="card overflow-hidden group">
+                {/* Video embed — replace src with your YouTube/Vimeo embed URL */}
+                <div className="relative bg-slate-900 aspect-video flex items-center justify-center">
+                  {/* PLACEHOLDER — replace this div with your iframe once you have a video URL:
+                      <iframe
+                        src="https://www.youtube.com/embed/YOUR_VIDEO_ID"
+                        title="How to book as a patient"
+                        className="w-full h-full"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      /> */}
+                  <div className="flex flex-col items-center gap-3 text-white/60 p-8 text-center">
+                    <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center">
+                      <svg className="w-7 h-7 ml-1" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                      </svg>
+                    </div>
+                    <p className="text-sm font-medium text-white/40">Patient tutorial video coming soon</p>
+                  </div>
+                </div>
+                <div className="p-5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="badge badge-teal text-xs">For Patients</span>
+                  </div>
+                  <h3 className="font-display font-bold text-slate-900 text-base mb-1">How to Book an Appointment</h3>
+                  <p className="text-slate-500 text-sm leading-relaxed">Create an account, find a clinic near you, pick a schedule, and confirm your booking in under 2 minutes.</p>
+                </div>
+              </div>
+            </Reveal>
+ 
+            {/* Clinic tutorial */}
+            <Reveal variant="blur-up" delay={100}>
+              <div className="card overflow-hidden group">
+                <div className="relative bg-slate-900 aspect-video flex items-center justify-center">
+                  {/* PLACEHOLDER — replace with your iframe once you have a video:
+                      <iframe
+                        src="https://www.youtube.com/embed/YOUR_VIDEO_ID"
+                        title="How to register as a clinic"
+                        className="w-full h-full"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      /> */}
+                  <div className="flex flex-col items-center gap-3 text-white/60 p-8 text-center">
+                    <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center">
+                      <svg className="w-7 h-7 ml-1" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z"/>
+                      </svg>
+                    </div>
+                    <p className="text-sm font-medium text-white/40">Clinic tutorial video coming soon</p>
+                  </div>
+                </div>
+                <div className="p-5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="badge badge-info text-xs">For Clinics</span>
+                  </div>
+                  <h3 className="font-display font-bold text-slate-900 text-base mb-1">How to Register Your Clinic</h3>
+                  <p className="text-slate-500 text-sm leading-relaxed">Set up your clinic profile, add your services and availability, submit for approval, and start receiving bookings.</p>
+                </div>
+              </div>
+            </Reveal>
+          </div>
+ 
+          {/* To add your video: replace the placeholder div inside each card with:
+              <iframe src="https://www.youtube.com/embed/YOUR_VIDEO_ID" ... />
+              Get the embed URL from YouTube → Share → Embed → copy the src URL */}
         </div>
       </section>
 
@@ -913,6 +990,7 @@ export default function Landing() {
         </div>
       </section>
 
+
       {/* ── MASCOT PAPER SECTION ── */}
       <section className="relative z-[1] py-20 pb-15">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
@@ -1012,12 +1090,7 @@ export default function Landing() {
               <div className="pointer-events-none absolute top-0 left-0 w-64 h-64 rounded-full opacity-40 bg-[radial-gradient(circle,rgba(186,230,253,0.8)_0%,transparent_70%)]"/>
               <div className="pointer-events-none absolute bottom-0 right-0 w-64 h-64 rounded-full opacity-30 bg-[radial-gradient(circle,rgba(251,191,36,0.4)_0%,transparent_70%)]"/>
               <div className="flex flex-col items-center relative z-[1]">
-                    <div className="w-20 h-20 flex items-center justify-center">
-      <img
-        src="/Logo.png"
-        alt="BookMyDentistPH"
-        className="w-20 h-20 object-contain"
-      /></div>
+                    <div className="w-20 h-20 flex items-center justify-center"></div>
                 <h2 className="font-display font-bold text-slate-900 text-3xl sm:text-4xl mb-4 tracking-[-0.02em]">
                   Ready to Book Your Visit?
                 </h2>
@@ -1046,15 +1119,8 @@ export default function Landing() {
 
                   <div>
                     <div className="flex items-center mb-4">
-                    <div className="w-17 h-15 flex items-center justify-center">
-                      <img
-                        src="/Logo.png"
-                        alt="BookMyDentistPH"
-                        className="w-20 h-20 object-contain"
-                      />
-                    </div>
-                    <span className="font-display font-bold text-[1.1rem] text-slate-900">Book</span>
-                      <span className="font-display font-bold text-[1.1rem] text-white">MyDentist</span>
+                    <span className="font-display font-bold text-3xl text-sky-500">Book</span>
+                      <span className="font-display font-bold text-3xl text-slate-900">MyDentist</span>
                     </div>
                     <p className="text-white/60 text-sm leading-[1.7] max-w-[260px] mb-6">
                       Connecting patients with verified, affordable dental clinics across the Philippines. Book in minutes, smile with confidence.
