@@ -36,7 +36,7 @@ function PendingTab({ onRefreshStats }) {
     await supabase.from('clinics').update({verification_status:'approved',is_active:true}).eq('id',clinic.id)
     await supabase.from('notifications').insert({
       recipient_id:clinic.profiles.id, type:'accepted',
-      title:'🎉 Clinic Approved!',
+      title:'Clinic Approved!',
       message:`Your clinic "${clinic.name}" has been approved and is now live on BookMyDentistPH!`
     })
     await sendClinicApprovedEmail?.({to:clinic.profiles.email, ownerName:clinic.profiles.full_name, clinicName:clinic.name})
@@ -301,7 +301,7 @@ export default function SuperAdminDashboard() {
         <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-lg bg-sky-500 flex items-center justify-center">
-              <span className="text-white text-xs">🦷</span>
+              <span className="text-white text-xs">[DENTAL]</span>
             </div>
             <span className="font-display font-bold text-slate-900 text-sm">BookMyDentistPH</span>
             <span className="badge badge-info ml-1">Admin</span>

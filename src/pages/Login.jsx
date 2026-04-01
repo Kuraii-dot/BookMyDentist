@@ -61,7 +61,7 @@ export default function Login() {
           <div>
             <h1 className="font-display font-bold text-white text-4xl leading-tight mb-3"
               style={{letterSpacing:'-0.02em'}}>
-              Welcome<br/>back! 👋
+              Welcome<br/>back!
             </h1>
             <p className="text-sky-100 text-base leading-relaxed max-w-xs">
               Sign in to manage your appointments, find new clinics, and keep your smile on track.
