@@ -119,8 +119,10 @@ export default function Login() {
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
             <Link to="/" className="inline-flex items-center gap-2">
-              <img src="/logo.png" alt="BookMyDentistPH" className="w-8 h-8 rounded-lg object-contain"/>
-              <span className="font-display font-bold text-slate-900">BookMyDentistPH</span>
+            <span className="font-display font-bold text-sky-400 text-3xl">Book
+            <span className="font-display font-bold text-slate-900 text-3xl">
+              MyDentist
+            </span></span>
             </Link>
           </div>
 

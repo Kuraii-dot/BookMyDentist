@@ -38,12 +38,19 @@ export default function Register() {
     if (!form.full_name.trim()||!form.email||!form.password) { setError('Please fill in all fields'); return }
     if (form.password.length < 6) { setError('Password must be at least 6 characters'); return }
     setLoading(true)
-    const { error:err } = await supabase.auth.signUp({
-      email: form.email, password: form.password,
-      options: { data: { full_name: form.full_name, role: form.role } }
-    })
+const { error: err } = await supabase.auth.signUp({
+  email: form.email,
+  password: form.password,
+  options: {
+    emailRedirectTo: 'https://bookmydentistph.com/auth/callback',
+    data: {
+      full_name: form.full_name,
+      role: form.role
+    }
+  }
+})
     if (err) { setError(err.message); setLoading(false); return }
-    navigate(isClinic ? '/clinic' : '/dashboard')
+    navigate('/check-email')
   }
 
   return (
