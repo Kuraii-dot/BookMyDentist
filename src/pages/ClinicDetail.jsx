@@ -139,6 +139,14 @@ export default function ClinicDetail() {
               </div>
             )}
 
+<iframe
+  width="100%"
+  height="100%"
+  style={{border:0}}
+  loading="lazy"
+  src={`https://maps.google.com/maps?q=${encodeURIComponent([clinic.name, clinic.address, clinic.city].filter(Boolean).join(', '))}&output=embed`}
+/>
+
             {/* Mobile book */}
             <button onClick={()=>user?navigate(`/book/${clinic.id}`):navigate('/login')}
               className="btn btn-primary btn-md w-full mt-4 sm:hidden">Book Appointment</button>
