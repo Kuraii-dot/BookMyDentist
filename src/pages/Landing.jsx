@@ -735,7 +735,7 @@ export default function Landing() {
                 {/* Video embed — replace src with your YouTube/Vimeo embed URL */}
            <div className="relative bg-black aspect-video">
             <iframe
-              src="https://www.youtube.com/embed/mewn-qxETmo"
+              src="https://youtu.be/mewn-qxETmo"
               title="How to book as a patient"
               className="w-full h-full"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
