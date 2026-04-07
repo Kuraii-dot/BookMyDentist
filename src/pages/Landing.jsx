@@ -733,24 +733,15 @@ export default function Landing() {
             <Reveal variant="blur-up" delay={0}>
               <div className="card overflow-hidden group">
                 {/* Video embed — replace src with your YouTube/Vimeo embed URL */}
-                <div className="relative bg-slate-900 aspect-video flex items-center justify-center">
-                  {/* PLACEHOLDER — replace this div with your iframe once you have a video URL:
-                      <iframe
-                        src="https://www.youtube.com/embed/YOUR_VIDEO_ID"
-                        title="How to book as a patient"
-                        className="w-full h-full"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                      /> */}
-                  <div className="flex flex-col items-center gap-3 text-white/60 p-8 text-center">
-                    <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center">
-                      <svg className="w-7 h-7 ml-1" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z"/>
-                      </svg>
-                    </div>
-                    <p className="text-sm font-medium text-white/40">Patient tutorial video coming soon</p>
-                  </div>
-                </div>
+           <div className="relative bg-black aspect-video">
+            <iframe
+              src="https://www.youtube.com/embed/mewn-qxETmo"
+              title="How to book as a patient"
+              className="w-full h-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
                 <div className="p-5">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="badge badge-teal text-xs">For Patients</span>
