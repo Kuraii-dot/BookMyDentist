@@ -1,21 +1,24 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
-import { format, isPast, startOfMonth, endOfMonth, eachDayOfInterval,
-         getDay, addMonths, isSameDay, parseISO, addDays, startOfToday } from 'date-fns'
+import {
+  format, isPast, startOfMonth, endOfMonth, eachDayOfInterval,
+  getDay, addMonths, isSameDay, parseISO, addDays, startOfToday,
+} from 'date-fns'
 import toast from 'react-hot-toast'
 import { sendAppointmentEmail } from '../../lib/email'
 import {
   Calendar, Clock, User, ChevronLeft, ChevronRight,
   AlertTriangle, Plus, X, CheckCircle2, XCircle, RefreshCw,
-  Trophy, Stethoscope, Phone, Mail, Users
+  Trophy, Stethoscope, Mail, Users, Timer, ClipboardList,
+  Save, Zap, AlertCircle, ListChecks,
 } from 'lucide-react'
 
 const TABS = [
-  { key: 'pending',   label: 'Pending',   icon: '⏳' },
-  { key: 'upcoming',  label: 'Upcoming',  icon: '✅' },
-  { key: 'completed', label: 'Completed', icon: '🏆' },
-  { key: 'all',       label: 'All',       icon: '📋' },
+  { key: 'pending',   label: 'Pending',   Icon: Timer       },
+  { key: 'upcoming',  label: 'Upcoming',  Icon: CheckCircle2 },
+  { key: 'completed', label: 'Completed', Icon: Trophy      },
+  { key: 'all',       label: 'All',       Icon: ClipboardList},
 ]
 
 const STATUS_CONFIG = {
@@ -31,22 +34,19 @@ const STATUS_CONFIG = {
 
 const DAY_KEYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday']
 
-// ── Mini Calendar ──────────────────────────────────────────────────────────────
+// ── Mini Calendar ─────────────────────────────────────────────────────────────
 function MiniCalendar({ appointments, onSelectDate, selectedDate, bookingWindowDays = 30 }) {
   const [viewMonth, setViewMonth] = useState(startOfMonth(new Date()))
 
   const maxMonth = startOfMonth(addDays(startOfToday(), bookingWindowDays))
   const minMonth = startOfMonth(new Date(Math.min(...appointments.map(a => new Date(a.appointment_date).getTime()), Date.now())))
 
-  const days = eachDayOfInterval({ start: startOfMonth(viewMonth), end: endOfMonth(viewMonth) })
-  const firstDow = getDay(days[0]) // 0=Sun
+  const days     = eachDayOfInterval({ start: startOfMonth(viewMonth), end: endOfMonth(viewMonth) })
+  const firstDow = getDay(days[0])
 
-  // Count appointments per date string
   const countByDate = useMemo(() => {
     const map = {}
-    appointments.forEach(a => {
-      map[a.appointment_date] = (map[a.appointment_date] || 0) + 1
-    })
+    appointments.forEach(a => { map[a.appointment_date] = (map[a.appointment_date] || 0) + 1 })
     return map
   }, [appointments])
 
@@ -55,40 +55,30 @@ function MiniCalendar({ appointments, onSelectDate, selectedDate, bookingWindowD
 
   return (
     <div className="card p-5">
-      {/* Month nav */}
       <div className="flex items-center justify-between mb-4">
         <button onClick={() => setViewMonth(m => addMonths(m, -1))} disabled={!canGoPrev}
           className="w-8 h-8 rounded-xl flex items-center justify-center transition-all disabled:opacity-30 hover:bg-sky-50">
-          <ChevronLeft className="w-4 h-4 text-slate-500"/>
+          <ChevronLeft className="w-4 h-4 text-slate-500" />
         </button>
-        <h3 className="font-display font-bold text-slate-800 text-sm">
-          {format(viewMonth, 'MMMM yyyy')}
-        </h3>
+        <h3 className="font-display font-bold text-slate-800 text-sm">{format(viewMonth, 'MMMM yyyy')}</h3>
         <button onClick={() => setViewMonth(m => addMonths(m, 1))} disabled={!canGoNext}
           className="w-8 h-8 rounded-xl flex items-center justify-center transition-all disabled:opacity-30 hover:bg-sky-50">
-          <ChevronRight className="w-4 h-4 text-slate-500"/>
+          <ChevronRight className="w-4 h-4 text-slate-500" />
         </button>
       </div>
-
-      {/* Day headers */}
       <div className="grid grid-cols-7 mb-1">
         {['Su','Mo','Tu','We','Th','Fr','Sa'].map(d => (
           <div key={d} className="text-center text-xs font-bold text-slate-400 py-1">{d}</div>
         ))}
       </div>
-
-      {/* Day cells */}
       <div className="grid grid-cols-7 gap-y-1 gap-3">
-        {/* Empty cells before first day */}
-        {Array.from({ length: firstDow }).map((_, i) => <div key={`e${i}`}/>)}
-
+        {Array.from({ length: firstDow }).map((_, i) => <div key={`e${i}`} />)}
         {days.map(day => {
-          const dateStr = format(day, 'yyyy-MM-dd')
-          const count = countByDate[dateStr] || 0
+          const dateStr   = format(day, 'yyyy-MM-dd')
+          const count     = countByDate[dateStr] || 0
           const isSelected = selectedDate && isSameDay(day, selectedDate)
-          const isToday = isSameDay(day, new Date())
+          const isToday   = isSameDay(day, new Date())
           const isPastDay = isPast(day) && !isToday
-
           return (
             <button key={dateStr}
               onClick={() => count > 0 ? onSelectDate(day) : null}
@@ -96,17 +86,17 @@ function MiniCalendar({ appointments, onSelectDate, selectedDate, bookingWindowD
                 ${count > 0 ? 'cursor-pointer hover:-translate-y-0.5' : 'cursor-default'}
                 ${isSelected ? 'text-white shadow-md' : ''}
                 ${isToday && !isSelected ? 'font-bold ring-2 ring-sky-400 ring-offset-1' : ''}
-                ${isPastDay && !isSelected && count === 0 ? 'opacity-30' : ''}
-              `}
-              style={isSelected ? {background:'linear-gradient(135deg,#0ea5e9,#06b6d4)'} :
-                     count > 0 ? {background:'rgba(224,242,254,0.8)'} : {}}>
+                ${isPastDay && !isSelected && count === 0 ? 'opacity-30' : ''}`}
+              style={isSelected
+                ? { background: 'linear-gradient(135deg,#0ea5e9,#06b6d4)' }
+                : count > 0 ? { background: 'rgba(224,242,254,0.8)' } : {}}>
               <span className={`text-xs font-semibold ${isSelected ? 'text-white' : isToday ? 'text-sky-600' : 'text-slate-700'}`}>
                 {format(day, 'd')}
               </span>
               {count > 0 && (
                 <span className={`text-[10px] font-bold mt-0.5 w-4 h-4 rounded-full flex items-center justify-center
                   ${isSelected ? 'bg-white/30 text-white' : 'text-white'}`}
-                  style={!isSelected ? {background:'linear-gradient(135deg,#0ea5e9,#06b6d4)'} : {}}>
+                  style={!isSelected ? { background: 'linear-gradient(135deg,#0ea5e9,#06b6d4)' } : {}}>
                   {count}
                 </span>
               )}
@@ -114,15 +104,13 @@ function MiniCalendar({ appointments, onSelectDate, selectedDate, bookingWindowD
           )
         })}
       </div>
-
-      {/* Legend */}
       <div className="flex items-center gap-3 mt-4 pt-3 border-t border-slate-100 text-xs text-slate-400">
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded-full" style={{background:'linear-gradient(135deg,#0ea5e9,#06b6d4)'}}/>
+          <div className="w-3 h-3 rounded-full" style={{ background: 'linear-gradient(135deg,#0ea5e9,#06b6d4)' }} />
           has appointments
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded-xl ring-2 ring-sky-400"/>
+          <div className="w-3 h-3 rounded-xl ring-2 ring-sky-400" />
           today
         </div>
       </div>
@@ -130,35 +118,33 @@ function MiniCalendar({ appointments, onSelectDate, selectedDate, bookingWindowD
   )
 }
 
-// ── Appointment Card (compact, for calendar view) ──────────────────────────────
+// ── Appointment Card ──────────────────────────────────────────────────────────
 function ApptCard({ a, onAction, onProcedures }) {
-  const st = STATUS_CONFIG[a.status] || STATUS_CONFIG.pending
-  const isPending  = a.status === 'pending'
-  const isAccepted = ['accepted','reschedule_accepted'].includes(a.status)
+  const st          = STATUS_CONFIG[a.status] || STATUS_CONFIG.pending
+  const isPending   = a.status === 'pending'
+  const isAccepted  = ['accepted','reschedule_accepted'].includes(a.status)
   const isCompleted = a.status === 'completed'
-  const past = isPast(new Date(a.appointment_date))
-  const hasPerformed = a.performed_services?.length > 0
+  const past        = isPast(new Date(a.appointment_date))
+  const hasPerformed     = a.performed_services?.length > 0
   const canEditProcedures = isCompleted || (isAccepted && past)
-  const isWalkIn = a.is_walk_in
+  const isWalkIn    = a.is_walk_in
 
-  const name = isWalkIn ? a.guest_name : a.profiles?.full_name
+  const name    = isWalkIn ? a.guest_name    : a.profiles?.full_name
   const contact = isWalkIn ? a.guest_contact : a.profiles?.email
 
   return (
-    <div className={`rounded-2xl border p-4 transition-all hover:shadow-sm
-      ${isPending ? 'border-l-4 border-l-amber-400 border-slate-100' : ''}
-      ${isAccepted ? 'border-l-4 border-sky-400 border-slate-100' : ''}
-      ${!isPending && !isAccepted ? 'border-slate-100' : ''}
-      bg-white`}>
+    <div className={`rounded-2xl border p-4 transition-all hover:shadow-sm bg-white
+      ${isPending  ? 'border-l-4 border-l-amber-400 border-slate-100' : ''}
+      ${isAccepted ? 'border-l-4 border-sky-400 border-slate-100'    : ''}
+      ${!isPending && !isAccepted ? 'border-slate-100' : ''}`}>
       <div className="flex items-start gap-3">
-        {/* Avatar */}
         <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 overflow-hidden"
-          style={{background:'rgba(224,242,254,0.8)'}}>
+          style={{ background: 'rgba(224,242,254,0.8)' }}>
           {!isWalkIn && a.profiles?.avatar_url
-            ? <img src={a.profiles.avatar_url} alt="" className="w-full h-full object-cover"/>
+            ? <img src={a.profiles.avatar_url} alt="" className="w-full h-full object-cover" />
             : isWalkIn
-              ? <Users className="w-4 h-4 text-sky-400"/>
-              : <User className="w-4 h-4 text-sky-400"/>
+              ? <Users className="w-4 h-4 text-sky-400" />
+              : <User  className="w-4 h-4 text-sky-400" />
           }
         </div>
 
@@ -177,7 +163,7 @@ function ApptCard({ a, onAction, onProcedures }) {
           <div className="flex items-center gap-3 mt-1.5 text-xs text-slate-500 flex-wrap">
             <span className="font-semibold text-sky-600">{a.services?.name || a.guest_procedure}</span>
             {a.appointment_time && (
-              <span className="flex items-center gap-0.5"><Clock className="w-3 h-3"/>{a.appointment_time}</span>
+              <span className="flex items-center gap-0.5"><Clock className="w-3 h-3" />{a.appointment_time}</span>
             )}
             {a.services?.price && (
               <span className="font-semibold">₱{parseFloat(a.services.price).toLocaleString()}</span>
@@ -186,7 +172,7 @@ function ApptCard({ a, onAction, onProcedures }) {
 
           {isWalkIn && (a.guest_age || a.guest_gender) && (
             <div className="flex gap-2 mt-1 text-xs text-slate-400">
-              {a.guest_age && <span>Age: {a.guest_age}</span>}
+              {a.guest_age    && <span>Age: {a.guest_age}</span>}
               {a.guest_gender && <span>· {a.guest_gender}</span>}
             </div>
           )}
@@ -195,29 +181,43 @@ function ApptCard({ a, onAction, onProcedures }) {
             <div className="mt-2 p-2 rounded-lg bg-sky-50 border border-sky-100">
               <div className="flex flex-wrap gap-1">
                 {a.performed_services.map((p, i) => (
-                  <span key={i} className="badge badge-teal" style={{fontSize:'0.6rem',padding:'0.1rem 0.4rem'}}>{p.name}</span>
+                  <span key={i} className="badge badge-teal" style={{ fontSize: '0.6rem', padding: '0.1rem 0.4rem' }}>{p.name}</span>
                 ))}
               </div>
               <p className="text-xs font-bold text-sky-700 mt-1">
-                Total: ₱{a.performed_services.reduce((s,p)=>s+(p.price||0),0).toLocaleString()}
+                Total: ₱{a.performed_services.reduce((s, p) => s + (p.price || 0), 0).toLocaleString()}
               </p>
             </div>
           )}
 
-          {/* Actions */}
           <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-slate-100">
-            {isPending && <>
-              <button onClick={() => onAction(a,'accept')} className="btn btn-primary btn-sm">✓ Accept</button>
-              <button onClick={() => onAction(a,'reschedule')} className="btn btn-secondary btn-sm">🔄 Reschedule</button>
-              <button onClick={() => onAction(a,'decline')} className="btn btn-secondary btn-sm text-red-500 hover:bg-red-50">✗ Decline</button>
-            </>}
+            {isPending && (
+              <>
+                <button onClick={() => onAction(a, 'accept')}
+                  className="btn btn-primary btn-sm flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Accept
+                </button>
+                <button onClick={() => onAction(a, 'reschedule')}
+                  className="btn btn-secondary btn-sm flex items-center gap-1">
+                  <RefreshCw className="w-3.5 h-3.5" /> Reschedule
+                </button>
+                <button onClick={() => onAction(a, 'decline')}
+                  className="btn btn-secondary btn-sm text-red-500 hover:bg-red-50 flex items-center gap-1">
+                  <XCircle className="w-3.5 h-3.5" /> Decline
+                </button>
+              </>
+            )}
             {isAccepted && past && (
-              <button onClick={() => onAction(a,'complete')} className="btn btn-primary btn-sm">🏆 Complete</button>
+              <button onClick={() => onAction(a, 'complete')}
+                className="btn btn-primary btn-sm flex items-center gap-1">
+                <Trophy className="w-3.5 h-3.5" /> Complete
+              </button>
             )}
             {canEditProcedures && (
-              <button onClick={() => onProcedures(a)} className="btn btn-secondary btn-sm flex items-center gap-1">
-                <Stethoscope className="w-3 h-3"/>
-                {hasPerformed ? 'Edit Procedures' : '+ Procedures'}
+              <button onClick={() => onProcedures(a)}
+                className="btn btn-secondary btn-sm flex items-center gap-1">
+                <Stethoscope className="w-3 h-3" />
+                {hasPerformed ? 'Edit Procedures' : 'Add Procedures'}
               </button>
             )}
           </div>
@@ -227,32 +227,32 @@ function ApptCard({ a, onAction, onProcedures }) {
   )
 }
 
-// ── Performed Services Modal ───────────────────────────────────────────────────
+// ── Performed Services Modal ──────────────────────────────────────────────────
 function PerformedServicesModal({ appointment, clinicServices, onSave, onClose }) {
   const [performed, setPerformed] = useState(
     appointment.performed_services?.length
       ? appointment.performed_services
-      : [{ service_id: appointment.service_id, name: appointment.services?.name, price: parseFloat(appointment.services?.price||0), custom:false }]
+      : [{ service_id: appointment.service_id, name: appointment.services?.name, price: parseFloat(appointment.services?.price || 0), custom: false }]
   )
-  const [clinicNotes, setClinicNotes] = useState(appointment.clinic_notes||'')
-  const [saving, setSaving] = useState(false)
-  const [showCustom, setShowCustom] = useState(false)
-  const [customName, setCustomName] = useState('')
+  const [clinicNotes, setClinicNotes] = useState(appointment.clinic_notes || '')
+  const [saving, setSaving]           = useState(false)
+  const [showCustom, setShowCustom]   = useState(false)
+  const [customName, setCustomName]   = useState('')
   const [customPrice, setCustomPrice] = useState('')
 
-  const total = performed.reduce((s,p)=>s+(p.price||0),0)
+  const total = performed.reduce((s, p) => s + (p.price || 0), 0)
 
   function addFromCatalog(svc) {
-    if (performed.find(p=>p.service_id===svc.id)) { toast.error('Already added'); return }
-    setPerformed(p=>[...p,{service_id:svc.id,name:svc.name,price:parseFloat(svc.price||0),custom:false}])
+    if (performed.find(p => p.service_id === svc.id)) { toast.error('Already added'); return }
+    setPerformed(p => [...p, { service_id: svc.id, name: svc.name, price: parseFloat(svc.price || 0), custom: false }])
   }
   function addCustom() {
     if (!customName.trim()) { toast.error('Enter a name'); return }
-    setPerformed(p=>[...p,{name:customName.trim(),price:parseFloat(customPrice)||0,custom:true}])
+    setPerformed(p => [...p, { name: customName.trim(), price: parseFloat(customPrice) || 0, custom: true }])
     setCustomName(''); setCustomPrice(''); setShowCustom(false)
   }
-  function remove(i) { setPerformed(p=>p.filter((_,j)=>j!==i)) }
-  function updatePrice(i,v) { setPerformed(p=>p.map((x,j)=>j===i?{...x,price:parseFloat(v)||0}:x)) }
+  function remove(i)          { setPerformed(p => p.filter((_, j) => j !== i)) }
+  function updatePrice(i, v)  { setPerformed(p => p.map((x, j) => j === i ? { ...x, price: parseFloat(v) || 0 } : x)) }
 
   async function handleSave() {
     if (!performed.length) { toast.error('Add at least one procedure'); return }
@@ -263,21 +263,23 @@ function PerformedServicesModal({ appointment, clinicServices, onSave, onClose }
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal w-full max-w-lg" onClick={e=>e.stopPropagation()}>
+      <div className="modal w-full max-w-lg" onClick={e => e.stopPropagation()}>
         <div className="p-6">
           <div className="flex items-start justify-between gap-3 mb-5">
             <div>
               <h3 className="font-display font-bold text-slate-900 text-lg">Procedures Performed</h3>
               <p className="text-slate-400 text-sm mt-0.5">
                 {appointment.is_walk_in ? appointment.guest_name : appointment.profiles?.full_name}
-                {' · '}{format(new Date(appointment.appointment_date),'MMM d, yyyy')}
+                {' · '}{format(new Date(appointment.appointment_date), 'MMM d, yyyy')}
               </p>
             </div>
-            <button onClick={onClose} className="text-slate-300 hover:text-slate-500"><X className="w-5 h-5"/></button>
+            <button onClick={onClose} className="text-slate-300 hover:text-slate-500">
+              <X className="w-5 h-5" />
+            </button>
           </div>
 
           <div className="space-y-2 mb-4">
-            {performed.map((p,i)=>(
+            {performed.map((p, i) => (
               <div key={i} className="flex items-center gap-2 rounded-xl p-3 bg-white/60 border border-white/80">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
@@ -287,10 +289,11 @@ function PerformedServicesModal({ appointment, clinicServices, onSave, onClose }
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="text-slate-400 text-xs">₱</span>
-                  <input type="number" value={p.price} onChange={e=>updatePrice(i,e.target.value)} min="0"
-                    className="w-20 border border-slate-200 rounded-lg px-2 py-1 text-sm text-right font-semibold focus:outline-none focus:border-sky-400"/>
-                  <button onClick={()=>remove(i)} className="w-7 h-7 flex items-center justify-center text-slate-300 hover:text-red-400 hover:bg-red-50 rounded-lg">
-                    <X className="w-4 h-4"/>
+                  <input type="number" value={p.price} onChange={e => updatePrice(i, e.target.value)} min="0"
+                    className="w-20 border border-slate-200 rounded-lg px-2 py-1 text-sm text-right font-semibold focus:outline-none focus:border-sky-400" />
+                  <button onClick={() => remove(i)}
+                    className="w-7 h-7 flex items-center justify-center text-slate-300 hover:text-red-400 hover:bg-red-50 rounded-lg">
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
               </div>
@@ -300,54 +303,58 @@ function PerformedServicesModal({ appointment, clinicServices, onSave, onClose }
           <div className="mb-4">
             <p className="text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wide">Add from services</p>
             <div className="flex flex-wrap gap-1.5">
-              {clinicServices.filter(s=>!performed.find(p=>p.service_id===s.id)).map(s=>(
-                <button key={s.id} onClick={()=>addFromCatalog(s)} className="btn btn-secondary btn-sm flex items-center gap-1">
-                  <Plus className="w-3 h-3"/>{s.name}
+              {clinicServices.filter(s => !performed.find(p => p.service_id === s.id)).map(s => (
+                <button key={s.id} onClick={() => addFromCatalog(s)}
+                  className="btn btn-secondary btn-sm flex items-center gap-1">
+                  <Plus className="w-3 h-3" />{s.name}
                 </button>
               ))}
             </div>
           </div>
 
           {!showCustom ? (
-            <button onClick={()=>setShowCustom(true)}
+            <button onClick={() => setShowCustom(true)}
               className="w-full py-2.5 rounded-xl text-sm flex items-center justify-center gap-2 mb-4"
-              style={{border:'1.5px dashed rgba(186,230,253,0.8)',color:'#94a3b8',background:'rgba(255,255,255,0.3)'}}>
-              <Plus className="w-4 h-4"/> Add custom procedure
+              style={{ border: '1.5px dashed rgba(186,230,253,0.8)', color: '#94a3b8', background: 'rgba(255,255,255,0.3)' }}>
+              <Plus className="w-4 h-4" /> Add custom procedure
             </button>
           ) : (
             <div className="border border-sky-200 bg-sky-50/30 rounded-xl p-3 mb-4">
               <div className="flex gap-2 flex-wrap">
-                <input type="text" value={customName} onChange={e=>setCustomName(e.target.value)}
+                <input type="text" value={customName} onChange={e => setCustomName(e.target.value)}
                   placeholder="Procedure name" className="input flex-1 py-2 text-sm min-w-0"
-                  onKeyDown={e=>e.key==='Enter'&&addCustom()}/>
+                  onKeyDown={e => e.key === 'Enter' && addCustom()} />
                 <div className="flex items-center gap-1 border border-slate-200 rounded-xl px-3 bg-white">
                   <span className="text-slate-400 text-sm">₱</span>
-                  <input type="number" value={customPrice} onChange={e=>setCustomPrice(e.target.value)}
-                    placeholder="0" className="w-20 text-sm py-2 focus:outline-none" min="0"/>
+                  <input type="number" value={customPrice} onChange={e => setCustomPrice(e.target.value)}
+                    placeholder="0" className="w-20 text-sm py-2 focus:outline-none" min="0" />
                 </div>
               </div>
               <div className="flex gap-2 mt-2">
                 <button onClick={addCustom} className="btn btn-primary btn-sm flex-1">Add</button>
-                <button onClick={()=>{setShowCustom(false);setCustomName('');setCustomPrice('')}} className="btn btn-secondary btn-sm flex-1">Cancel</button>
+                <button onClick={() => { setShowCustom(false); setCustomName(''); setCustomPrice('') }}
+                  className="btn btn-secondary btn-sm flex-1">Cancel</button>
               </div>
             </div>
           )}
 
           <div className="mb-5">
             <label className="block text-xs font-semibold text-slate-500 mb-1.5 uppercase tracking-wide">Clinic Notes</label>
-            <textarea value={clinicNotes} onChange={e=>setClinicNotes(e.target.value)} rows={2}
-              placeholder="Follow-up instructions, notes..." className="input resize-none text-sm"/>
+            <textarea value={clinicNotes} onChange={e => setClinicNotes(e.target.value)} rows={2}
+              placeholder="Follow-up instructions, notes..." className="input resize-none text-sm" />
           </div>
 
           <div className="rounded-xl p-3 mb-5 flex items-center justify-between">
             <span className="text-slate-500 font-medium text-sm">Total</span>
-            <span className="font-display font-bold text-lg" style={{color:'var(--color-brand)'}}>₱{total.toLocaleString()}</span>
+            <span className="font-display font-bold text-lg" style={{ color: 'var(--color-brand)' }}>₱{total.toLocaleString()}</span>
           </div>
 
           <div className="flex gap-3">
             <button onClick={onClose} className="btn btn-secondary btn-md flex-1">Cancel</button>
-            <button onClick={handleSave} disabled={saving||!performed.length} className="btn btn-primary btn-md flex-1">
-              {saving ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"/>Saving...</> : '💾 Save'}
+            <button onClick={handleSave} disabled={saving || !performed.length} className="btn btn-primary btn-md flex-1 flex items-center justify-center gap-2">
+              {saving
+                ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Saving...</>
+                : <><Save className="w-4 h-4" />Save</>}
             </button>
           </div>
         </div>
@@ -359,59 +366,58 @@ function PerformedServicesModal({ appointment, clinicServices, onSave, onClose }
 // ── Walk-in Modal ─────────────────────────────────────────────────────────────
 function WalkInModal({ clinic, clinicServices, availability, onClose, onSaved }) {
   const [form, setForm] = useState({
-    guest_name:'', guest_contact:'', guest_age:'', guest_gender:'',
-    service_id:'', date:'', time:''
+    guest_name: '', guest_contact: '', guest_age: '', guest_gender: '',
+    service_id: '', date: '', time: '',
   })
   const [saving, setSaving] = useState(false)
-  const today = format(new Date(), 'yyyy-MM-dd')
+  const today        = format(new Date(), 'yyyy-MM-dd')
   const bookingWindow = availability?.booking_window_days || 30
-  const maxDate = format(addDays(startOfToday(), bookingWindow), 'yyyy-MM-dd')
+  const maxDate      = format(addDays(startOfToday(), bookingWindow), 'yyyy-MM-dd')
 
-  // Generate time slots for selected date
   const timeSlots = useMemo(() => {
     if (!form.date || !availability?.schedule) return []
-    const d = parseISO(form.date)
+    const d      = parseISO(form.date)
     const dayKey = DAY_KEYS[getDay(d)]
-    const sched = availability.schedule[dayKey]
+    const sched  = availability.schedule[dayKey]
     if (!sched?.enabled) return []
     const slots = []
-    const [oh,om] = sched.open.split(':').map(Number)
-    const [ch,cm] = sched.close.split(':').map(Number)
+    const [oh, om] = sched.open.split(':').map(Number)
+    const [ch, cm] = sched.close.split(':').map(Number)
     const dur = availability.slot_duration || 30
-    let cur = oh*60+om
-    const end = ch*60+cm
-    while (cur+dur <= end) {
-      const hh = Math.floor(cur/60).toString().padStart(2,'0')
-      const mm = (cur%60).toString().padStart(2,'0')
-      const h12 = cur>=720 ? Math.floor(cur/60)-12||12 : Math.floor(cur/60)||12
-      const ampm = cur>=720 ? 'PM' : 'AM'
-      slots.push({ value:`${hh}:${mm}`, label:`${h12}:${mm} ${ampm}` })
+    let cur   = oh * 60 + om
+    const end = ch * 60 + cm
+    while (cur + dur <= end) {
+      const hh   = Math.floor(cur / 60).toString().padStart(2, '0')
+      const mm   = (cur % 60).toString().padStart(2, '0')
+      const h12  = cur >= 720 ? Math.floor(cur / 60) - 12 || 12 : Math.floor(cur / 60) || 12
+      const ampm = cur >= 720 ? 'PM' : 'AM'
+      slots.push({ value: `${hh}:${mm}`, label: `${h12}:${mm} ${ampm}` })
       cur += dur
     }
     return slots
   }, [form.date, availability])
 
-  function set(k,v) { setForm(p=>({...p,[k]:v})) }
+  function set(k, v) { setForm(p => ({ ...p, [k]: v })) }
 
   async function handleSave() {
-    if (!form.guest_name.trim()||!form.service_id||!form.date||!form.time) {
+    if (!form.guest_name.trim() || !form.service_id || !form.date || !form.time) {
       toast.error('Fill in name, service, date and time'); return
     }
     setSaving(true)
-    const svc = clinicServices.find(s=>s.id===form.service_id)
+    const svc = clinicServices.find(s => s.id === form.service_id)
     const { error } = await supabase.from('appointments').insert({
-      clinic_id: clinic.id,
-      service_id: form.service_id,
-      customer_id: null,
-      is_walk_in: true,
-      guest_name: form.guest_name.trim(),
+      clinic_id:     clinic.id,
+      service_id:    form.service_id,
+      customer_id:   null,
+      is_walk_in:    true,
+      guest_name:    form.guest_name.trim(),
       guest_contact: form.guest_contact.trim(),
-      guest_age: form.guest_age ? parseInt(form.guest_age) : null,
-      guest_gender: form.guest_gender || null,
+      guest_age:     form.guest_age ? parseInt(form.guest_age) : null,
+      guest_gender:  form.guest_gender || null,
       appointment_date: form.date,
       appointment_time: form.time,
-      status: 'accepted', // walk-ins are pre-confirmed
-      notes: `Walk-in: ${form.guest_name}. Procedure: ${svc?.name}`
+      status: 'accepted',
+      notes: `Walk-in: ${form.guest_name}. Procedure: ${svc?.name}`,
     })
     if (error) { toast.error(error.message); setSaving(false); return }
     toast.success('Walk-in appointment added!')
@@ -420,92 +426,85 @@ function WalkInModal({ clinic, clinicServices, availability, onClose, onSaved })
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal w-full max-w-lg" onClick={e=>e.stopPropagation()}>
+      <div className="modal w-full max-w-lg" onClick={e => e.stopPropagation()}>
         <div className="p-6">
           <div className="flex items-start justify-between gap-3 mb-5">
             <div>
               <h3 className="font-display font-bold text-slate-900 text-lg flex items-center gap-2">
-                <Users className="w-5 h-5 text-sky-500"/> Walk-in Appointment
+                <Users className="w-5 h-5 text-sky-500" /> Walk-in Appointment
               </h3>
               <p className="text-slate-400 text-sm mt-0.5">Manually add a walk-in or phone booking</p>
             </div>
-            <button onClick={onClose} className="text-slate-300 hover:text-slate-500"><X className="w-5 h-5"/></button>
+            <button onClick={onClose} className="text-slate-300 hover:text-slate-500">
+              <X className="w-5 h-5" />
+            </button>
           </div>
 
           <div className="space-y-3">
-            {/* Name */}
             <div>
               <label className="block text-xs font-semibold text-slate-600 mb-1">Full Name *</label>
-              <input value={form.guest_name} onChange={e=>set('guest_name',e.target.value)}
-                placeholder="Patient's full name" className="input text-sm"/>
+              <input value={form.guest_name} onChange={e => set('guest_name', e.target.value)}
+                placeholder="Patient's full name" className="input text-sm" />
             </div>
-
-            {/* Contact */}
             <div>
               <label className="block text-xs font-semibold text-slate-600 mb-1">Contact (email or phone)</label>
-              <input value={form.guest_contact} onChange={e=>set('guest_contact',e.target.value)}
-                placeholder="09XX-XXX-XXXX or email@example.com" className="input text-sm"/>
+              <input value={form.guest_contact} onChange={e => set('guest_contact', e.target.value)}
+                placeholder="09XX-XXX-XXXX or email@example.com" className="input text-sm" />
             </div>
-
-            {/* Age + Gender */}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1">Age</label>
-                <input type="number" value={form.guest_age} onChange={e=>set('guest_age',e.target.value)}
-                  placeholder="e.g. 28" min="1" max="120" className="input text-sm"/>
+                <input type="number" value={form.guest_age} onChange={e => set('guest_age', e.target.value)}
+                  placeholder="e.g. 28" min="1" max="120" className="input text-sm" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1">Gender</label>
-                <select value={form.guest_gender} onChange={e=>set('guest_gender',e.target.value)} className="input text-sm">
+                <select value={form.guest_gender} onChange={e => set('guest_gender', e.target.value)} className="input text-sm">
                   <option value="">Select</option>
-                  <option>Male</option>
-                  <option>Female</option>
-                  <option>Other</option>
-                  <option>Prefer not to say</option>
+                  <option>Male</option><option>Female</option>
+                  <option>Other</option><option>Prefer not to say</option>
                 </select>
               </div>
             </div>
-
-            {/* Service */}
             <div>
               <label className="block text-xs font-semibold text-slate-600 mb-1">Procedure / Service *</label>
-              <select value={form.service_id} onChange={e=>set('service_id',e.target.value)} className="input text-sm">
+              <select value={form.service_id} onChange={e => set('service_id', e.target.value)} className="input text-sm">
                 <option value="">Select service</option>
-                {clinicServices.map(s=>(
-                  <option key={s.id} value={s.id}>{s.name} — ₱{parseFloat(s.price||0).toLocaleString()}</option>
+                {clinicServices.map(s => (
+                  <option key={s.id} value={s.id}>{s.name} — ₱{parseFloat(s.price || 0).toLocaleString()}</option>
                 ))}
               </select>
             </div>
-
-            {/* Date + Time */}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1">Date *</label>
-                <input type="date" value={form.date} onChange={e=>{set('date',e.target.value);set('time','')}}
-                  min={today} max={maxDate} className="input text-sm"/>
+                <input type="date" value={form.date} onChange={e => { set('date', e.target.value); set('time', '') }}
+                  min={today} max={maxDate} className="input text-sm" />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1">Time *</label>
                 {timeSlots.length > 0 ? (
-                  <select value={form.time} onChange={e=>set('time',e.target.value)} className="input text-sm">
+                  <select value={form.time} onChange={e => set('time', e.target.value)} className="input text-sm">
                     <option value="">Select slot</option>
-                    {timeSlots.map(t=><option key={t.value} value={t.value}>{t.label}</option>)}
+                    {timeSlots.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                   </select>
                 ) : (
-                  <input type="time" value={form.time} onChange={e=>set('time',e.target.value)} className="input text-sm"/>
+                  <input type="time" value={form.time} onChange={e => set('time', e.target.value)} className="input text-sm" />
                 )}
               </div>
             </div>
-
-            <div className="bg-sky-50 border border-sky-200 rounded-xl p-3">
-              <p className="text-sky-700 text-xs">ℹ️ Walk-in appointments are automatically marked as <strong>Confirmed</strong>.</p>
+            <div className="bg-sky-50 border border-sky-200 rounded-xl p-3 flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-sky-500 shrink-0 mt-0.5" />
+              <p className="text-sky-700 text-xs">Walk-in appointments are automatically marked as <strong>Confirmed</strong>.</p>
             </div>
           </div>
 
           <div className="flex gap-3 mt-5">
             <button onClick={onClose} className="btn btn-secondary btn-md flex-1">Cancel</button>
-            <button onClick={handleSave} disabled={saving} className="btn btn-primary btn-md flex-1">
-              {saving ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"/>Adding...</> : '+ Add Walk-in'}
+            <button onClick={handleSave} disabled={saving} className="btn btn-primary btn-md flex-1 flex items-center justify-center gap-2">
+              {saving
+                ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Adding...</>
+                : <><Plus className="w-4 h-4" />Add Walk-in</>}
             </button>
           </div>
         </div>
@@ -516,73 +515,74 @@ function WalkInModal({ clinic, clinicServices, availability, onClose, onSaved })
 
 // ── Emergency Closure Modal ───────────────────────────────────────────────────
 function EmergencyClosureModal({ appointments, clinicName, onClose, onDone }) {
-  const today = format(new Date(), 'yyyy-MM-dd')
+  const today         = format(new Date(), 'yyyy-MM-dd')
   const [selectedDate, setSelectedDate] = useState(today)
-  const [decisions, setDecisions] = useState({}) // { [apptId]: 'cancel' | 'reschedule' }
-  const [newDates, setNewDates] = useState({})   // { [apptId]: 'yyyy-MM-dd' }
-  const [processing, setProcessing] = useState(false)
+  const [decisions, setDecisions]       = useState({})
+  const [newDates, setNewDates]         = useState({})
+  const [processing, setProcessing]     = useState(false)
 
   const affectedAppts = appointments.filter(a =>
     a.appointment_date === selectedDate &&
     ['pending','accepted','reschedule_accepted'].includes(a.status)
   )
 
-  function setDecision(id, val) { setDecisions(p=>({...p,[id]:val})) }
-  function setNewDate(id, val)  { setNewDates(p=>({...p,[id]:val})) }
+  function setDecision(id, val) { setDecisions(p => ({ ...p, [id]: val })) }
+  function setNewDate(id, val)  { setNewDates(p => ({ ...p, [id]: val })) }
 
   async function handleSubmit() {
-    const undecided = affectedAppts.filter(a=>!decisions[a.id])
+    const undecided = affectedAppts.filter(a => !decisions[a.id])
     if (undecided.length) { toast.error(`Please decide for all ${undecided.length} appointment(s)`); return }
-    const reschedules = affectedAppts.filter(a=>decisions[a.id]==='reschedule' && !newDates[a.id])
+    const reschedules = affectedAppts.filter(a => decisions[a.id] === 'reschedule' && !newDates[a.id])
     if (reschedules.length) { toast.error('Pick a new date for all rescheduled appointments'); return }
 
     setProcessing(true)
     for (const a of affectedAppts) {
-      const decision = decisions[a.id]
+      const decision    = decisions[a.id]
       const patientName = a.is_walk_in ? a.guest_name : a.profiles?.full_name
       const patientEmail = a.is_walk_in ? null : a.profiles?.email
 
       if (decision === 'cancel') {
         await supabase.from('appointments').update({
           status: 'cancelled', cancelled_by: 'clinic',
-          cancel_reason: `Emergency closure on ${format(parseISO(selectedDate),'MMMM d, yyyy')}. We sincerely apologize for the inconvenience.`
+          cancel_reason: `Emergency closure on ${format(parseISO(selectedDate), 'MMMM d, yyyy')}. We sincerely apologize.`,
         }).eq('id', a.id)
         if (a.customer_id) {
           await supabase.from('notifications').insert({
             recipient_id: a.customer_id, type: 'rejected',
-            title: '🚨 Appointment Cancelled — Emergency',
-            message: `Your appointment on ${format(parseISO(selectedDate),'MMMM d, yyyy')} at ${a.appointment_time} was cancelled due to an emergency closure. We sincerely apologize.`,
-            related_id: a.id
+            title: 'Appointment Cancelled — Emergency',
+            message: `Your appointment on ${format(parseISO(selectedDate), 'MMMM d, yyyy')} at ${a.appointment_time} was cancelled due to an emergency closure. We sincerely apologize.`,
+            related_id: a.id,
           })
         }
         if (patientEmail) {
           sendAppointmentEmail({
-            to: patientEmail, subject: `Important: Your appointment on ${format(parseISO(selectedDate),'MMM d')} has been cancelled`,
+            to: patientEmail,
+            subject: `Important: Your appointment on ${format(parseISO(selectedDate), 'MMM d')} has been cancelled`,
             patientName, clinicName, serviceName: a.services?.name,
-            date: format(parseISO(selectedDate),'EEEE, MMMM d, yyyy'),
+            date: format(parseISO(selectedDate), 'EEEE, MMMM d, yyyy'),
             time: a.appointment_time, status: 'rejected',
-            reason: 'Emergency closure — we sincerely apologize for the inconvenience. Please contact us to rebook at your convenience.',
+            reason: 'Emergency closure — we sincerely apologize for the inconvenience.',
           }).catch(console.warn)
         }
       } else {
-        // Reschedule
         const newDate = newDates[a.id]
         await supabase.from('appointments').update({
-          status: 'rescheduled', rescheduled_date: newDate, rescheduled_time: a.appointment_time
+          status: 'rescheduled', rescheduled_date: newDate, rescheduled_time: a.appointment_time,
         }).eq('id', a.id)
         if (a.customer_id) {
           await supabase.from('notifications').insert({
             recipient_id: a.customer_id, type: 'rescheduled',
-            title: '🔄 Emergency Reschedule',
-            message: `Your appointment on ${format(parseISO(selectedDate),'MMM d')} has been rescheduled to ${format(parseISO(newDate),'MMMM d, yyyy')} due to an emergency closure. Please confirm or decline in the app.`,
-            related_id: a.id
+            title: 'Emergency Reschedule',
+            message: `Your appointment on ${format(parseISO(selectedDate), 'MMM d')} has been rescheduled to ${format(parseISO(newDate), 'MMMM d, yyyy')} due to an emergency closure.`,
+            related_id: a.id,
           })
         }
         if (patientEmail) {
           sendAppointmentEmail({
-            to: patientEmail, subject: `Your appointment has been rescheduled — ${clinicName}`,
+            to: patientEmail,
+            subject: `Your appointment has been rescheduled — ${clinicName}`,
             patientName, clinicName, serviceName: a.services?.name,
-            date: format(parseISO(newDate),'EEEE, MMMM d, yyyy'),
+            date: format(parseISO(newDate), 'EEEE, MMMM d, yyyy'),
             time: a.appointment_time, status: 'rescheduled',
             reason: 'Emergency closure on original date — we apologize for the inconvenience.',
           }).catch(console.warn)
@@ -598,74 +598,74 @@ function EmergencyClosureModal({ appointments, clinicName, onClose, onDone }) {
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e=>e.stopPropagation()}>
+      <div className="modal w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <div className="p-6">
           <div className="flex items-start justify-between gap-3 mb-2">
             <div>
               <h3 className="font-display font-bold text-slate-900 text-lg flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-red-500"/> Emergency Closure
+                <AlertTriangle className="w-5 h-5 text-red-500" /> Emergency Closure
               </h3>
               <p className="text-slate-400 text-sm mt-0.5">Handle appointments affected by an unexpected closure</p>
             </div>
-            <button onClick={onClose} className="text-slate-300 hover:text-slate-500 shrink-0"><X className="w-5 h-5"/></button>
+            <button onClick={onClose} className="text-slate-300 hover:text-slate-500 shrink-0">
+              <X className="w-5 h-5" />
+            </button>
           </div>
 
-          <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-5">
-            <p className="text-red-700 text-xs font-medium">⚠️ For each affected appointment, choose to cancel or reschedule. Patients will be notified by email and in-app notification.</p>
+          <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-5 flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+            <p className="text-red-700 text-xs font-medium">
+              For each affected appointment, choose to cancel or reschedule. Patients will be notified by email and in-app notification.
+            </p>
           </div>
 
-          {/* Date picker */}
           <div className="mb-5">
             <label className="block text-xs font-semibold text-slate-600 mb-1.5">Closure Date</label>
-            <input type="date" value={selectedDate} onChange={e=>{setSelectedDate(e.target.value);setDecisions({});setNewDates({})}}
-              className="input text-sm"/>
+            <input type="date" value={selectedDate}
+              onChange={e => { setSelectedDate(e.target.value); setDecisions({}); setNewDates({}) }}
+              className="input text-sm" />
           </div>
 
-          {/* Affected appointments */}
           {affectedAppts.length === 0 ? (
             <div className="text-center py-8">
-              <CheckCircle2 className="w-10 h-10 text-emerald-300 mx-auto mb-2"/>
+              <CheckCircle2 className="w-10 h-10 text-emerald-300 mx-auto mb-2" />
               <p className="text-slate-500 text-sm font-medium">No active appointments on this date</p>
             </div>
           ) : (
             <div className="space-y-4">
               {affectedAppts.map(a => {
-                const name = a.is_walk_in ? a.guest_name : a.profiles?.full_name
+                const name     = a.is_walk_in ? a.guest_name : a.profiles?.full_name
                 const decision = decisions[a.id]
                 return (
                   <div key={a.id} className="border border-slate-200 rounded-2xl p-4">
                     <div className="flex items-center gap-3 mb-3">
                       <div className="w-9 h-9 rounded-xl bg-sky-50 flex items-center justify-center">
-                        <User className="w-4 h-4 text-sky-400"/>
+                        <User className="w-4 h-4 text-sky-400" />
                       </div>
                       <div>
                         <p className="font-semibold text-slate-800 text-sm">{name}</p>
                         <p className="text-xs text-slate-400">{a.services?.name} · {a.appointment_time}</p>
                       </div>
                     </div>
-
-                    {/* Decision buttons */}
                     <div className="flex gap-2 mb-3">
-                      <button onClick={()=>setDecision(a.id,'cancel')}
+                      <button onClick={() => setDecision(a.id, 'cancel')}
                         className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-all flex items-center justify-center gap-1.5
-                          ${decision==='cancel' ? 'bg-red-500 text-white border-red-500' : 'border-slate-200 text-slate-600 hover:border-red-300 hover:text-red-500'}`}>
-                        <XCircle className="w-3.5 h-3.5"/> Cancel
+                          ${decision === 'cancel' ? 'bg-red-500 text-white border-red-500' : 'border-slate-200 text-slate-600 hover:border-red-300 hover:text-red-500'}`}>
+                        <XCircle className="w-3.5 h-3.5" /> Cancel
                       </button>
-                      <button onClick={()=>setDecision(a.id,'reschedule')}
+                      <button onClick={() => setDecision(a.id, 'reschedule')}
                         className={`flex-1 py-2 rounded-xl text-sm font-semibold border transition-all flex items-center justify-center gap-1.5
-                          ${decision==='reschedule' ? 'text-white border-transparent' : 'border-slate-200 text-slate-600 hover:border-sky-300 hover:text-sky-500'}`}
-                        style={decision==='reschedule' ? {backgroundColor:'var(--color-brand)'} : {}}>
-                        <RefreshCw className="w-3.5 h-3.5"/> Reschedule
+                          ${decision === 'reschedule' ? 'text-white border-transparent' : 'border-slate-200 text-slate-600 hover:border-sky-300 hover:text-sky-500'}`}
+                        style={decision === 'reschedule' ? { backgroundColor: 'var(--color-brand)' } : {}}>
+                        <RefreshCw className="w-3.5 h-3.5" /> Reschedule
                       </button>
                     </div>
-
-                    {/* New date for reschedule */}
-                    {decision==='reschedule' && (
+                    {decision === 'reschedule' && (
                       <div className="animate-fade-in">
                         <label className="block text-xs font-semibold text-slate-500 mb-1">New date for this patient</label>
-                        <input type="date" value={newDates[a.id]||''} onChange={e=>setNewDate(a.id,e.target.value)}
-                          min={minNewDate} className="input text-sm"/>
-                        <p className="text-xs text-slate-400 mt-1">Patient will be asked to confirm or decline the new date in the app.</p>
+                        <input type="date" value={newDates[a.id] || ''} onChange={e => setNewDate(a.id, e.target.value)}
+                          min={minNewDate} className="input text-sm" />
+                        <p className="text-xs text-slate-400 mt-1">Patient will be asked to confirm or decline the new date.</p>
                       </div>
                     )}
                   </div>
@@ -677,10 +677,10 @@ function EmergencyClosureModal({ appointments, clinicName, onClose, onDone }) {
           {affectedAppts.length > 0 && (
             <div className="flex gap-3 mt-5">
               <button onClick={onClose} className="btn btn-secondary btn-md flex-1">Cancel</button>
-              <button onClick={handleSubmit} disabled={processing} className="btn btn-danger btn-md flex-1">
+              <button onClick={handleSubmit} disabled={processing} className="btn btn-danger btn-md flex-1 flex items-center justify-center gap-2">
                 {processing
-                  ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"/>Processing...</>
-                  : `Handle ${affectedAppts.length} Appointment${affectedAppts.length>1?'s':''}`}
+                  ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Processing...</>
+                  : <><AlertTriangle className="w-4 h-4" />Handle {affectedAppts.length} Appointment{affectedAppts.length > 1 ? 's' : ''}</>}
               </button>
             </div>
           )}
@@ -690,33 +690,25 @@ function EmergencyClosureModal({ appointments, clinicName, onClose, onDone }) {
   )
 }
 
-// ── Main Component ─────────────────────────────────────────────────────────────
+// ── Main Component ────────────────────────────────────────────────────────────
 export default function AppointmentRequests() {
   const { user } = useAuth()
-  const [clinic, setClinic]           = useState(null)
+  const [clinic, setClinic]             = useState(null)
   const [clinicServices, setClinicServices] = useState([])
   const [appointments, setAppointments] = useState([])
-  const [loading, setLoading]         = useState(true)
-  const [tab, setTab]                 = useState('pending')
-
-  // Calendar state
+  const [loading, setLoading]           = useState(true)
+  const [tab, setTab]                   = useState('pending')
   const [selectedDate, setSelectedDate] = useState(null)
-
-  // Action modal
-  const [actionModal, setActionModal] = useState(null)
-  const [actionType, setActionType]   = useState(null)
-  const [reason, setReason]           = useState('')
+  const [actionModal, setActionModal]   = useState(null)
+  const [actionType, setActionType]     = useState(null)
+  const [reason, setReason]             = useState('')
   const [rescheduleDate, setRescheduleDate] = useState('')
   const [rescheduleTime, setRescheduleTime] = useState('')
-  const [processing, setProcessing]   = useState(false)
-
-  // Sub-modals
-  const [performedModal, setPerformedModal]     = useState(null)
-  const [showWalkIn, setShowWalkIn]             = useState(false)
-  const [showEmergency, setShowEmergency]       = useState(false)
-
-  // List view (all/completed tabs)
-  const [search, setSearch] = useState('')
+  const [processing, setProcessing]     = useState(false)
+  const [performedModal, setPerformedModal] = useState(null)
+  const [showWalkIn, setShowWalkIn]     = useState(false)
+  const [showEmergency, setShowEmergency] = useState(false)
+  const [search, setSearch]             = useState('')
 
   useEffect(() => { loadData() }, [user])
 
@@ -727,8 +719,8 @@ export default function AppointmentRequests() {
     const [appts, services] = await Promise.all([
       supabase.from('appointments')
         .select('*, profiles!appointments_customer_id_fkey(full_name,email,phone,avatar_url), services(name,price,duration_minutes)')
-        .eq('clinic_id', c.id).order('appointment_date',{ascending:true}).order('appointment_time',{ascending:true}),
-      supabase.from('services').select('*').eq('clinic_id',c.id).eq('is_active',true)
+        .eq('clinic_id', c.id).order('appointment_date', { ascending: true }).order('appointment_time', { ascending: true }),
+      supabase.from('services').select('*').eq('clinic_id', c.id).eq('is_active', true),
     ])
     setAppointments(appts.data || [])
     setClinicServices(services.data || [])
@@ -738,68 +730,76 @@ export default function AppointmentRequests() {
   async function handleAction() {
     if (!actionModal) return
     setProcessing(true)
-    const a = actionModal
+    const a            = actionModal
     const clinicName   = clinic?.name || 'Your clinic'
     const patientEmail = a.is_walk_in ? null : a.profiles?.email
     const patientName  = a.is_walk_in ? a.guest_name : a.profiles?.full_name
     const serviceName  = a.services?.name || 'appointment'
-    const dateStr      = format(new Date(a.appointment_date),'EEEE, MMMM d, yyyy')
+    const dateStr      = format(new Date(a.appointment_date), 'EEEE, MMMM d, yyyy')
 
     const updates = {
-      accept:     { status:'accepted' },
-      decline:    { status:'rejected', rejection_reason: reason },
-      complete:   { status:'completed' },
-      reschedule: { status:'rescheduled', rescheduled_date:rescheduleDate, rescheduled_time:rescheduleTime },
+      accept:     { status: 'accepted' },
+      decline:    { status: 'rejected', rejection_reason: reason },
+      complete:   { status: 'completed' },
+      reschedule: { status: 'rescheduled', rescheduled_date: rescheduleDate, rescheduled_time: rescheduleTime },
     }[actionType]
 
     const notifMap = {
-      accept:     { type:'accepted',    title:'✅ Appointment Confirmed!',  msg:`Your ${serviceName} on ${format(new Date(a.appointment_date),'MMM d, yyyy')} is confirmed.` },
-      decline:    { type:'rejected',    title:'❌ Appointment Declined',    msg:`Your ${serviceName} was declined.${reason?` Reason: ${reason}`:''}` },
-      complete:   { type:'completed',   title:'🏆 Appointment Completed',   msg:`Your ${serviceName} is complete. Please leave a review!` },
-      reschedule: { type:'rescheduled', title:'🔄 Reschedule Proposed',     msg:`Your appointment has been proposed to reschedule to ${format(new Date(rescheduleDate),'MMM d, yyyy')}${rescheduleTime?' at '+rescheduleTime:''}.` },
+      accept:     { type: 'accepted',    title: 'Appointment Confirmed',  msg: `Your ${serviceName} on ${format(new Date(a.appointment_date), 'MMM d, yyyy')} is confirmed.` },
+      decline:    { type: 'rejected',    title: 'Appointment Declined',   msg: `Your ${serviceName} was declined.${reason ? ` Reason: ${reason}` : ''}` },
+      complete:   { type: 'completed',   title: 'Appointment Completed',  msg: `Your ${serviceName} is complete. Please leave a review!` },
+      reschedule: { type: 'rescheduled', title: 'Reschedule Proposed',    msg: `Your appointment has been proposed to reschedule to ${format(new Date(rescheduleDate), 'MMM d, yyyy')}${rescheduleTime ? ' at ' + rescheduleTime : ''}.` },
     }[actionType]
 
     await supabase.from('appointments').update(updates).eq('id', a.id)
     if (a.customer_id) {
       await supabase.from('notifications').insert({
-        recipient_id: a.customer_id, type: notifMap.type, title: notifMap.title, message: notifMap.msg, related_id: a.id
+        recipient_id: a.customer_id, type: notifMap.type,
+        title: notifMap.title, message: notifMap.msg, related_id: a.id,
       })
     }
 
-    // Email
     if (patientEmail) {
-      const emailConfig = {
-        accept:     { subject:`✅ Appointment Confirmed — ${clinicName}`, body:'' },
-        decline:    { subject:`Update on your appointment — ${clinicName}`, body:'' },
-        complete:   { subject:`🏆 Visit Complete — ${clinicName}`, body:'' },
-        reschedule: { subject:`🔄 Reschedule Proposed — ${clinicName}`, body:'' },
-      }[actionType]
-      const displayDate = actionType==='reschedule'&&rescheduleDate ? format(new Date(rescheduleDate),'EEEE, MMMM d, yyyy') : dateStr
-      const displayTime = actionType==='reschedule'&&rescheduleTime ? rescheduleTime : a.appointment_time
+      const subjects = {
+        accept:     `Appointment Confirmed — ${clinicName}`,
+        decline:    `Update on your appointment — ${clinicName}`,
+        complete:   `Visit Complete — ${clinicName}`,
+        reschedule: `Reschedule Proposed — ${clinicName}`,
+      }
+      const displayDate = actionType === 'reschedule' && rescheduleDate ? format(new Date(rescheduleDate), 'EEEE, MMMM d, yyyy') : dateStr
+      const displayTime = actionType === 'reschedule' && rescheduleTime ? rescheduleTime : a.appointment_time
       sendAppointmentEmail({
-        to: patientEmail, subject: emailConfig.subject,
-        patientName, clinicName, serviceName, date: displayDate, time: displayTime,
-        status: actionType, reason: actionType==='decline'&&reason ? reason : undefined,
-      }).catch(err=>console.warn('Email failed:',err))
+        to: patientEmail, subject: subjects[actionType],
+        patientName, clinicName, serviceName,
+        date: displayDate, time: displayTime, status: actionType,
+        reason: actionType === 'decline' && reason ? reason : undefined,
+      }).catch(err => console.warn('Email failed:', err))
     }
 
-    toast.success({accept:'Confirmed! ✅',decline:'Declined.',complete:'Marked complete! 🏆',reschedule:'Reschedule proposed. 🔄'}[actionType])
+    toast.success({
+      accept:     'Confirmed!',
+      decline:    'Declined.',
+      complete:   'Marked complete!',
+      reschedule: 'Reschedule proposed.',
+    }[actionType])
+
     setActionModal(null); setReason(''); setRescheduleDate(''); setRescheduleTime('')
     loadData(); setProcessing(false)
   }
 
   async function handleSavePerformed(appointmentId, performedServices, clinicNotes) {
-    const { error } = await supabase.from('appointments').update({ performed_services:performedServices, clinic_notes:clinicNotes }).eq('id',appointmentId)
+    const { error } = await supabase.from('appointments')
+      .update({ performed_services: performedServices, clinic_notes: clinicNotes }).eq('id', appointmentId)
     if (error) { toast.error(error.message); return }
-    const appt = appointments.find(a=>a.id===appointmentId)
+    const appt = appointments.find(a => a.id === appointmentId)
     if (appt?.customer_id) {
-      const total = performedServices.reduce((s,p)=>s+(p.price||0),0)
-      const names = performedServices.map(p=>p.name).join(', ')
+      const total = performedServices.reduce((s, p) => s + (p.price || 0), 0)
+      const names = performedServices.map(p => p.name).join(', ')
       await supabase.from('notifications').insert({
-        recipient_id: appt.customer_id, type:'completed',
-        title:'📋 Visit Summary Updated',
-        message:`Your visit on ${format(new Date(appt.appointment_date),'MMM d')} — ${names}. Total: ₱${total.toLocaleString()}.`,
-        related_id: appointmentId
+        recipient_id: appt.customer_id, type: 'completed',
+        title: 'Visit Summary Updated',
+        message: `Your visit on ${format(new Date(appt.appointment_date), 'MMM d')} — ${names}. Total: ₱${total.toLocaleString()}.`,
+        related_id: appointmentId,
       })
     }
     toast.success('Procedures saved!'); setPerformedModal(null); loadData()
@@ -807,29 +807,26 @@ export default function AppointmentRequests() {
 
   function openAction(appt, type) {
     setActionModal(appt); setActionType(type); setReason('')
-    setRescheduleDate(appt.appointment_date); setRescheduleTime(appt.appointment_time||'')
+    setRescheduleDate(appt.appointment_date); setRescheduleTime(appt.appointment_time || '')
   }
 
-  // Filter appointments per tab
-  const pendingAppts   = appointments.filter(a=>a.status==='pending')
-  const upcomingAppts  = appointments.filter(a=>['accepted','reschedule_accepted','rescheduled'].includes(a.status))
-  const completedAppts = appointments.filter(a=>['completed','rejected','cancelled'].includes(a.status))
+  const pendingAppts   = appointments.filter(a => a.status === 'pending')
+  const upcomingAppts  = appointments.filter(a => ['accepted','reschedule_accepted','rescheduled'].includes(a.status))
+  const completedAppts = appointments.filter(a => ['completed','rejected','cancelled'].includes(a.status))
 
-  // For calendar tabs — appointments on selected date
-  const calendarAppts = (tab==='pending' ? pendingAppts : upcomingAppts)
+  const calendarAppts  = tab === 'pending' ? pendingAppts : upcomingAppts
   const selectedDateAppts = selectedDate
-    ? calendarAppts.filter(a=>a.appointment_date===format(selectedDate,'yyyy-MM-dd'))
+    ? calendarAppts.filter(a => a.appointment_date === format(selectedDate, 'yyyy-MM-dd'))
     : []
 
-  // For list tabs
-  const listAppts = (tab==='completed' ? completedAppts : appointments).filter(a=>
-    !search || (a.profiles?.full_name||a.guest_name||'').toLowerCase().includes(search.toLowerCase()) ||
-    (a.services?.name||'').toLowerCase().includes(search.toLowerCase())
+  const listAppts = (tab === 'completed' ? completedAppts : appointments).filter(a =>
+    !search ||
+    (a.profiles?.full_name || a.guest_name || '').toLowerCase().includes(search.toLowerCase()) ||
+    (a.services?.name || '').toLowerCase().includes(search.toLowerCase())
   )
 
-  const bookingWindow = clinic?.availability?.booking_window_days || 30
-  const isCalendarTab = tab==='pending' || tab==='upcoming'
-
+  const bookingWindow  = clinic?.availability?.booking_window_days || 30
+  const isCalendarTab  = tab === 'pending' || tab === 'upcoming'
   const counts = {
     pending:   pendingAppts.length,
     upcoming:  upcomingAppts.length,
@@ -840,7 +837,7 @@ export default function AppointmentRequests() {
   if (loading) return (
     <div className="flex justify-center py-16">
       <div className="w-8 h-8 border-4 border-t-transparent rounded-full animate-spin"
-        style={{borderColor:'var(--color-brand)',borderTopColor:'transparent'}}/>
+        style={{ borderColor: 'var(--color-brand)', borderTopColor: 'transparent' }} />
     </div>
   )
 
@@ -853,27 +850,30 @@ export default function AppointmentRequests() {
           <p className="page-subtitle">{appointments.length} total</p>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <button onClick={()=>setShowWalkIn(true)}
+          <button onClick={() => setShowWalkIn(true)}
             className="btn btn-secondary btn-sm flex items-center gap-1.5">
-            <Plus className="w-4 h-4"/> Walk-in
+            <Plus className="w-4 h-4" /> Walk-in
           </button>
-          <button onClick={()=>setShowEmergency(true)}
-            className="btn btn-sm flex items-center gap-1.5 text-red-500 border-red-200 hover:bg-red-50"
-            style={{border:'1px solid',borderColor:'#fecaca',background:'rgba(254,242,242,0.5)'}}>
-            <AlertTriangle className="w-4 h-4"/> Emergency Closure
+          <button onClick={() => setShowEmergency(true)}
+            className="btn btn-sm flex items-center gap-1.5 text-red-500"
+            style={{ border: '1px solid #fecaca', background: 'rgba(254,242,242,0.5)' }}>
+            <AlertTriangle className="w-4 h-4" /> Emergency Closure
           </button>
         </div>
       </div>
 
       {/* Tabs */}
       <div className="flex gap-1 card p-1 mb-5 rounded-2xl overflow-x-auto">
-        {TABS.map(t=>(
-          <button key={t.key} onClick={()=>{setTab(t.key);setSelectedDate(null)}}
-            className={`flex-1 min-w-0 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap px-2 ${tab===t.key?'text-white shadow-sm':'text-slate-500 hover:text-slate-700'}`}
-            style={tab===t.key?{backgroundColor:'var(--color-brand)'}:{}}>
-            <span className="hidden sm:inline">{t.icon}</span>{t.label}
-            {counts[t.key]>0&&(
-              <span className={`text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center ${tab===t.key?'bg-white/20 text-white':'bg-slate-100 text-slate-500'}`}>
+        {TABS.map(t => (
+          <button key={t.key} onClick={() => { setTab(t.key); setSelectedDate(null) }}
+            className={`flex-1 min-w-0 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap px-2
+              ${tab === t.key ? 'text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+            style={tab === t.key ? { backgroundColor: 'var(--color-brand)' } : {}}>
+            <t.Icon className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">{t.label}</span>
+            {counts[t.key] > 0 && (
+              <span className={`text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center
+                ${tab === t.key ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'}`}>
                 {counts[t.key]}
               </span>
             )}
@@ -881,12 +881,12 @@ export default function AppointmentRequests() {
         ))}
       </div>
 
-      {/* ── Calendar view (pending + upcoming) ── */}
+      {/* Calendar view */}
       {isCalendarTab && (
         <div className="space-y-5">
           {calendarAppts.length === 0 ? (
             <div className="card p-14 text-center">
-              <Calendar className="w-12 h-12 text-slate-200 mx-auto mb-3"/>
+              <Calendar className="w-12 h-12 text-slate-200 mx-auto mb-3" />
               <p className="text-slate-500 font-medium">No {tab} appointments</p>
             </div>
           ) : (
@@ -897,19 +897,16 @@ export default function AppointmentRequests() {
                 onSelectDate={setSelectedDate}
                 bookingWindowDays={bookingWindow}
               />
-
-              {/* Selected date appointments */}
               {selectedDate ? (
                 <div className="animate-fade-in">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="font-display font-semibold text-slate-800 flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-sky-500"/>
-                      {format(selectedDate,'EEEE, MMMM d, yyyy')}
+                      <Calendar className="w-4 h-4 text-sky-500" />
+                      {format(selectedDate, 'EEEE, MMMM d, yyyy')}
                       <span className="badge badge-teal">{selectedDateAppts.length}</span>
                     </h3>
-                    <button onClick={()=>setSelectedDate(null)} className="text-slate-400 hover:text-slate-600 text-xs font-semibold">
-                      Clear ×
-                    </button>
+                    <button onClick={() => setSelectedDate(null)}
+                      className="text-slate-400 hover:text-slate-600 text-xs font-semibold">Clear</button>
                   </div>
                   {selectedDateAppts.length === 0 ? (
                     <div className="card p-8 text-center">
@@ -917,15 +914,15 @@ export default function AppointmentRequests() {
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      {selectedDateAppts.map(a=>(
-                        <ApptCard key={a.id} a={a} onAction={openAction} onProcedures={setPerformedModal}/>
+                      {selectedDateAppts.map(a => (
+                        <ApptCard key={a.id} a={a} onAction={openAction} onProcedures={setPerformedModal} />
                       ))}
                     </div>
                   )}
                 </div>
               ) : (
                 <div className="card p-6 text-center border-dashed">
-                  <Calendar className="w-8 h-8 text-slate-200 mx-auto mb-2"/>
+                  <Calendar className="w-8 h-8 text-slate-200 mx-auto mb-2" />
                   <p className="text-slate-400 text-sm">Click a highlighted date to see appointments</p>
                 </div>
               )}
@@ -934,91 +931,101 @@ export default function AppointmentRequests() {
         </div>
       )}
 
-      {/* ── List view (completed + all) ── */}
+      {/* List view */}
       {!isCalendarTab && (
         <div>
           <div className="relative mb-5">
             <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
-            <input type="text" placeholder="Search by patient name or service..." value={search}
-              onChange={e=>setSearch(e.target.value)} className="input pl-9"/>
+            <input type="text" placeholder="Search by patient name or service..."
+              value={search} onChange={e => setSearch(e.target.value)} className="input pl-9" />
           </div>
-
           {listAppts.length === 0 ? (
             <div className="card p-12 text-center">
-              <Trophy className="w-10 h-10 text-slate-200 mx-auto mb-3"/>
+              <Trophy className="w-10 h-10 text-slate-200 mx-auto mb-3" />
               <p className="text-slate-500 font-medium">No appointments found</p>
             </div>
           ) : (
             <div className="space-y-3">
-              {listAppts.map(a=>(
-                <ApptCard key={a.id} a={a} onAction={openAction} onProcedures={setPerformedModal}/>
+              {listAppts.map(a => (
+                <ApptCard key={a.id} a={a} onAction={openAction} onProcedures={setPerformedModal} />
               ))}
             </div>
           )}
         </div>
       )}
 
-      {/* ── Action Modal ── */}
+      {/* Action Modal */}
       {actionModal && (
-        <div className="modal-backdrop" onClick={()=>setActionModal(null)}>
-          <div className="modal p-6" onClick={e=>e.stopPropagation()}>
-            <h3 className="font-display font-bold text-slate-900 text-lg mb-1">
-              {{accept:'✅ Confirm',decline:'✗ Decline',complete:'🏆 Mark Complete',reschedule:'🔄 Reschedule'}[actionType]}
+        <div className="modal-backdrop" onClick={() => setActionModal(null)}>
+          <div className="modal p-6" onClick={e => e.stopPropagation()}>
+            <h3 className="font-display font-bold text-slate-900 text-lg mb-1 flex items-center gap-2">
+              {actionType === 'accept'     && <><CheckCircle2 className="w-5 h-5 text-emerald-500" /> Confirm Appointment</>}
+              {actionType === 'decline'    && <><XCircle      className="w-5 h-5 text-red-500"     /> Decline Appointment</>}
+              {actionType === 'complete'   && <><Trophy       className="w-5 h-5 text-violet-500"  /> Mark Complete</>}
+              {actionType === 'reschedule' && <><RefreshCw    className="w-5 h-5 text-blue-500"    /> Reschedule</>}
             </h3>
             <p className="text-slate-500 text-sm mb-4">
               {actionModal.is_walk_in ? actionModal.guest_name : actionModal.profiles?.full_name}
-              {' · '}{actionModal.services?.name}<br/>
-              {format(new Date(actionModal.appointment_date),'EEEE, MMMM d, yyyy')}
+              {' · '}{actionModal.services?.name}<br />
+              {format(new Date(actionModal.appointment_date), 'EEEE, MMMM d, yyyy')}
             </p>
 
-            {/* Email notice for non-walkins */}
             {!actionModal.is_walk_in && actionModal.profiles?.email && (
               <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl mb-4"
-                style={{background:'rgba(220,252,231,0.5)',border:'1px solid rgba(134,239,172,0.5)'}}>
-                <Mail className="w-4 h-4 text-green-500 shrink-0"/>
+                style={{ background: 'rgba(220,252,231,0.5)', border: '1px solid rgba(134,239,172,0.5)' }}>
+                <Mail className="w-4 h-4 text-green-500 shrink-0" />
                 <p className="text-green-700 text-xs font-medium">
                   Email will be sent to <strong>{actionModal.profiles.email}</strong>
                 </p>
               </div>
             )}
 
-            {actionType==='reschedule' && (
+            {actionType === 'reschedule' && (
               <div className="space-y-3 mb-4">
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1.5">New Date</label>
-                  <input type="date" value={rescheduleDate} onChange={e=>setRescheduleDate(e.target.value)}
-                    min={format(new Date(),'yyyy-MM-dd')} className="input"/>
+                  <input type="date" value={rescheduleDate} onChange={e => setRescheduleDate(e.target.value)}
+                    min={format(new Date(), 'yyyy-MM-dd')} className="input" />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1.5">New Time</label>
-                  <input type="time" value={rescheduleTime} onChange={e=>setRescheduleTime(e.target.value)} className="input"/>
+                  <input type="time" value={rescheduleTime} onChange={e => setRescheduleTime(e.target.value)} className="input" />
                 </div>
               </div>
             )}
-            {actionType==='decline' && (
+
+            {actionType === 'decline' && (
               <div className="mb-4">
                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">Reason (optional)</label>
-                <textarea value={reason} onChange={e=>setReason(e.target.value)} rows={2}
-                  placeholder="e.g. Fully booked..." className="input resize-none"/>
+                <textarea value={reason} onChange={e => setReason(e.target.value)} rows={2}
+                  placeholder="e.g. Fully booked..." className="input resize-none" />
               </div>
             )}
-            {actionType==='complete' && (
+
+            {actionType === 'complete' && (
               <div className="rounded-xl p-3 mb-4"
-                style={{backgroundColor:'var(--color-brand-light)',border:'1px solid var(--color-brand-border)'}}>
-                <p className="text-xs" style={{color:'var(--color-brand-text)'}}>
+                style={{ backgroundColor: 'var(--color-brand-light)', border: '1px solid var(--color-brand-border)' }}>
+                <p className="text-xs" style={{ color: 'var(--color-brand-text)' }}>
                   Patient will be notified. You can log procedures after marking complete.
                 </p>
               </div>
             )}
+
             <div className="flex gap-3">
-              <button onClick={()=>setActionModal(null)} className="btn btn-secondary btn-md flex-1">Cancel</button>
-              <button onClick={handleAction} disabled={processing||(actionType==='reschedule'&&!rescheduleDate)}
-                className={`btn btn-md flex-1 ${actionType==='decline'?'btn-danger':'btn-primary'}`}>
+              <button onClick={() => setActionModal(null)} className="btn btn-secondary btn-md flex-1">Cancel</button>
+              <button onClick={handleAction}
+                disabled={processing || (actionType === 'reschedule' && !rescheduleDate)}
+                className={`btn btn-md flex-1 flex items-center justify-center gap-2 ${actionType === 'decline' ? 'btn-danger' : 'btn-primary'}`}>
                 {processing
-                  ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin"/>Processing...</>
-                  : {accept:'Confirm',decline:'Decline',complete:'Mark Complete',reschedule:'Propose'}[actionType]}
+                  ? <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Processing...</>
+                  : <>
+                      {actionType === 'accept'     && <><CheckCircle2 className="w-4 h-4" />Confirm</>}
+                      {actionType === 'decline'    && <><XCircle      className="w-4 h-4" />Decline</>}
+                      {actionType === 'complete'   && <><Trophy       className="w-4 h-4" />Mark Complete</>}
+                      {actionType === 'reschedule' && <><RefreshCw    className="w-4 h-4" />Propose</>}
+                    </>}
               </button>
             </div>
           </div>
@@ -1028,15 +1035,15 @@ export default function AppointmentRequests() {
       {/* Sub-modals */}
       {performedModal && (
         <PerformedServicesModal appointment={performedModal} clinicServices={clinicServices}
-          onSave={handleSavePerformed} onClose={()=>setPerformedModal(null)}/>
+          onSave={handleSavePerformed} onClose={() => setPerformedModal(null)} />
       )}
       {showWalkIn && clinic && (
         <WalkInModal clinic={clinic} clinicServices={clinicServices} availability={clinic.availability}
-          onClose={()=>setShowWalkIn(false)} onSaved={loadData}/>
+          onClose={() => setShowWalkIn(false)} onSaved={loadData} />
       )}
       {showEmergency && (
         <EmergencyClosureModal appointments={appointments} clinicName={clinic?.name}
-          onClose={()=>setShowEmergency(false)} onDone={loadData}/>
+          onClose={() => setShowEmergency(false)} onDone={loadData} />
       )}
     </div>
   )

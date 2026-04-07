@@ -10,9 +10,8 @@ import ProfileEdit from '../pages/ProfileEdit'
 import AboutUs from '../pages/AboutUs'
 import ContactUs from '../pages/ContactUs'
 import BrowseServices from '../pages/BrowseServices'
-import PrivacyPolicy  from '../pages/PrivacyPolicy'
+import PrivacyPolicy from '../pages/PrivacyPolicy'
 import TermsOfService from '../pages/TermsOfService'
-
 
 // Customer
 import CustomerLayout from '../pages/customer/CustomerLayout'
@@ -28,36 +27,37 @@ import AppointmentRequests from '../pages/clinic/AppointmentRequests'
 import ManageServices from '../pages/clinic/ManageServices'
 import ClinicProfile from '../pages/clinic/ClinicProfile'
 import ClinicAvailability from '../pages/clinic/ClinicAvailability'
+import ClinicReports from '../pages/clinic/ClinicReports'
 
 // Admin
 import SuperAdminDashboard from '../pages/admin/SuperAdminDashboard'
 
 const router = createBrowserRouter([
-  { path: '/', element: <Landing /> },
-  { path: '/login', element: <Login /> },
-  { path: '/register', element: <Register /> },
+  { path: '/',             element: <Landing /> },
+  { path: '/login',        element: <Login /> },
+  { path: '/register',     element: <Register /> },
   { path: '/verify-email', element: <VerifyEmail /> },
-  { path: '/about', element: <AboutUs /> },
-  { path: '/contact', element: <ContactUs /> },
-  { path: '/browse', element: <BrowseServices /> },
-  { path: '/clinic/:id', element: <ClinicDetail /> },
-  { path: '/terms',   element: <TermsOfService/> },
-  { path: '/privacy', element: <PrivacyPolicy/>  },
+  { path: '/about',        element: <AboutUs /> },
+  { path: '/contact',      element: <ContactUs /> },
+  { path: '/browse',       element: <BrowseServices /> },
+  { path: '/clinic/:id',   element: <ClinicDetail /> },
+  { path: '/terms',        element: <TermsOfService /> },
+  { path: '/privacy',      element: <PrivacyPolicy /> },
 
   // Customer routes
   {
     path: '/dashboard',
     element: <ProtectedRoute allowedRoles={['customer']}><CustomerLayout /></ProtectedRoute>,
     children: [
-      { index: true, element: <CustomerDashboard /> },
-      { path: 'appointments', element: <MyAppointments /> },
-      { path: 'browse', element: <BrowseClinics /> },
-      { path: 'profile', element: <ProfileEdit /> },
-    ]
+      { index: true,              element: <CustomerDashboard /> },
+      { path: 'appointments',     element: <MyAppointments /> },
+      { path: 'browse',           element: <BrowseClinics /> },
+      { path: 'profile',          element: <ProfileEdit /> },
+    ],
   },
   {
     path: '/book/:clinicId',
-    element: <ProtectedRoute allowedRoles={['customer']}><BookAppointment /></ProtectedRoute>
+    element: <ProtectedRoute allowedRoles={['customer']}><BookAppointment /></ProtectedRoute>,
   },
 
   // Clinic routes
@@ -65,20 +65,21 @@ const router = createBrowserRouter([
     path: '/clinic',
     element: <ProtectedRoute allowedRoles={['clinic_owner']}><ClinicLayout /></ProtectedRoute>,
     children: [
-      { index: true, element: <ClinicDashboard /> },
-      { path: 'appointments', element: <AppointmentRequests /> },
-      { path: 'services', element: <ManageServices /> },
-      { path: 'availability', element: <ClinicAvailability /> },
-      { path: 'profile', element: <ClinicProfile /> },
-      { path: 'account', element: <ProfileEdit /> },
-    ]
+      { index: true,             element: <ClinicDashboard /> },
+      { path: 'appointments',    element: <AppointmentRequests /> },
+      { path: 'services',        element: <ManageServices /> },
+      { path: 'availability',    element: <ClinicAvailability /> },
+      { path: 'reports',         element: <ClinicReports /> },
+      { path: 'profile',         element: <ClinicProfile /> },
+      { path: 'account',         element: <ProfileEdit /> },
+    ],
   },
 
   // Admin
   {
     path: '/admin',
-    element: <ProtectedRoute allowedRoles={['super_admin']}><SuperAdminDashboard /></ProtectedRoute>
-  }
+    element: <ProtectedRoute allowedRoles={['super_admin']}><SuperAdminDashboard /></ProtectedRoute>,
+  },
 ])
 
 export default router
