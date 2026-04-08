@@ -734,61 +734,55 @@ export default function Landing() {
               <div className="card overflow-hidden group">
                 {/* Video embed — replace src with your YouTube/Vimeo embed URL */}
            <div className="relative bg-black aspect-video">
-            <iframe
-              src="https://www.youtube-nocookie.com/embed/mewn-qxETmo"
-              title="How to book as a patient"
+<iframe
+  src="https://www.youtube.com/embed/dfnJPMCd4WE?rel=0&modestbranding=1"
+  title="How to book as a patient"
+  className="w-full h-full"
+  loading="lazy"
+  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+  allowFullScreen
+/>
+              </div>
+              <div className="p-5">
+              <div className="flex items-center gap-2 mb-2">
+              <span className="badge badge-teal text-xs">For Patients</span>
+              </div>
+              <h3 className="font-display font-bold text-slate-900 text-base mb-1">How to Book an Appointment</h3>
+              <p className="text-slate-500 text-sm leading-relaxed">Create an account, find a clinic near you, pick a schedule, and confirm your booking in under 2 minutes.</p>
+              </div>
+              </div>
+              </Reveal>
+ 
+                    {/* Clinic tutorial */}
+                    <Reveal variant="blur-up" delay={100}>
+                    <div className="card overflow-hidden group">
+                    {/* Video Container */}
+              <div className="relative bg-black aspect-video">
+              <iframe
+              src="https://www.youtube-nocookie.com/embed/TZ9Pp8QVsls"
+              title="How to Register Your Clinic"
               className="w-full h-full"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
-            />
-          </div>
-                <div className="p-5">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="badge badge-teal text-xs">For Patients</span>
-                  </div>
-                  <h3 className="font-display font-bold text-slate-900 text-base mb-1">How to Book an Appointment</h3>
-                  <p className="text-slate-500 text-sm leading-relaxed">Create an account, find a clinic near you, pick a schedule, and confirm your booking in under 2 minutes.</p>
-                </div>
+              />
               </div>
-            </Reveal>
- 
-            {/* Clinic tutorial */}
-            <Reveal variant="blur-up" delay={100}>
-              <div className="card overflow-hidden group">
-                <div className="relative bg-slate-900 aspect-video flex items-center justify-center">
-                  {/* PLACEHOLDER — replace with your iframe once you have a video:
-                      <iframe
-                        src="https://www.youtube.com/embed/YOUR_VIDEO_ID"
-                        title="How to register as a clinic"
-                        className="w-full h-full"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                      /> */}
-                  <div className="flex flex-col items-center gap-3 text-white/60 p-8 text-center">
-                    <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center">
-                      <svg className="w-7 h-7 ml-1" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z"/>
-                      </svg>
-                    </div>
-                    <p className="text-sm font-medium text-white/40">Clinic tutorial video coming soon</p>
-                  </div>
-                </div>
-                <div className="p-5">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="badge badge-info text-xs">For Clinics</span>
-                  </div>
-                  <h3 className="font-display font-bold text-slate-900 text-base mb-1">How to Register Your Clinic</h3>
-                  <p className="text-slate-500 text-sm leading-relaxed">Set up your clinic profile, add your services and availability, submit for approval, and start receiving bookings.</p>
-                </div>
+                              {/* Content */}
+              <div className="p-5">
+              <div className="flex items-center gap-2 mb-2">
+              <span className="badge badge-info text-xs">For Clinics</span>
               </div>
-            </Reveal>
-          </div>
- 
-          {/* To add your video: replace the placeholder div inside each card with:
-              <iframe src="https://www.youtube.com/embed/YOUR_VIDEO_ID" ... />
-              Get the embed URL from YouTube → Share → Embed → copy the src URL */}
-        </div>
-      </section>
+              <h3 className="font-display font-bold text-slate-900 text-base mb-1">
+              How to Register Your Clinic
+              </h3>
+              <p className="text-slate-500 text-sm leading-relaxed">
+              Set up your clinic profile, add your services and availability, submit for approval, and start receiving bookings.
+              </p>
+              </div>
+              </div>
+              </Reveal>
+              </div>
+              </div>
+              </section>
 
       {/* ── SEARCH ── */}
       <section className="py-8 relative z-[1]">
