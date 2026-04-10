@@ -15,10 +15,10 @@ import {
 } from 'lucide-react'
 
 const TABS = [
-  { key: 'pending',   label: 'Pending',   Icon: Timer       },
+  { key: 'pending',   label: 'Pending',   Icon: Timer        },
   { key: 'upcoming',  label: 'Upcoming',  Icon: CheckCircle2 },
-  { key: 'completed', label: 'Completed', Icon: Trophy      },
-  { key: 'all',       label: 'All',       Icon: ClipboardList},
+  { key: 'completed', label: 'Completed', Icon: Trophy       },
+  { key: 'all',       label: 'All',       Icon: ClipboardList },
 ]
 
 const STATUS_CONFIG = {
@@ -74,11 +74,11 @@ function MiniCalendar({ appointments, onSelectDate, selectedDate, bookingWindowD
       <div className="grid grid-cols-7 gap-y-1 gap-3">
         {Array.from({ length: firstDow }).map((_, i) => <div key={`e${i}`} />)}
         {days.map(day => {
-          const dateStr   = format(day, 'yyyy-MM-dd')
-          const count     = countByDate[dateStr] || 0
+          const dateStr    = format(day, 'yyyy-MM-dd')
+          const count      = countByDate[dateStr] || 0
           const isSelected = selectedDate && isSameDay(day, selectedDate)
-          const isToday   = isSameDay(day, new Date())
-          const isPastDay = isPast(day) && !isToday
+          const isToday    = isSameDay(day, new Date())
+          const isPastDay  = isPast(day) && !isToday
           return (
             <button key={dateStr}
               onClick={() => count > 0 ? onSelectDate(day) : null}
@@ -118,6 +118,50 @@ function MiniCalendar({ appointments, onSelectDate, selectedDate, bookingWindowD
   )
 }
 
+// ── Helper: get display name & services for an appointment ────────────────────
+function getApptServices(a) {
+  // Multi-service appointments store selected_services as JSON array
+  if (a.selected_services && Array.isArray(a.selected_services) && a.selected_services.length > 0) {
+    return a.selected_services
+  }
+  // Fallback: single service from the join
+  if (a.services) {
+    return [{ name: a.services.name, price: a.services.price, duration_minutes: a.services.duration_minutes }]
+  }
+  return []
+}
+
+function getApptTotalDuration(a) {
+  const svcs = getApptServices(a)
+  return svcs.reduce((sum, s) => sum + (s.duration_minutes || 30), 0)
+}
+
+function getApptTotalPrice(a) {
+  const svcs = getApptServices(a)
+  return svcs.reduce((sum, s) => sum + parseFloat(s.price || 0), 0)
+}
+
+function formatTime12(t) {
+  if (!t) return '—'
+  const [h, m] = t.split(':').map(Number)
+  const ampm = h >= 12 ? 'PM' : 'AM'
+  const h12  = h === 0 ? 12 : h > 12 ? h - 12 : h
+  return `${h12}:${m.toString().padStart(2, '0')} ${ampm}`
+}
+
+function getApptEndTime(a) {
+  if (!a.appointment_time) return null
+  const [h, m]    = a.appointment_time.split(':').map(Number)
+  const startMin  = h * 60 + m
+  const totalMins = getApptTotalDuration(a)
+  const endMin    = startMin + totalMins
+  const endH      = Math.floor(endMin / 60)
+  const endM      = endMin % 60
+  const ampm      = endH >= 12 ? 'PM' : 'AM'
+  const endH12    = endH === 0 ? 12 : endH > 12 ? endH - 12 : endH
+  return `${endH12}:${endM.toString().padStart(2, '0')} ${ampm}`
+}
+
 // ── Appointment Card ──────────────────────────────────────────────────────────
 function ApptCard({ a, onAction, onProcedures }) {
   const st          = STATUS_CONFIG[a.status] || STATUS_CONFIG.pending
@@ -131,6 +175,12 @@ function ApptCard({ a, onAction, onProcedures }) {
 
   const name    = isWalkIn ? a.guest_name    : a.profiles?.full_name
   const contact = isWalkIn ? a.guest_contact : a.profiles?.email
+
+  const apptServices   = getApptServices(a)
+  const totalDuration  = getApptTotalDuration(a)
+  const totalPrice     = getApptTotalPrice(a)
+  const endTime        = getApptEndTime(a)
+  const isMultiService = apptServices.length > 1
 
   return (
     <div className={`rounded-2xl border p-4 transition-all hover:shadow-sm bg-white
@@ -160,15 +210,50 @@ function ApptCard({ a, onAction, onProcedures }) {
             <span className={`badge ${st.class} shrink-0`}>{st.label}</span>
           </div>
 
-          <div className="flex items-center gap-3 mt-1.5 text-xs text-slate-500 flex-wrap">
-            <span className="font-semibold text-sky-600">{a.services?.name || a.guest_procedure}</span>
-            {a.appointment_time && (
-              <span className="flex items-center gap-0.5"><Clock className="w-3 h-3" />{a.appointment_time}</span>
-            )}
-            {a.services?.price && (
-              <span className="font-semibold">₱{parseFloat(a.services.price).toLocaleString()}</span>
+          {/* Services display */}
+          <div className="mt-1.5">
+            {isMultiService ? (
+              <div className="space-y-0.5">
+                {apptServices.map((s, i) => (
+                  <div key={i} className="flex items-center justify-between text-xs">
+                    <span className="font-medium text-sky-600">{s.name}</span>
+                    <span className="text-slate-400">₱{parseFloat(s.price || 0).toLocaleString()}</span>
+                  </div>
+                ))}
+                <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100 mt-1">
+                  <span className="text-slate-500 font-semibold">{apptServices.length} services · {totalDuration} min total</span>
+                  <span className="font-bold text-slate-700">₱{totalPrice.toLocaleString()}</span>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3 text-xs text-slate-500 flex-wrap">
+                <span className="font-semibold text-sky-600">{apptServices[0]?.name || a.guest_procedure}</span>
+                {apptServices[0]?.price && (
+                  <span className="font-semibold">₱{parseFloat(apptServices[0].price).toLocaleString()}</span>
+                )}
+              </div>
             )}
           </div>
+
+          {/* Time info */}
+          {a.appointment_time && (
+            <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-400">
+              <Clock className="w-3 h-3" />
+              <span>{formatTime12(a.appointment_time)}</span>
+              {endTime && (
+                <>
+                  <span>–</span>
+                  <span>{endTime}</span>
+                  <span className="text-slate-300">({totalDuration} min)</span>
+                </>
+              )}
+              {isCompleted && a.completed_at && (
+                <span className="ml-1 text-emerald-500 font-medium">
+                  · Done at {formatTime12(format(new Date(a.completed_at), 'HH:mm'))}
+                </span>
+              )}
+            </div>
+          )}
 
           {isWalkIn && (a.guest_age || a.guest_gender) && (
             <div className="flex gap-2 mt-1 text-xs text-slate-400">
@@ -229,11 +314,19 @@ function ApptCard({ a, onAction, onProcedures }) {
 
 // ── Performed Services Modal ──────────────────────────────────────────────────
 function PerformedServicesModal({ appointment, clinicServices, onSave, onClose }) {
-  const [performed, setPerformed] = useState(
-    appointment.performed_services?.length
-      ? appointment.performed_services
-      : [{ service_id: appointment.service_id, name: appointment.services?.name, price: parseFloat(appointment.services?.price || 0), custom: false }]
-  )
+  // Pre-populate from selected_services or the single booked service
+  const defaultPerformed = () => {
+    if (appointment.performed_services?.length) return appointment.performed_services
+    const svcs = getApptServices(appointment)
+    return svcs.map(s => ({
+      service_id: s.service_id || appointment.service_id,
+      name: s.name,
+      price: parseFloat(s.price || 0),
+      custom: false,
+    }))
+  }
+
+  const [performed, setPerformed]     = useState(defaultPerformed)
   const [clinicNotes, setClinicNotes] = useState(appointment.clinic_notes || '')
   const [saving, setSaving]           = useState(false)
   const [showCustom, setShowCustom]   = useState(false)
@@ -251,8 +344,8 @@ function PerformedServicesModal({ appointment, clinicServices, onSave, onClose }
     setPerformed(p => [...p, { name: customName.trim(), price: parseFloat(customPrice) || 0, custom: true }])
     setCustomName(''); setCustomPrice(''); setShowCustom(false)
   }
-  function remove(i)          { setPerformed(p => p.filter((_, j) => j !== i)) }
-  function updatePrice(i, v)  { setPerformed(p => p.map((x, j) => j === i ? { ...x, price: parseFloat(v) || 0 } : x)) }
+  function remove(i)         { setPerformed(p => p.filter((_, j) => j !== i)) }
+  function updatePrice(i, v) { setPerformed(p => p.map((x, j) => j === i ? { ...x, price: parseFloat(v) || 0 } : x)) }
 
   async function handleSave() {
     if (!performed.length) { toast.error('Add at least one procedure'); return }
@@ -370,9 +463,9 @@ function WalkInModal({ clinic, clinicServices, availability, onClose, onSaved })
     service_id: '', date: '', time: '',
   })
   const [saving, setSaving] = useState(false)
-  const today        = format(new Date(), 'yyyy-MM-dd')
+  const today         = format(new Date(), 'yyyy-MM-dd')
   const bookingWindow = availability?.booking_window_days || 30
-  const maxDate      = format(addDays(startOfToday(), bookingWindow), 'yyyy-MM-dd')
+  const maxDate       = format(addDays(startOfToday(), bookingWindow), 'yyyy-MM-dd')
 
   const timeSlots = useMemo(() => {
     if (!form.date || !availability?.schedule) return []
@@ -405,17 +498,25 @@ function WalkInModal({ clinic, clinicServices, availability, onClose, onSaved })
     }
     setSaving(true)
     const svc = clinicServices.find(s => s.id === form.service_id)
+    const selectedServicesData = svc ? [{
+      service_id: svc.id,
+      name: svc.name,
+      price: parseFloat(svc.price || 0),
+      duration_minutes: svc.duration_minutes || 30,
+    }] : []
+
     const { error } = await supabase.from('appointments').insert({
-      clinic_id:     clinic.id,
-      service_id:    form.service_id,
-      customer_id:   null,
-      is_walk_in:    true,
-      guest_name:    form.guest_name.trim(),
-      guest_contact: form.guest_contact.trim(),
-      guest_age:     form.guest_age ? parseInt(form.guest_age) : null,
-      guest_gender:  form.guest_gender || null,
-      appointment_date: form.date,
-      appointment_time: form.time,
+      clinic_id:         clinic.id,
+      service_id:        form.service_id,
+      selected_services: selectedServicesData,
+      customer_id:       null,
+      is_walk_in:        true,
+      guest_name:        form.guest_name.trim(),
+      guest_contact:     form.guest_contact.trim(),
+      guest_age:         form.guest_age ? parseInt(form.guest_age) : null,
+      guest_gender:      form.guest_gender || null,
+      appointment_date:  form.date,
+      appointment_time:  form.time,
       status: 'accepted',
       notes: `Walk-in: ${form.guest_name}. Procedure: ${svc?.name}`,
     })
@@ -537,8 +638,8 @@ function EmergencyClosureModal({ appointments, clinicName, onClose, onDone }) {
 
     setProcessing(true)
     for (const a of affectedAppts) {
-      const decision    = decisions[a.id]
-      const patientName = a.is_walk_in ? a.guest_name : a.profiles?.full_name
+      const decision     = decisions[a.id]
+      const patientName  = a.is_walk_in ? a.guest_name : a.profiles?.full_name
       const patientEmail = a.is_walk_in ? null : a.profiles?.email
 
       if (decision === 'cancel') {
@@ -636,6 +737,7 @@ function EmergencyClosureModal({ appointments, clinicName, onClose, onDone }) {
               {affectedAppts.map(a => {
                 const name     = a.is_walk_in ? a.guest_name : a.profiles?.full_name
                 const decision = decisions[a.id]
+                const svcs     = getApptServices(a)
                 return (
                   <div key={a.id} className="border border-slate-200 rounded-2xl p-4">
                     <div className="flex items-center gap-3 mb-3">
@@ -644,7 +746,9 @@ function EmergencyClosureModal({ appointments, clinicName, onClose, onDone }) {
                       </div>
                       <div>
                         <p className="font-semibold text-slate-800 text-sm">{name}</p>
-                        <p className="text-xs text-slate-400">{a.services?.name} · {a.appointment_time}</p>
+                        <p className="text-xs text-slate-400">
+                          {svcs.map(s => s.name).join(', ')} · {a.appointment_time}
+                        </p>
                       </div>
                     </div>
                     <div className="flex gap-2 mb-3">
@@ -693,22 +797,22 @@ function EmergencyClosureModal({ appointments, clinicName, onClose, onDone }) {
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function AppointmentRequests() {
   const { user } = useAuth()
-  const [clinic, setClinic]             = useState(null)
+  const [clinic, setClinic]               = useState(null)
   const [clinicServices, setClinicServices] = useState([])
-  const [appointments, setAppointments] = useState([])
-  const [loading, setLoading]           = useState(true)
-  const [tab, setTab]                   = useState('pending')
-  const [selectedDate, setSelectedDate] = useState(null)
-  const [actionModal, setActionModal]   = useState(null)
-  const [actionType, setActionType]     = useState(null)
-  const [reason, setReason]             = useState('')
+  const [appointments, setAppointments]   = useState([])
+  const [loading, setLoading]             = useState(true)
+  const [tab, setTab]                     = useState('pending')
+  const [selectedDate, setSelectedDate]   = useState(null)
+  const [actionModal, setActionModal]     = useState(null)
+  const [actionType, setActionType]       = useState(null)
+  const [reason, setReason]               = useState('')
   const [rescheduleDate, setRescheduleDate] = useState('')
   const [rescheduleTime, setRescheduleTime] = useState('')
-  const [processing, setProcessing]     = useState(false)
+  const [processing, setProcessing]       = useState(false)
   const [performedModal, setPerformedModal] = useState(null)
-  const [showWalkIn, setShowWalkIn]     = useState(false)
+  const [showWalkIn, setShowWalkIn]       = useState(false)
   const [showEmergency, setShowEmergency] = useState(false)
-  const [search, setSearch]             = useState('')
+  const [search, setSearch]               = useState('')
 
   useEffect(() => { loadData() }, [user])
 
@@ -719,7 +823,9 @@ export default function AppointmentRequests() {
     const [appts, services] = await Promise.all([
       supabase.from('appointments')
         .select('*, profiles!appointments_customer_id_fkey(full_name,email,phone,avatar_url), services(name,price,duration_minutes)')
-        .eq('clinic_id', c.id).order('appointment_date', { ascending: true }).order('appointment_time', { ascending: true }),
+        .eq('clinic_id', c.id)
+        .order('appointment_date', { ascending: true })
+        .order('appointment_time', { ascending: true }),
       supabase.from('services').select('*').eq('clinic_id', c.id).eq('is_active', true),
     ])
     setAppointments(appts.data || [])
@@ -734,13 +840,15 @@ export default function AppointmentRequests() {
     const clinicName   = clinic?.name || 'Your clinic'
     const patientEmail = a.is_walk_in ? null : a.profiles?.email
     const patientName  = a.is_walk_in ? a.guest_name : a.profiles?.full_name
-    const serviceName  = a.services?.name || 'appointment'
+    const svcs         = getApptServices(a)
+    const serviceName  = svcs.map(s => s.name).join(', ') || 'appointment'
     const dateStr      = format(new Date(a.appointment_date), 'EEEE, MMMM d, yyyy')
 
+    // ── KEY CHANGE: store completed_at timestamp so slot reopening works ──
     const updates = {
       accept:     { status: 'accepted' },
       decline:    { status: 'rejected', rejection_reason: reason },
-      complete:   { status: 'completed' },
+      complete:   { status: 'completed', completed_at: new Date().toISOString() },
       reschedule: { status: 'rescheduled', rescheduled_date: rescheduleDate, rescheduled_time: rescheduleTime },
     }[actionType]
 
@@ -779,7 +887,7 @@ export default function AppointmentRequests() {
     toast.success({
       accept:     'Confirmed!',
       decline:    'Declined.',
-      complete:   'Marked complete!',
+      complete:   'Marked complete! Slot reopened for new bookings.',
       reschedule: 'Reschedule proposed.',
     }[actionType])
 
@@ -814,7 +922,7 @@ export default function AppointmentRequests() {
   const upcomingAppts  = appointments.filter(a => ['accepted','reschedule_accepted','rescheduled'].includes(a.status))
   const completedAppts = appointments.filter(a => ['completed','rejected','cancelled'].includes(a.status))
 
-  const calendarAppts  = tab === 'pending' ? pendingAppts : upcomingAppts
+  const calendarAppts     = tab === 'pending' ? pendingAppts : upcomingAppts
   const selectedDateAppts = selectedDate
     ? calendarAppts.filter(a => a.appointment_date === format(selectedDate, 'yyyy-MM-dd'))
     : []
@@ -822,7 +930,7 @@ export default function AppointmentRequests() {
   const listAppts = (tab === 'completed' ? completedAppts : appointments).filter(a =>
     !search ||
     (a.profiles?.full_name || a.guest_name || '').toLowerCase().includes(search.toLowerCase()) ||
-    (a.services?.name || '').toLowerCase().includes(search.toLowerCase())
+    (getApptServices(a).map(s => s.name).join(' ') || '').toLowerCase().includes(search.toLowerCase())
   )
 
   const bookingWindow  = clinic?.availability?.booking_window_days || 30
@@ -881,7 +989,7 @@ export default function AppointmentRequests() {
         ))}
       </div>
 
-      {/* Calendar view */}
+      {/* Calendar view (pending + upcoming tabs) */}
       {isCalendarTab && (
         <div className="space-y-5">
           {calendarAppts.length === 0 ? (
@@ -931,7 +1039,7 @@ export default function AppointmentRequests() {
         </div>
       )}
 
-      {/* List view */}
+      {/* List view (completed + all tabs) */}
       {!isCalendarTab && (
         <div>
           <div className="relative mb-5">
@@ -968,8 +1076,10 @@ export default function AppointmentRequests() {
             </h3>
             <p className="text-slate-500 text-sm mb-4">
               {actionModal.is_walk_in ? actionModal.guest_name : actionModal.profiles?.full_name}
-              {' · '}{actionModal.services?.name}<br />
+              {' · '}{getApptServices(actionModal).map(s => s.name).join(', ')}<br />
               {format(new Date(actionModal.appointment_date), 'EEEE, MMMM d, yyyy')}
+              {actionModal.appointment_time && ` · ${formatTime12(actionModal.appointment_time)}`}
+              {getApptEndTime(actionModal) && ` – ${getApptEndTime(actionModal)}`}
             </p>
 
             {!actionModal.is_walk_in && actionModal.profiles?.email && (
@@ -978,6 +1088,14 @@ export default function AppointmentRequests() {
                 <Mail className="w-4 h-4 text-green-500 shrink-0" />
                 <p className="text-green-700 text-xs font-medium">
                   Email will be sent to <strong>{actionModal.profiles.email}</strong>
+                </p>
+              </div>
+            )}
+
+            {actionType === 'complete' && (
+              <div className="rounded-xl p-3 mb-4 bg-violet-50 border border-violet-200">
+                <p className="text-xs text-violet-700 font-medium">
+                  ✓ Marking complete now will release this time slot for new bookings immediately — even if the scheduled end time hasn't passed yet.
                 </p>
               </div>
             )}
@@ -1001,15 +1119,6 @@ export default function AppointmentRequests() {
                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">Reason (optional)</label>
                 <textarea value={reason} onChange={e => setReason(e.target.value)} rows={2}
                   placeholder="e.g. Fully booked..." className="input resize-none" />
-              </div>
-            )}
-
-            {actionType === 'complete' && (
-              <div className="rounded-xl p-3 mb-4"
-                style={{ backgroundColor: 'var(--color-brand-light)', border: '1px solid var(--color-brand-border)' }}>
-                <p className="text-xs" style={{ color: 'var(--color-brand-text)' }}>
-                  Patient will be notified. You can log procedures after marking complete.
-                </p>
               </div>
             )}
 
