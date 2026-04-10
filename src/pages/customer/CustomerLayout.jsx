@@ -21,13 +21,14 @@ export default function CustomerLayout() {
     <div className="min-h-screen flex flex-col bg-slate-50">
       {/* Header */}
       <header className="glass-header sticky top-0 z-40">
-      <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-          <span className="font-display font-bold text-sky-400 text-3xl">
-          Book
-          <span className="font-display font-bold text-slate-900 text-3xl">
-            MyDentist
-          </span></span>
+            <span className="font-display font-bold text-sky-400 text-3xl">
+              Book
+              <span className="font-display font-bold text-slate-900 text-3xl">
+                MyDentist
+              </span>
+            </span>
           </div>
           <div className="flex items-center gap-3">
             <NotificationBell/>
@@ -39,13 +40,19 @@ export default function CustomerLayout() {
                 }
               </div>
               <span className="text-sm font-medium text-slate-700 hidden sm:block">{profile?.full_name}</span>
+              {/* Desktop sign out */}
+              <button
+                onClick={handleSignOut}
+                className="text-xs text-slate-400 hover:text-red-400 transition-colors ml-1 hidden sm:block">
+                Sign out
+              </button>
             </div>
           </div>
         </div>
       </header>
 
       <div className="max-w-7xl mx-auto w-full px-4 py-6 flex gap-6 flex-1">
-        {/* Sidebar */}
+        {/* Desktop sidebar */}
         <aside className="w-52 shrink-0 hidden md:block">
           <nav className="glass-sidebar p-2 sticky top-20 space-y-0.5">
             {navItems.map(item => (
@@ -64,11 +71,13 @@ export default function CustomerLayout() {
           </nav>
         </aside>
 
+        {/* Main content — extra bottom padding for mobile tab bar */}
         <main className="flex-1 min-w-0 pb-20 md:pb-0"><Outlet/></main>
       </div>
 
-      {/* Mobile nav */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 flex z-40">
+      {/* Mobile bottom nav — 4 tabs + Sign Out */}
+      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 flex z-40"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         {navItems.map(item => (
           <NavLink key={item.to} to={item.to} end={item.end}
             className={({isActive}) => `flex-1 flex flex-col items-center py-2.5 gap-0.5 text-xs font-semibold transition-colors ${isActive?'text-sky-600':'text-slate-400'}`}>
@@ -76,6 +85,13 @@ export default function CustomerLayout() {
             <span>{item.label.split(' ')[0]}</span>
           </NavLink>
         ))}
+        {/* Sign Out tab */}
+        <button
+          onClick={handleSignOut}
+          className="flex-1 flex flex-col items-center py-2.5 gap-0.5 text-xs font-semibold text-slate-400 hover:text-red-400 transition-colors">
+          <LogOut className="w-5 h-5"/>
+          <span>Sign Out</span>
+        </button>
       </nav>
     </div>
   )

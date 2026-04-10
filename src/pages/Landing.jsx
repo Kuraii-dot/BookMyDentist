@@ -43,8 +43,6 @@ const ANIM_STYLES = `
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
     background-size: 200px 200px;
   }
-
-  /* Landing uses global card/header styles */
 `
 
 // ── useInView ────────────────────────────────────────────────────────────────
@@ -605,7 +603,7 @@ export default function Landing() {
       <style>{ANIM_STYLES}</style>
       <BackgroundScene/>
 
-      {/* ── NAV ── */}
+      {/* ── NAV (desktop only) ── */}
       <nav className="glass-header fixed top-0 inset-x-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-6">
@@ -619,10 +617,10 @@ export default function Landing() {
           <div className="flex items-center gap-3">
             {user ? (
               <button onClick={() => navigate(profile?.role === 'clinic_owner' ? '/clinic' : '/dashboard')}
-                className="btn btn-primary btn-md">Dashboard →</button>
+                className="btn btn-primary btn-md">Dashboard</button>
             ) : (
               <>
-                <Link to="/login" className="text-sm font-semibold text-slate-600 hover:text-sky-600 transition-colors px-3 py-2">Sign in</Link>
+                <Link to="/login" className="hidden md:block text-sm font-semibold text-slate-600 hover:text-sky-600 transition-colors px-3 py-2">Sign in</Link>
                 <Link to="/register" className="btn btn-primary btn-md">Get Started</Link>
               </>
             )}
@@ -630,34 +628,72 @@ export default function Landing() {
         </div>
       </nav>
 
+      {/* ── MOBILE BOTTOM TAB BAR ── */}
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-white/95 backdrop-blur-md border-t border-slate-200"
+        style={{ boxShadow: '0 -4px 24px rgba(14,165,233,0.10)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div className="flex items-center">
+          <Link to="/" className="flex-1 flex flex-col items-center py-2.5 gap-0.5 text-sky-600">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            <span className="text-[10px] font-bold">Home</span>
+          </Link>
+          <Link to="/browse" className="flex-1 flex flex-col items-center py-2.5 gap-0.5 text-slate-500 hover:text-sky-600 transition-colors">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+            <span className="text-[10px] font-bold">Browse</span>
+          </Link>
+          <Link to="/about" className="flex-1 flex flex-col items-center py-2.5 gap-0.5 text-slate-500 hover:text-sky-600 transition-colors">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span className="text-[10px] font-bold">About</span>
+          </Link>
+          <Link to="/contact" className="flex-1 flex flex-col items-center py-2.5 gap-0.5 text-slate-500 hover:text-sky-600 transition-colors">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            <span className="text-[10px] font-bold">Contact</span>
+          </Link>
+          {user ? (
+            <button
+              onClick={() => navigate(profile?.role === 'clinic_owner' ? '/clinic' : '/dashboard')}
+              className="flex-1 flex flex-col items-center py-2.5 gap-0.5 text-slate-500 hover:text-sky-600 transition-colors">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+              </svg>
+              <span className="text-[10px] font-bold">Dashboard</span>
+            </button>
+          ) : (
+            <Link to="/login" className="flex-1 flex flex-col items-center py-2.5 gap-0.5 text-slate-500 hover:text-sky-600 transition-colors">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>
+              </svg>
+              <span className="text-[10px] font-bold">Sign In</span>
+            </Link>
+          )}
+        </div>
+      </nav>
+
       {/* ── HERO ── */}
       <section className="relative z-[1] overflow-hidden">
-        {/* Full-bleed hero image */}
         <div className="relative w-full" style={{minHeight:'88vh'}}>
-
-          {/* Background image — Dr. Tooth in clinic */}
           <img
             src={heroImg}
             alt="Dr. Tooth at the dentist office"
             className="absolute inset-0 w-full h-full object-cover object-center"
           />
-
-          {/* Left gradient overlay so text is readable */}
           <div className="absolute inset-0 bg-gradient-to-r from-white/95 via-white/75 to-transparent"/>
-          {/* Bottom fade into page bg */}
           <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[#e0f2fe] to-transparent"/>
-
-          {/* Content — left-aligned text over overlay */}
           <div className="relative z-[2] max-w-7xl mx-auto px-4 sm:px-6 flex items-center" style={{minHeight:'88vh'}}>
             <div className="max-w-xl py-20">
-
               <Reveal variant="blur-up" delay={0}>
                 <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold mb-6 bg-[rgba(14,165,233,0.12)] border border-[rgba(14,165,233,0.3)] text-sky-700 backdrop-blur-sm">
                   <span className="w-1.5 h-1.5 bg-sky-400 rounded-full animate-pulse"/>
                   Trusted by patients across the Philippines
                 </div>
               </Reveal>
-
               <Reveal variant="blur-up" delay={80}>
                 <h1 className="font-display font-bold text-slate-900 text-5xl sm:text-6xl lg:text-7xl leading-[1.05] mb-6 tracking-[-0.03em]">
                   Your Smile<br/>Deserves<br/>
@@ -666,23 +702,19 @@ export default function Landing() {
                   </span>
                 </h1>
               </Reveal>
-
               <Reveal variant="blur-up" delay={180}>
                 <p className="text-slate-600 text-lg leading-relaxed max-w-md mb-8">
                   Book dental appointments instantly. Find top-rated clinics near you, check real-time availability, and never miss a visit.
                 </p>
               </Reveal>
-
               <Reveal variant="blur-up" delay={270}>
                 <div className="flex flex-wrap gap-3 mb-10">
                   <Link to="/register" className="btn btn-primary btn-lg">Book Appointment</Link>
                   <Link to="/register?role=clinic" className="btn btn-secondary btn-lg">List Your Clinic <ChevronRightIcon className="w-4 h-4 inline ml-1"/></Link>
                 </div>
               </Reveal>
-
               <Reveal variant="blur-fade" delay={400}>
                 <div className="flex flex-wrap gap-4">
-                  {/* Stat chips */}
                   <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/80 backdrop-blur-md border border-white/90 shadow-[0_4px_20px_rgba(14,165,233,0.10)]">
                     <div className="w-9 h-9 rounded-xl bg-sky-100 flex items-center justify-center">
                       <BuildingIcon className="w-5 h-5 text-sky-500"/>
@@ -727,93 +759,71 @@ export default function Landing() {
               <p className="text-slate-500 text-base max-w-md mx-auto">Watch these short guides to get started in minutes — whether you're a patient or a clinic.</p>
             </div>
           </Reveal>
- 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {/* Patient tutorial */}
             <Reveal variant="blur-up" delay={0}>
               <div className="card overflow-hidden group">
-                {/* Video embed — replace src with your YouTube/Vimeo embed URL */}
-           <div className="relative bg-black aspect-video">
-<iframe
-  src="https://www.youtube.com/embed/dfnJPMCd4WE?rel=0&modestbranding=1"
-  title="How to book as a patient"
-  className="w-full h-full"
-  loading="lazy"
-  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-  allowFullScreen
-/>
+                <div className="relative bg-black aspect-video">
+                  <iframe
+                    src="https://www.youtube.com/embed/dfnJPMCd4WE?rel=0&modestbranding=1"
+                    title="How to book as a patient"
+                    className="w-full h-full"
+                    loading="lazy"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                </div>
+                <div className="p-5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="badge badge-teal text-xs">For Patients</span>
+                  </div>
+                  <h3 className="font-display font-bold text-slate-900 text-base mb-1">How to Book an Appointment</h3>
+                  <p className="text-slate-500 text-sm leading-relaxed">Create an account, find a clinic near you, pick a schedule, and confirm your booking in under 2 minutes.</p>
+                </div>
               </div>
-              <div className="p-5">
-              <div className="flex items-center gap-2 mb-2">
-              <span className="badge badge-teal text-xs">For Patients</span>
+            </Reveal>
+            <Reveal variant="blur-up" delay={100}>
+              <div className="card overflow-hidden group">
+                <div className="relative bg-black aspect-video">
+                  <iframe
+                    src="https://www.youtube-nocookie.com/embed/TZ9Pp8QVsls"
+                    title="How to Register Your Clinic"
+                    className="w-full h-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                </div>
+                <div className="p-5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="badge badge-info text-xs">For Clinics</span>
+                  </div>
+                  <h3 className="font-display font-bold text-slate-900 text-base mb-1">How to Register Your Clinic</h3>
+                  <p className="text-slate-500 text-sm leading-relaxed">Set up your clinic profile, add your services and availability, submit for approval, and start receiving bookings.</p>
+                </div>
               </div>
-              <h3 className="font-display font-bold text-slate-900 text-base mb-1">How to Book an Appointment</h3>
-              <p className="text-slate-500 text-sm leading-relaxed">Create an account, find a clinic near you, pick a schedule, and confirm your booking in under 2 minutes.</p>
-              </div>
-              </div>
-              </Reveal>
- 
-                    {/* Clinic tutorial */}
-                    <Reveal variant="blur-up" delay={100}>
-                    <div className="card overflow-hidden group">
-                    {/* Video Container */}
-              <div className="relative bg-black aspect-video">
-              <iframe
-              src="https://www.youtube-nocookie.com/embed/TZ9Pp8QVsls"
-              title="How to Register Your Clinic"
-              className="w-full h-full"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              />
-              </div>
-                              {/* Content */}
-              <div className="p-5">
-              <div className="flex items-center gap-2 mb-2">
-              <span className="badge badge-info text-xs">For Clinics</span>
-              </div>
-              <h3 className="font-display font-bold text-slate-900 text-base mb-1">
-              How to Register Your Clinic
-              </h3>
-              <p className="text-slate-500 text-sm leading-relaxed">
-              Set up your clinic profile, add your services and availability, submit for approval, and start receiving bookings.
-              </p>
-              </div>
-              </div>
-              </Reveal>
-              </div>
-              </div>
-              </section>
+            </Reveal>
+          </div>
+        </div>
+      </section>
 
       {/* ── SEARCH ── */}
       <section className="py-8 relative z-[1]">
         <div className="max-w-2xl mx-auto px-4 sm:px-6">
           <Reveal variant="blur-up">
             <div className="relative">
-
-              {/* Mascot — static, above city dropdown */}
               <div className="absolute bottom-full right-0 w-[140px] z-10 pointer-events-none -mb-2">
                 <img src={searchMascot} alt="" className="w-[140px] block" style={{mixBlendMode:'multiply'}}/>
               </div>
-
-              {/* Paper card */}
               <div className="relative bg-[#fffef9] rounded-[20px] shadow-[0_2px_0_#e2d9c8,0_8px_40px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.95)] border border-[#ede8dc] overflow-hidden p-[26px_28px_24px]">
-
-                {/* Ruled lines */}
                 <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
                   {Array.from({length:9}).map((_,i) => (
                     <div key={i} className="absolute left-0 right-0 h-px bg-sky-100/30" style={{top:`${50+i*26}px`}}/>
                   ))}
                   <div className="absolute top-0 bottom-0 left-[44px] w-px bg-red-200/30"/>
                 </div>
-
-                {/* Cloud corners */}
                 <img src={cloud1} alt="" className="absolute -bottom-2.5 -left-1.5 w-[88px] opacity-50 pointer-events-none z-[1] mix-blend-multiply" style={{animation:'dropdrift 9s ease-in-out infinite',animationDelay:'0.5s'}}/>
                 <img src={cloud3} alt="" className="absolute -bottom-1.5 -right-1 w-[80px] opacity-48 pointer-events-none z-[1] mix-blend-multiply" style={{animation:'dropdrift 11s ease-in-out infinite',animationDelay:'2.2s'}}/>
-
-                {/* Content */}
                 <div className="relative z-[2]">
                   <p className="text-[0.65rem] font-extrabold tracking-[0.1em] uppercase text-sky-500 mb-3">🔍 Find Your Dentist</p>
-
                   <div className="flex flex-col sm:flex-row gap-3 mb-4">
                     <div className="relative flex-1">
                       <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"/>
@@ -834,7 +844,6 @@ export default function Landing() {
                       {cities.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                   </div>
-
                   <div className="flex flex-wrap gap-2">
                     {SERVICES.map(s => (
                       <button key={s} onClick={() => setServiceFilter(serviceFilter === s ? '' : s)}
@@ -886,22 +895,17 @@ export default function Landing() {
 
       {/* ── CLINICS GRID ── */}
       <section className="relative z-[1] py-16 overflow-hidden">
-
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          {/* Header */}
           <Reveal variant="blur-up">
             <div className="mb-10">
               <div className="flex items-end gap-0">
                 <h2 className="font-display font-bold text-slate-800 text-3xl sm:text-4xl tracking-[-0.02em] shrink-0">
                   {search || city !== 'all' || serviceFilter ? 'Search Results' : 'Featured Clinics'}
                 </h2>
-                {/* Negative margin pulls mascot back so he doesn't push subtitle down */}
               </div>
               <p className="text-slate-400 text-sm mt-1">{filtered.length} clinic{filtered.length !== 1 ? 's' : ''} available</p>
             </div>
           </Reveal>
-
-          {/* Cards */}
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
               {[...Array(8)].map((_,i) => (
@@ -934,7 +938,6 @@ export default function Landing() {
               ))}
             </div>
           )}
-
           {filtered.length > 0 && !search && city === 'all' && !serviceFilter && (
             <Reveal variant="blur-fade">
               <div className="mt-8">
@@ -975,15 +978,14 @@ export default function Landing() {
         </div>
       </section>
 
-
       {/* ── MASCOT PAPER SECTION ── */}
       <section className="relative z-[1] py-20 pb-15">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <Reveal variant="blur-up">
-            <div className="relative bg-[#fffef9] rounded-[32px] shadow-[0_2px_0_#e2d9c8,0_8px_48px_rgba(0,0,0,0.07),inset_0_1px_0_rgba(255,255,255,0.9)] border border-[#ede8dc] overflow-visible p-[56px_48px]">
+            <div className="relative bg-[#fffef9] rounded-[32px] shadow-[0_2px_0_#e2d9c8,0_8px_48px_rgba(0,0,0,0.07),inset_0_1px_0_rgba(255,255,255,0.9)] border border-[#ede8dc] overflow-hidden p-[56px_48px_56px]">
 
               {/* Ruled lines */}
-              <div className="absolute inset-0 rounded-[32px] overflow-hidden pointer-events-none z-0">
+              <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
                 {Array.from({length:22}).map((_,i) => (
                   <div key={i} className="absolute left-0 right-0 h-px bg-sky-100/35" style={{top:`${80+i*32}px`}}/>
                 ))}
@@ -1019,15 +1021,18 @@ export default function Landing() {
                 <rect x="8" y="46" width="4" height="14" rx="2" fill="#0ea5e9"/>
               </svg>
 
-              <div className="relative z-[1] grid gap-10 items-end" style={{gridTemplateColumns:'1fr auto'}}>
-                <div className="pl-10">
+              {/* ── CONTENT: stacks on mobile, side-by-side on desktop ── */}
+              <div className="relative z-[1] flex flex-col lg:flex-row gap-10 items-center lg:items-end">
+
+                {/* Text content */}
+                <div className="flex-1 pl-0 lg:pl-10 w-full">
                   <div className="inline-flex items-center gap-2 bg-sky-50/70 border border-dashed border-sky-200/35 rounded-lg px-3.5 py-1 text-[0.7rem] font-bold text-sky-700 tracking-[0.08em] uppercase mb-6">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                     </svg>
                     Why BookMyDentist?
                   </div>
-                  <h2 className="font-display font-black text-[clamp(28px,4vw,46px)] tracking-[-0.03em] leading-[1.05] text-slate-900 mb-3">
+                  <h2 className="font-display font-black text-[clamp(24px,4vw,46px)] tracking-[-0.03em] leading-[1.05] text-slate-900 mb-3">
                     Your dental health,<br/><span className="text-sky-500">finally organized.</span>
                   </h2>
                   <p className="text-slate-500 text-base leading-[1.7] max-w-[460px] mb-9">
@@ -1057,9 +1062,22 @@ export default function Landing() {
                   </Link>
                 </div>
 
-                <div className="relative shrink-0 w-[clamp(220px,28vw,320px)] -mb-14">
-                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[120%] h-[60%] rounded-full bg-[radial-gradient(ellipse,rgba(186,230,253,0.6)_0%,transparent_70%)] z-0"/>
-                  <img src={mascotImage} alt="BookMyDentist mascot" className="w-full relative z-[1] mix-blend-multiply drop-shadow-[0_8px_32px_rgba(14,165,233,0.18)] animate-float" style={{animationDuration:'4s'}}/>
+                {/* Mascot — embedded in paper, no float, constrained width on mobile */}
+                <div className="relative shrink-0 w-full lg:w-[clamp(220px,28vw,320px)] flex justify-center lg:block">
+                  {/* Subtle shadow/glow to make it feel grounded on the paper */}
+                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[80%] h-[30px] rounded-full opacity-30 blur-xl"
+                    style={{ background: 'radial-gradient(ellipse,rgba(186,230,253,0.9)_0%,transparent_70%)' }}/>
+                  {/* Thin ruled-line underline to anchor mascot to the paper */}
+                  <div className="absolute bottom-0 left-[10%] right-[10%] h-px bg-sky-200/60"/>
+                  <img
+                    src={mascotImage}
+                    alt="BookMyDentist mascot"
+                    className="relative z-[1] w-[200px] sm:w-[260px] lg:w-full mix-blend-multiply"
+                    style={{
+                      filter: 'drop-shadow(0 8px 16px rgba(14,165,233,0.12))',
+                      maxWidth: '320px',
+                    }}
+                  />
                 </div>
               </div>
             </div>
@@ -1075,7 +1093,7 @@ export default function Landing() {
               <div className="pointer-events-none absolute top-0 left-0 w-64 h-64 rounded-full opacity-40 bg-[radial-gradient(circle,rgba(186,230,253,0.8)_0%,transparent_70%)]"/>
               <div className="pointer-events-none absolute bottom-0 right-0 w-64 h-64 rounded-full opacity-30 bg-[radial-gradient(circle,rgba(251,191,36,0.4)_0%,transparent_70%)]"/>
               <div className="flex flex-col items-center relative z-[1]">
-                    <div className="w-20 h-20 flex items-center justify-center"></div>
+                <div className="w-20 h-20 flex items-center justify-center"></div>
                 <h2 className="font-display font-bold text-slate-900 text-3xl sm:text-4xl mb-4 tracking-[-0.02em]">
                   Ready to Book Your Visit?
                 </h2>
@@ -1091,7 +1109,8 @@ export default function Landing() {
       </section>
 
       {/* ── FOOTER ── */}
-      <footer className="relative z-[1]">
+      {/* Extra bottom padding on mobile so footer isn't hidden behind tab bar */}
+      <footer className="relative z-[1] pb-16 md:pb-0">
         <div className="relative overflow-hidden">
           <div className="absolute inset-0 z-0 bg-cover bg-[center_30%]" style={{backgroundImage:`url(${footerBg})`}}/>
           <div className="absolute top-0 left-0 right-0 h-[220px] z-[1] bg-gradient-to-b from-[#DFF1FD] via-[rgba(245,234,214,0.6)] to-transparent"/>
@@ -1101,10 +1120,9 @@ export default function Landing() {
             <Reveal variant="blur-up">
               <div className="max-w-7xl mx-auto px-4 sm:px-6">
                 <div className="footer-grid grid gap-10 pb-12">
-
                   <div>
                     <div className="flex items-center mb-4">
-                    <span className="font-display font-bold text-3xl text-sky-500">Book</span>
+                      <span className="font-display font-bold text-3xl text-sky-500">Book</span>
                       <span className="font-display font-bold text-3xl text-slate-900">MyDentist</span>
                     </div>
                     <p className="text-white/60 text-sm leading-[1.7] max-w-[260px] mb-6">
@@ -1117,7 +1135,6 @@ export default function Landing() {
                       <button className="px-4 py-2.5 rounded-[10px] bg-sky-500 text-white font-bold text-[0.8rem] border-none cursor-pointer whitespace-nowrap">Subscribe</button>
                     </div>
                   </div>
-
                   {[
                     { title:'Product',   links:[['Browse Clinics','/browse'],['Book Appointment','/register'],['List Your Clinic','/register?role=clinic'],['How It Works','/#how-it-works']] },
                     { title:'Resources', links:[['Help Centre','/contact'],['FAQ','/contact'],['Contact Us','/contact'],['For Clinics','/register?role=clinic']] },

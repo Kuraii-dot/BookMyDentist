@@ -18,6 +18,14 @@ const navItems = [
   { to: '/clinic/account',      label: 'Account',       Icon: User },
 ]
 
+// Mobile nav items — 4 main tabs + sign out
+const mobileNavItems = [
+  { to: '/clinic',              label: 'Home',      Icon: LayoutDashboard, end: true },
+  { to: '/clinic/appointments', label: 'Appts',     Icon: Calendar },
+  { to: '/clinic/services',     label: 'Services',  Icon: Wrench },
+  { to: '/clinic/reports',      label: 'Reports',   Icon: FileBarChart2 },
+]
+
 function Header({ profile, badge, onSignOut }) {
   return (
     <header className="glass-header sticky top-0 z-40">
@@ -102,6 +110,7 @@ export default function ClinicLayout() {
     <div className="min-h-screen flex flex-col bg-slate-50">
       <Header profile={profile} badge="Clinic" onSignOut={handleSignOut} />
       <div className="max-w-7xl mx-auto w-full px-4 py-6 flex gap-6 flex-1">
+        {/* Desktop sidebar */}
         <aside className="w-52 shrink-0 hidden md:block">
           <nav className="glass-sidebar p-2 sticky top-20 space-y-0.5">
             {navItems.map(item => (
@@ -119,17 +128,30 @@ export default function ClinicLayout() {
             </div>
           </nav>
         </aside>
+
+        {/* Main content — extra bottom padding for mobile tab bar */}
         <main className="flex-1 min-w-0 pb-20 md:pb-0"><Outlet /></main>
       </div>
-      {/* Mobile nav — Dashboard, Appointments, Services, Reports, Profile */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 flex z-40">
-        {[navItems[0], navItems[1], navItems[2], navItems[4], navItems[5]].map(item => (
-          <NavLink key={item.to} to={item.to} end={item.end}
-            className={({ isActive }) => `flex-1 flex flex-col items-center py-2.5 gap-0.5 text-xs font-semibold transition-colors ${isActive ? 'text-sky-600' : 'text-slate-400'}`}>
-            <item.Icon className="w-5 h-5" />
-            <span>{item.label.split(' ')[0]}</span>
-          </NavLink>
-        ))}
+
+      {/* Mobile bottom nav — 4 tabs + Sign Out */}
+      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 z-40"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div className="flex items-center">
+          {mobileNavItems.map(item => (
+            <NavLink key={item.to} to={item.to} end={item.end}
+              className={({ isActive }) => `flex-1 flex flex-col items-center py-2.5 gap-0.5 text-xs font-semibold transition-colors ${isActive ? 'text-sky-600' : 'text-slate-400'}`}>
+              <item.Icon className="w-5 h-5" />
+              <span>{item.label}</span>
+            </NavLink>
+          ))}
+          {/* Sign Out tab */}
+          <button
+            onClick={handleSignOut}
+            className="flex-1 flex flex-col items-center py-2.5 gap-0.5 text-xs font-semibold text-slate-400 hover:text-red-400 transition-colors">
+            <LogOut className="w-5 h-5" />
+            <span>Sign Out</span>
+          </button>
+        </div>
       </nav>
     </div>
   )
