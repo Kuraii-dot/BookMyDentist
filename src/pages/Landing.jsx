@@ -604,17 +604,17 @@ export default function Landing() {
       <BackgroundScene/>
 
       {/* ── NAV (desktop only) ── */}
-      <nav className="glass-header fixed top-0 inset-x-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <LOGO/>
+<nav className="glass-header fixed top-0 inset-x-0 z-50">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
+    <div className="flex items-center gap-6">
+      <LOGO/>
             <div className="hidden md:flex items-center">
               <BrowseDropdown/>
               <Link to="/about" className="text-sm font-semibold text-slate-600 hover:text-sky-600 transition-colors px-3 py-2">About</Link>
               <Link to="/contact" className="text-sm font-semibold text-slate-600 hover:text-sky-600 transition-colors px-3 py-2">Contact</Link>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-3">
             {user ? (
               <button onClick={() => navigate(profile?.role === 'clinic_owner' ? '/clinic' : '/dashboard')}
                 className="btn btn-primary btn-md">Dashboard</button>
