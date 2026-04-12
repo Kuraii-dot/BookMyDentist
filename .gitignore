@@ -23,7 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 
-# Environment variables - NEVER upload this!
+# Environment variables
 .env
 .env.local
 .env.production
