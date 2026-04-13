@@ -3,7 +3,7 @@ import { useNotifications } from '../hooks/useNotifications'
 import { format } from 'date-fns'
 import {
   Bell, Calendar, CheckCircle2, XCircle, RefreshCw,
-  Star, PartyPopper, Ban, Clock, Inbox,
+  Star, PartyPopper, Ban, Inbox, Megaphone,
 } from 'lucide-react'
 
 // Map notification types to lucide icons + colors
@@ -19,6 +19,7 @@ const TYPE_CONFIG = {
   clinic_approved:      { Icon: PartyPopper,  color: 'text-emerald-500', bg: 'bg-emerald-50' },
   clinic_rejected:      { Icon: XCircle,      color: 'text-red-500',     bg: 'bg-red-50'     },
   appointment_cancelled:{ Icon: Ban,          color: 'text-slate-500',   bg: 'bg-slate-100'  },
+  announcement:         { Icon: Megaphone,    color: 'text-sky-500',     bg: 'bg-sky-50'     },
 }
 
 const DEFAULT_CONFIG = { Icon: Bell, color: 'text-sky-500', bg: 'bg-sky-50' }
@@ -78,10 +79,10 @@ export default function NotificationBell() {
         onClick={() => setOpen(!open)}
         className="relative w-9 h-9 rounded-xl flex items-center justify-center transition-all"
         style={{
-          background:    'rgba(255,255,255,0.55)',
-          backdropFilter:'blur(12px)',
-          border:        '1px solid rgba(255,255,255,0.8)',
-          boxShadow:     '0 2px 8px rgba(14,165,233,0.08)',
+          background:     'rgba(255,255,255,0.55)',
+          backdropFilter: 'blur(12px)',
+          border:         '1px solid rgba(255,255,255,0.8)',
+          boxShadow:      '0 2px 8px rgba(14,165,233,0.08)',
         }}
       >
         <Bell className="w-5 h-5 text-slate-600" />
@@ -98,21 +99,25 @@ export default function NotificationBell() {
           <div
             className="absolute right-0 top-11 w-80 z-50 overflow-hidden animate-fade-in"
             style={{
-              background:    'rgba(255,255,255,0.82)',
-              backdropFilter:'blur(28px) saturate(1.6)',
-              border:        '1px solid rgba(255,255,255,0.9)',
-              borderRadius:  '1.25rem',
-              boxShadow:     '0 24px 64px rgba(14,165,233,0.14), 0 8px 24px rgba(0,0,0,0.08)',
+              background:     'rgba(255,255,255,0.82)',
+              backdropFilter: 'blur(28px) saturate(1.6)',
+              border:         '1px solid rgba(255,255,255,0.9)',
+              borderRadius:   '1.25rem',
+              boxShadow:      '0 24px 64px rgba(14,165,233,0.14), 0 8px 24px rgba(0,0,0,0.08)',
             }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3"
-              style={{ borderBottom: '1px solid rgba(255,255,255,0.6)' }}>
+            <div
+              className="flex items-center justify-between px-4 py-3"
+              style={{ borderBottom: '1px solid rgba(255,255,255,0.6)' }}
+            >
               <h3 className="font-display font-bold text-slate-800 text-sm">Notifications</h3>
               {unreadCount > 0 && (
-                <button onClick={markAllAsRead}
+                <button
+                  onClick={markAllAsRead}
                   className="text-xs font-semibold transition-colors hover:opacity-70"
-                  style={{ color: 'var(--color-brand)' }}>
+                  style={{ color: 'var(--color-brand)' }}
+                >
                   Mark all read
                 </button>
               )}

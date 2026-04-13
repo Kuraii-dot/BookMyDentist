@@ -14,35 +14,53 @@ export default function ProtectedRoute({ children, allowedRoles }) {
   )
 
   if (!user) return <Navigate to="/login" replace />
-  if (profile?.banned_at) {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
-      <div className="text-center max-w-sm p-8">
-        <div className="text-4xl mb-4">🚫</div>
+
+  // ── Account banned ────────────────────────────────────────────────────────
+  if (profile?.banned_at) return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
+      <div className="w-full max-w-sm text-center animate-fade-in">
+        <div className="w-16 h-16 rounded-2xl bg-red-100 flex items-center justify-center mx-auto mb-5 border border-red-200">
+          <span className="text-3xl">🚫</span>
+        </div>
         <h2 className="font-display font-bold text-slate-900 text-xl mb-2">Account Banned</h2>
-        <p className="text-slate-500 text-sm">Your account has been permanently banned. Contact support if you believe this is a mistake.</p>
+        <p className="text-slate-500 text-sm leading-relaxed mb-6">
+          Your account has been permanently banned from BookMyDentistPH.
+          If you believe this is a mistake, please contact our support team.
+        </p>
+        <a href="mailto:hello@bookmydentistph.com"
+          className="btn btn-secondary btn-md inline-flex">
+          Contact Support
+        </a>
       </div>
     </div>
   )
-}
 
-if (profile?.is_suspended) {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
-      <div className="text-center max-w-sm p-8">
-        <div className="text-4xl mb-4">⏸️</div>
+  // ── Account suspended ─────────────────────────────────────────────────────
+  if (profile?.is_suspended) return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
+      <div className="w-full max-w-sm text-center animate-fade-in">
+        <div className="w-16 h-16 rounded-2xl bg-amber-100 flex items-center justify-center mx-auto mb-5 border border-amber-200">
+          <span className="text-3xl">⏸️</span>
+        </div>
         <h2 className="font-display font-bold text-slate-900 text-xl mb-2">Account Suspended</h2>
-        <p className="text-slate-500 text-sm">Your account has been temporarily suspended. Contact support for more information.</p>
+        <p className="text-slate-500 text-sm leading-relaxed mb-6">
+          Your account has been temporarily suspended.
+          Please contact our support team for more information.
+        </p>
+        <a href="mailto:hello@bookmydentistph.com"
+          className="btn btn-secondary btn-md inline-flex">
+          Contact Support
+        </a>
       </div>
     </div>
   )
-}
 
+  // ── Role mismatch ─────────────────────────────────────────────────────────
   if (allowedRoles && profile && !allowedRoles.includes(profile.role)) {
     const redirectMap = {
-      super_admin: '/admin',
-      clinic_owner: '/clinic',
-      customer: '/dashboard'
+      super_admin:   '/admin',
+      clinic_owner:  '/clinic',
+      customer:      '/dashboard',
     }
     return <Navigate to={redirectMap[profile.role] || '/'} replace />
   }
