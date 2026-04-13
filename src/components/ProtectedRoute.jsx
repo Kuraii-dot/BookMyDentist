@@ -14,6 +14,29 @@ export default function ProtectedRoute({ children, allowedRoles }) {
   )
 
   if (!user) return <Navigate to="/login" replace />
+  if (profile?.banned_at) {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="text-center max-w-sm p-8">
+        <div className="text-4xl mb-4">🚫</div>
+        <h2 className="font-display font-bold text-slate-900 text-xl mb-2">Account Banned</h2>
+        <p className="text-slate-500 text-sm">Your account has been permanently banned. Contact support if you believe this is a mistake.</p>
+      </div>
+    </div>
+  )
+}
+
+if (profile?.is_suspended) {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="text-center max-w-sm p-8">
+        <div className="text-4xl mb-4">⏸️</div>
+        <h2 className="font-display font-bold text-slate-900 text-xl mb-2">Account Suspended</h2>
+        <p className="text-slate-500 text-sm">Your account has been temporarily suspended. Contact support for more information.</p>
+      </div>
+    </div>
+  )
+}
 
   if (allowedRoles && profile && !allowedRoles.includes(profile.role)) {
     const redirectMap = {
