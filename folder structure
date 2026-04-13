@@ -1,39 +1,58 @@
-📦dental
  ┣ 📂node_modules
  ┣ 📂public
+ ┃ ┣ 📜Favicon.png
+ ┃ ┣ 📜Logo.png
  ┃ ┗ 📜vite.svg
  ┣ 📂src
  ┃ ┣ 📂assets
- ┃ ┃ ┗ 📜react.svg
+ ┃ ┃ ┣ 📜1.jpg
+ ┃ ┃ ┣ 📜2.jpg
+ ┃ ┃ ┣ 📜3.jpg
+ ┃ ┃ ┣ 📜4.jpg
+ ┃ ┃ ┣ 📜5.jpg
+ ┃ ┃ ┣ 📜cloud1.png
+ ┃ ┃ ┣ 📜Cloud2.png
+ ┃ ┃ ┣ 📜Cloud3.png
+ ┃ ┃ ┣ 📜Cloud4.png
+ ┃ ┃ ┣ 📜Footer.png
+ ┃ ┃ ┣ 📜heroooo.png
+ ┃ ┃ ┣ 📜mascotnoBG.png
+ ┃ ┃ ┣ 📜MNB.png
+ ┃ ┃ ┣ 📜react.svg
+ ┃ ┃ ┗ 📜search.png
  ┃ ┣ 📂components
  ┃ ┃ ┣ 📂ui
+ ┃ ┃ ┃ ┗ 📜shared.jsx
  ┃ ┃ ┣ 📜Navbar.jsx
- ┃ ┃ ┣ 📜NotificationsBell.jsx
+ ┃ ┃ ┣ 📜NotificationBell.jsx
  ┃ ┃ ┣ 📜OnboardingModal.jsx
  ┃ ┃ ┣ 📜ProtectedRoute.jsx
- ┃ ┃ ┗ 📜Review.jsx
+ ┃ ┃ ┣ 📜Reviews.jsx
+ ┃ ┃ ┗ 📜ToothIcon.jsx
  ┃ ┣ 📂context
  ┃ ┃ ┗ 📜AuthContext.jsx
  ┃ ┣ 📂hooks
  ┃ ┃ ┗ 📜useNotifications.js
  ┃ ┣ 📂lib
- ┃ ┃ ┗ 📜email.js
+ ┃ ┃ ┣ 📜email.js
+ ┃ ┃ ┣ 📜security.js
  ┃ ┃ ┗ 📜supabase.js
  ┃ ┣ 📂pages
  ┃ ┃ ┣ 📂admin
  ┃ ┃ ┃ ┗ 📜SuperAdminDashboard.jsx
  ┃ ┃ ┣ 📂clinic
- ┃ ┃ ┃ ┣ 📜AppointmentRequest.jsx
+ ┃ ┃ ┃ ┣ 📜AppointmentRequests.jsx
  ┃ ┃ ┃ ┣ 📜ClinicAvailability.jsx
  ┃ ┃ ┃ ┣ 📜ClinicDashboard.jsx
  ┃ ┃ ┃ ┣ 📜ClinicLayout.jsx
  ┃ ┃ ┃ ┣ 📜ClinicProfile.jsx
+ ┃ ┃ ┃ ┣ 📜ClinicReports.jsx
  ┃ ┃ ┃ ┣ 📜ManageServices.jsx
- ┃ ┃ ┃ ┗ 📜PedingApproval.jsx
+ ┃ ┃ ┃ ┗ 📜PendingApproval.jsx
  ┃ ┃ ┣ 📂customer
  ┃ ┃ ┃ ┣ 📜BookAppointment.jsx
  ┃ ┃ ┃ ┣ 📜BrowseClinics.jsx
- ┃ ┃ ┃ ┣ 📜CustomerClinic.jsx
+ ┃ ┃ ┃ ┣ 📜CustomerClinicList.jsx
  ┃ ┃ ┃ ┣ 📜CustomerDashboard.jsx
  ┃ ┃ ┃ ┣ 📜CustomerLayout.jsx
  ┃ ┃ ┃ ┣ 📜CustomerProfile.jsx
@@ -44,20 +63,40 @@
  ┃ ┃ ┣ 📜ContactUs.jsx
  ┃ ┃ ┣ 📜Landing.jsx
  ┃ ┃ ┣ 📜Login.jsx
+ ┃ ┃ ┣ 📜PrivacyPolicy.jsx
  ┃ ┃ ┣ 📜ProfileEdit.jsx
  ┃ ┃ ┣ 📜Register.jsx
+ ┃ ┃ ┣ 📜TermsOfService.jsx
  ┃ ┃ ┗ 📜VerifyEmail.jsx
  ┃ ┣ 📂router
  ┃ ┃ ┗ 📜index.jsx
  ┃ ┣ 📜App.jsx
  ┃ ┣ 📜index.css
  ┃ ┗ 📜main.jsx
+ ┣ 📂supabase
+ ┃ ┣ 📂.temp
+ ┃ ┃ ┣ 📜cli-latest
+ ┃ ┃ ┣ 📜gotrue-version
+ ┃ ┃ ┣ 📜pooler-url
+ ┃ ┃ ┣ 📜postgres-version
+ ┃ ┃ ┣ 📜project-ref
+ ┃ ┃ ┣ 📜rest-version
+ ┃ ┃ ┣ 📜storage-migration
+ ┃ ┃ ┗ 📜storage-version
+ ┃ ┗ 📂functions
+ ┃ ┃ ┣ 📂send-email
+ ┃ ┃ ┃ ┗ 📜index.ts
+ ┃ ┃ ┗ 📂send-sms
+ ┃ ┃ ┃ ┗ 📜index.ts
  ┣ 📜.env
  ┣ 📜.gitignore
  ┣ 📜dentaldb.txt
  ┣ 📜eslint.config.js
+ ┣ 📜folder structure
  ┣ 📜index.html
  ┣ 📜package-lock.json
  ┣ 📜package.json
  ┣ 📜README.md
+ ┣ 📜sitemap.xml
+ ┣ 📜vercel.json
  ┗ 📜vite.config.js

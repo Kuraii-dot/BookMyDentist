@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /clinic
+Disallow: /customer
+
+Sitemap: https://bookmydentistph.com/sitemap.xml
