@@ -130,7 +130,7 @@ export default function ManageServices() {
   )
 
   return (
-    <div className="animate-fade-in">
+    <div>
       <PageHeader
         title="Services"
         subtitle={`${services.length} service${services.length!==1?'s':''} configured`}
