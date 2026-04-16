@@ -5,39 +5,86 @@ import { supabase } from '../../lib/supabase'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
 import { sendClinicApprovedEmail, sendClinicRejectedEmail } from '../../lib/email'
-import { Building2, Users, User, Calendar, Search, LogOut, CheckCircle2, XCircle } from 'lucide-react'
-import { StatCard, EmptyState, Modal, Field, Alert, SkeletonRows, TableWrapper, TableHead, StatusBadge, PageHeader } from '../../components/ui/shared'
+import {
+  Building2, Users, User, Calendar, Search, LogOut,
+  CheckCircle2, XCircle, Megaphone, FileText, DollarSign,
+  BarChart2, Star, Activity, ChevronLeft, ChevronRight, Menu, X
+} from 'lucide-react'
+import {
+  StatCard, EmptyState, Modal, Field, Alert, SkeletonRows,
+  TableWrapper, TableHead, StatusBadge, PageHeader
+} from '../../components/ui/shared'
 
-// Tooth SVG icon
+// ── Tooth Icon ─────────────────────────────────────────────────────────────
 function ToothIcon({ className = 'w-4 h-4' }) {
   return (
-    <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-      <path d="M12 2C9.5 2 7 4 7 6.5c0 1.5.5 2.8 1 4 .6 1.4.8 2.8.8 4.2 0 1.5.3 5.3 1.7 5.3.9 0 1.2-1.3 1.5-3 .3-1.7.5-3 1-3s.7 1.3 1 3c.3 1.7.6 3 1.5 3 1.4 0 1.7-3.8 1.7-5.3 0-1.4.2-2.8.8-4.2.5-1.2 1-2.5 1-4C18 4 15.5 2 12 2z"/>
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth={1.5}
+      strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+      <path d="M12 2C9.5 2 7 4 7 6.5c0 1.5.5 2.8 1 4 .6 1.4.8 2.8.8 4.2 0 1.5.3 5.3 1.7 5.3.9 0 1.2-1.3 1.5-3 .3-1.7.5-3 1-3s.7 1.3 1 3c.3 1.7.6 3 1.5 3 1.4 0 1.7-3.8 1.7-5.3 0-1.4.2-2.8.8-4.2.5-1.2 1-2.5 1-4C18 4 15.5 2 12 2z" />
     </svg>
   )
 }
 
-const TABS = [
-  { key: 'pending',       label: 'Pending Clinics'  },
-  { key: 'active',        label: 'Active Clinics'   },
-  { key: 'owners',        label: 'Clinic Owners'    },
-  { key: 'customers',     label: 'Customers'        },
-  { key: 'appointments',  label: 'Appointments'     },
-  { key: 'announcements', label: 'Announcements'    },
-  { key: 'reports',       label: 'Reports'          },
-  { key: 'revenue',       label: 'Revenue'          },
-  { key: 'analytics',     label: 'Analytics'        },
-  { key: 'reviews',       label: 'Reviews'          },
-  { key: 'performance',   label: 'Performance'      },
-]
+// ── Pagination Component ───────────────────────────────────────────────────
+function Pagination({ page, total, perPage, onPage }) {
+  const totalPages = Math.ceil(total / perPage)
+  if (totalPages <= 1) return null
+  const pages = []
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || Math.abs(i - page) <= 1) pages.push(i)
+    else if (pages[pages.length - 1] !== '…') pages.push('…')
+  }
+  return (
+    <div className="flex items-center justify-between mt-5 pt-4 border-t border-slate-100">
+      <p className="text-sm text-slate-400">
+        Showing {Math.min((page - 1) * perPage + 1, total)}–{Math.min(page * perPage, total)} of <strong>{total}</strong>
+      </p>
+      <div className="flex items-center gap-1">
+        <button onClick={() => onPage(page - 1)} disabled={page === 1}
+          className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+        {pages.map((p, i) =>
+          p === '…' ? (
+            <span key={i} className="w-8 h-8 flex items-center justify-center text-slate-400 text-sm">…</span>
+          ) : (
+            <button key={p} onClick={() => onPage(p)}
+              className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-medium transition-colors
+                ${page === p ? 'text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}`}
+              style={page === p ? { backgroundColor: 'var(--color-brand)' } : {}}>
+              {p}
+            </button>
+          )
+        )}
+        <button onClick={() => onPage(page + 1)} disabled={page === totalPages}
+          className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  )
+}
 
-// ── Pending Clinics ───────────────────────────────────────────────────────────
+// ── Spinner ────────────────────────────────────────────────────────────────
+function Spinner() {
+  return (
+    <div className="flex justify-center py-16">
+      <div className="w-7 h-7 border-4 border-t-transparent rounded-full animate-spin"
+        style={{ borderColor: 'var(--color-brand)', borderTopColor: 'transparent' }} />
+    </div>
+  )
+}
+
+const PER_PAGE = 10
+
+// ── Pending Clinics ────────────────────────────────────────────────────────
 function PendingTab({ onRefreshStats }) {
-  const [clinics, setClinics]             = useState([])
-  const [loading, setLoading]             = useState(true)
-  const [rejectModal, setRejectModal]     = useState(null)
-  const [rejectReason, setRejectReason]   = useState('')
+  const [clinics, setClinics]           = useState([])
+  const [loading, setLoading]           = useState(true)
+  const [rejectModal, setRejectModal]   = useState(null)
+  const [rejectReason, setRejectReason] = useState('')
   const [actionLoading, setActionLoading] = useState(null)
+  const [page, setPage] = useState(1)
 
   useEffect(() => {
     supabase.from('clinics')
@@ -75,55 +122,65 @@ function PendingTab({ onRefreshStats }) {
     setRejectModal(null); setRejectReason(''); setActionLoading(null); onRefreshStats()
   }
 
-  if (loading) return (
-    <div className="flex justify-center py-16">
-      <div className="w-7 h-7 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--color-brand)', borderTopColor: 'transparent' }} />
-    </div>
-  )
+  if (loading) return <Spinner />
+
+  const paged = clinics.slice((page - 1) * PER_PAGE, page * PER_PAGE)
 
   return (
     <>
       {clinics.length === 0 ? (
-        <EmptyState icon={<CheckCircle2 className="w-7 h-7 text-emerald-300" />} title="All caught up!" description="No pending clinic applications." />
+        <EmptyState icon={<CheckCircle2 className="w-7 h-7 text-emerald-300" />}
+          title="All caught up!" description="No pending clinic applications." />
       ) : (
-        <div className="space-y-3">
-          {clinics.map(c => (
-            <div key={c.id} className="card p-5 border-l-4 border-l-amber-400">
-              <div className="flex items-start gap-4 flex-wrap">
-                <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0 flex items-center justify-center">
-                  {c.logo_url ? <img src={c.logo_url} alt="" className="w-full h-full object-cover" /> : <Building2 className="w-6 h-6 text-slate-300" />}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-3 flex-wrap">
-                    <div>
-                      <h3 className="font-display font-bold text-slate-900 text-base">{c.name}</h3>
-                      <p className="text-slate-400 text-sm">{c.address}{c.city ? `, ${c.city}` : ''}</p>
-                      <p className="text-slate-400 text-xs mt-0.5">
-                        Owner: <span className="font-medium text-slate-600">{c.profiles?.full_name}</span> · {c.profiles?.email}
-                      </p>
-                      <p className="text-slate-300 text-xs mt-0.5">Submitted {format(new Date(c.created_at), 'MMM d, yyyy')}</p>
-                    </div>
-                    <div className="flex gap-2 shrink-0">
-                      <button onClick={() => approve(c)} disabled={actionLoading === c.id}
-                        className="btn btn-primary btn-sm flex items-center gap-1">
-                        <CheckCircle2 className="w-3.5 h-3.5" />Approve
-                      </button>
-                      <button onClick={() => setRejectModal(c)} disabled={actionLoading === c.id}
-                        className="btn btn-secondary btn-sm text-red-500 hover:bg-red-50 flex items-center gap-1">
-                        <XCircle className="w-3.5 h-3.5" />Reject
-                      </button>
-                    </div>
+        <>
+          <div className="space-y-3">
+            {paged.map(c => (
+              <div key={c.id} className="card p-5 border-l-4 border-l-amber-400">
+                <div className="flex items-start gap-4 flex-wrap">
+                  <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0 flex items-center justify-center">
+                    {c.logo_url
+                      ? <img src={c.logo_url} alt="" className="w-full h-full object-cover" />
+                      : <Building2 className="w-6 h-6 text-slate-300" />}
                   </div>
-                  {c.description && <p className="text-slate-500 text-sm mt-2 bg-slate-50 rounded-xl p-3">{c.description}</p>}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-3 flex-wrap">
+                      <div>
+                        <h3 className="font-display font-bold text-slate-900 text-base">{c.name}</h3>
+                        <p className="text-slate-400 text-sm">{c.address}{c.city ? `, ${c.city}` : ''}</p>
+                        <p className="text-slate-400 text-xs mt-0.5">
+                          Owner: <span className="font-medium text-slate-600">{c.profiles?.full_name}</span> · {c.profiles?.email}
+                        </p>
+                        <p className="text-slate-300 text-xs mt-0.5">
+                          Submitted {format(new Date(c.created_at), 'MMM d, yyyy')}
+                        </p>
+                      </div>
+                      <div className="flex gap-2 shrink-0">
+                        <button onClick={() => approve(c)} disabled={actionLoading === c.id}
+                          className="btn btn-primary btn-sm flex items-center gap-1">
+                          <CheckCircle2 className="w-3.5 h-3.5" />Approve
+                        </button>
+                        <button onClick={() => setRejectModal(c)} disabled={actionLoading === c.id}
+                          className="btn btn-secondary btn-sm text-red-500 hover:bg-red-50 flex items-center gap-1">
+                          <XCircle className="w-3.5 h-3.5" />Reject
+                        </button>
+                      </div>
+                    </div>
+                    {c.description && (
+                      <p className="text-slate-500 text-sm mt-2 bg-slate-50 rounded-xl p-3">{c.description}</p>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+          <Pagination page={page} total={clinics.length} perPage={PER_PAGE} onPage={setPage} />
+        </>
       )}
 
       <Modal open={!!rejectModal} onClose={() => { setRejectModal(null); setRejectReason('') }} title="Reject Clinic Application">
-        <p className="text-slate-600 text-sm mb-4"><strong>{rejectModal?.name}</strong> · {rejectModal?.profiles?.email}</p>
+        <p className="text-slate-600 text-sm mb-4">
+          <strong>{rejectModal?.name}</strong> · {rejectModal?.profiles?.email}
+        </p>
         <Field label="Reason for rejection" required hint="This will be sent to the clinic owner via email and notification.">
           <textarea value={rejectReason} onChange={e => setRejectReason(e.target.value)} rows={3}
             placeholder="e.g. Missing required documents, incomplete profile..." className="input resize-none" />
@@ -139,17 +196,20 @@ function PendingTab({ onRefreshStats }) {
   )
 }
 
-// ── Active Clinics ────────────────────────────────────────────────────────────
+// ── Active Clinics ─────────────────────────────────────────────────────────
 function ActiveClinicsTab() {
   const [clinics, setClinics] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch]   = useState('')
+  const [page, setPage]       = useState(1)
 
   useEffect(() => {
     supabase.from('clinics').select('*, profiles!clinics_owner_id_fkey(full_name)')
       .eq('verification_status', 'approved').order('created_at', { ascending: false })
       .then(({ data }) => { setClinics(data || []); setLoading(false) })
   }, [])
+
+  useEffect(() => { setPage(1) }, [search])
 
   async function toggleActive(c) {
     await supabase.from('clinics').update({ is_active: !c.is_active }).eq('id', c.id)
@@ -158,28 +218,28 @@ function ActiveClinicsTab() {
   }
 
   const filtered = clinics.filter(c => !search || c.name?.toLowerCase().includes(search.toLowerCase()))
+  const paged    = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE)
 
-  if (loading) return (
-    <div className="flex justify-center py-16">
-      <div className="w-7 h-7 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--color-brand)', borderTopColor: 'transparent' }} />
-    </div>
-  )
+  if (loading) return <Spinner />
 
   return (
     <div>
       <div className="relative mb-5">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-        <input type="text" placeholder="Search clinics..." value={search} onChange={e => setSearch(e.target.value)} className="input pl-9" />
+        <input type="text" placeholder="Search clinics..." value={search}
+          onChange={e => setSearch(e.target.value)} className="input pl-9" />
       </div>
       <TableWrapper>
         <TableHead cols={['Clinic', 'Location', 'Owner', 'Status', '']} />
         <tbody className="divide-y divide-slate-100">
-          {filtered.map(c => (
+          {paged.map(c => (
             <tr key={c.id} className="hover:bg-slate-50 transition-colors group">
               <td className="px-4 py-3">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
-                    {c.logo_url ? <img src={c.logo_url} alt="" className="w-full h-full object-cover" /> : <Building2 className="w-4 h-4 text-slate-300" />}
+                    {c.logo_url
+                      ? <img src={c.logo_url} alt="" className="w-full h-full object-cover" />
+                      : <Building2 className="w-4 h-4 text-slate-300" />}
                   </div>
                   <p className="font-semibold text-slate-800 text-sm">{c.name}</p>
                 </div>
@@ -187,11 +247,14 @@ function ActiveClinicsTab() {
               <td className="px-4 py-3 text-slate-500 text-sm">{c.city || '—'}</td>
               <td className="px-4 py-3 text-slate-500 text-sm">{c.profiles?.full_name || '—'}</td>
               <td className="px-4 py-3">
-                <span className={`badge ${c.is_active ? 'badge-success' : 'badge-gray'}`}>{c.is_active ? 'Active' : 'Inactive'}</span>
+                <span className={`badge ${c.is_active ? 'badge-success' : 'badge-gray'}`}>
+                  {c.is_active ? 'Active' : 'Inactive'}
+                </span>
               </td>
               <td className="px-4 py-3">
                 <button onClick={() => toggleActive(c)}
-                  className={`btn btn-sm opacity-0 group-hover:opacity-100 transition-opacity ${c.is_active ? 'text-red-500 border-red-200 hover:bg-red-50' : 'btn-primary'}`}
+                  className={`btn btn-sm opacity-0 group-hover:opacity-100 transition-opacity
+                    ${c.is_active ? 'text-red-500 border-red-200 hover:bg-red-50' : 'btn-primary'}`}
                   style={c.is_active ? { border: '1px solid' } : {}}>
                   {c.is_active ? 'Deactivate' : 'Activate'}
                 </button>
@@ -200,21 +263,26 @@ function ActiveClinicsTab() {
           ))}
         </tbody>
       </TableWrapper>
-      {filtered.length === 0 && <EmptyState title="No clinics found" />}
+      {filtered.length === 0
+        ? <EmptyState title="No clinics found" />
+        : <Pagination page={page} total={filtered.length} perPage={PER_PAGE} onPage={setPage} />}
     </div>
   )
 }
 
-// ── Users Tab (with suspend/ban) ──────────────────────────────────────────────
+// ── Users Tab ──────────────────────────────────────────────────────────────
 function UsersTab({ role }) {
   const [users, setUsers]     = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch]   = useState('')
+  const [page, setPage]       = useState(1)
 
   useEffect(() => {
     supabase.from('profiles').select('*').eq('role', role).order('created_at', { ascending: false })
       .then(({ data }) => { setUsers(data || []); setLoading(false) })
-  }, [])
+  }, [role])
+
+  useEffect(() => { setPage(1) }, [search])
 
   async function toggleSuspend(u) {
     await supabase.from('profiles').update({ is_suspended: !u.is_suspended }).eq('id', u.id)
@@ -231,34 +299,30 @@ function UsersTab({ role }) {
 
   const filtered = users.filter(u => !search ||
     u.full_name?.toLowerCase().includes(search.toLowerCase()) ||
-    u.email?.toLowerCase().includes(search.toLowerCase())
-  )
+    u.email?.toLowerCase().includes(search.toLowerCase()))
+  const paged = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE)
 
-  if (loading) return (
-    <div className="flex justify-center py-16">
-      <div className="w-7 h-7 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--color-brand)', borderTopColor: 'transparent' }} />
-    </div>
-  )
+  if (loading) return <Spinner />
 
   return (
     <div>
       <div className="relative mb-5">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-        <input type="text" placeholder={`Search ${role === 'clinic_owner' ? 'clinic owners' : 'customers'}...`}
+        <input type="text"
+          placeholder={`Search ${role === 'clinic_owner' ? 'clinic owners' : 'customers'}...`}
           value={search} onChange={e => setSearch(e.target.value)} className="input pl-9" />
       </div>
       <TableWrapper>
         <TableHead cols={['User', 'Phone', 'Joined', 'Status', '']} />
         <tbody className="divide-y divide-slate-100">
-          {filtered.map(u => (
+          {paged.map(u => (
             <tr key={u.id} className="hover:bg-slate-50 group">
               <td className="px-4 py-3">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-sky-100 flex items-center justify-center overflow-hidden shrink-0 ring-1 ring-sky-200">
                     {u.avatar_url
                       ? <img src={u.avatar_url} alt="" className="w-full h-full object-cover" />
-                      : <span className="text-sky-600 font-bold text-xs">{u.full_name?.[0]?.toUpperCase()}</span>
-                    }
+                      : <span className="text-sky-600 font-bold text-xs">{u.full_name?.[0]?.toUpperCase()}</span>}
                   </div>
                   <div>
                     <p className="font-semibold text-slate-800 text-sm">{u.full_name}</p>
@@ -273,8 +337,7 @@ function UsersTab({ role }) {
                   ? <span className="badge badge-danger">Banned</span>
                   : u.is_suspended
                     ? <span className="badge badge-warning">Suspended</span>
-                    : <span className="badge badge-success">Active</span>
-                }
+                    : <span className="badge badge-success">Active</span>}
               </td>
               <td className="px-4 py-3">
                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -298,22 +361,27 @@ function UsersTab({ role }) {
           ))}
         </tbody>
       </TableWrapper>
-      {filtered.length === 0 && <EmptyState title="No users found" />}
+      {filtered.length === 0
+        ? <EmptyState title="No users found" />
+        : <Pagination page={page} total={filtered.length} perPage={PER_PAGE} onPage={setPage} />}
     </div>
   )
 }
 
-// ── Appointments Tab ──────────────────────────────────────────────────────────
+// ── Appointments Tab ───────────────────────────────────────────────────────
 function AppointmentsTab() {
   const [appointments, setAppointments] = useState([])
   const [loading, setLoading]           = useState(true)
+  const [page, setPage]                 = useState(1)
 
   useEffect(() => {
     supabase.from('appointments')
       .select('*, profiles!appointments_customer_id_fkey(full_name), clinics(name), services(name)')
-      .order('created_at', { ascending: false }).limit(50)
+      .order('created_at', { ascending: false }).limit(200)
       .then(({ data }) => { setAppointments(data || []); setLoading(false) })
   }, [])
+
+  const paged = appointments.slice((page - 1) * PER_PAGE, page * PER_PAGE)
 
   if (loading) return (
     <TableWrapper>
@@ -323,75 +391,90 @@ function AppointmentsTab() {
   )
 
   return (
-    <TableWrapper>
-      <TableHead cols={['Patient', 'Clinic', 'Service', 'Date', 'Status']} />
-      <tbody className="divide-y divide-slate-100">
-        {appointments.map(a => (
-          <tr key={a.id} className="hover:bg-slate-50">
-            <td className="px-4 py-3 font-medium text-slate-800 text-sm">{a.profiles?.full_name || '—'}</td>
-            <td className="px-4 py-3 text-slate-500 text-sm">{a.clinics?.name || '—'}</td>
-            <td className="px-4 py-3 text-slate-500 text-sm">{a.services?.name || '—'}</td>
-            <td className="px-4 py-3 text-slate-400 text-sm">{format(new Date(a.appointment_date), 'MMM d, yyyy')}</td>
-            <td className="px-4 py-3"><StatusBadge status={a.status} /></td>
-          </tr>
-        ))}
-      </tbody>
-    </TableWrapper>
+    <>
+      <TableWrapper>
+        <TableHead cols={['Patient', 'Clinic', 'Service', 'Date', 'Status']} />
+        <tbody className="divide-y divide-slate-100">
+          {paged.map(a => (
+            <tr key={a.id} className="hover:bg-slate-50">
+              <td className="px-4 py-3 font-medium text-slate-800 text-sm">{a.profiles?.full_name || '—'}</td>
+              <td className="px-4 py-3 text-slate-500 text-sm">{a.clinics?.name || '—'}</td>
+              <td className="px-4 py-3 text-slate-500 text-sm">{a.services?.name || '—'}</td>
+              <td className="px-4 py-3 text-slate-400 text-sm">{format(new Date(a.appointment_date), 'MMM d, yyyy')}</td>
+              <td className="px-4 py-3"><StatusBadge status={a.status} /></td>
+            </tr>
+          ))}
+        </tbody>
+      </TableWrapper>
+      <Pagination page={page} total={appointments.length} perPage={PER_PAGE} onPage={setPage} />
+    </>
   )
 }
 
-// ── Announcements Tab ─────────────────────────────────────────────────────────
+// ── Announcements Tab ──────────────────────────────────────────────────────
 function AnnouncementsTab() {
   const [open, setOpen]     = useState(false)
   const [form, setForm]     = useState({ title: '', message: '', audience: 'all', clinic_id: '' })
   const [clinics, setClinics] = useState([])
   const [sending, setSending] = useState(false)
+  const [announcements, setAnnouncements] = useState([])
+  const [loadingAnnouncements, setLoadingAnnouncements] = useState(true)
+  const [page, setPage] = useState(1)
 
   useEffect(() => {
     supabase.from('clinics').select('id,name').eq('verification_status', 'approved')
       .then(({ data }) => setClinics(data || []))
+    fetchAnnouncements()
   }, [])
+
+  async function fetchAnnouncements() {
+    setLoadingAnnouncements(true)
+    const { data } = await supabase.from('notifications').select('*')
+      .eq('type', 'announcement').order('created_at', { ascending: false })
+    setAnnouncements(data || [])
+    setLoadingAnnouncements(false)
+  }
 
   async function send() {
     if (!form.title.trim() || !form.message.trim()) { toast.error('Title and message required'); return }
     setSending(true)
-
     let query = supabase.from('profiles').select('id,email')
-    if (form.audience === 'owners')           query = query.eq('role', 'clinic_owner')
-    else if (form.audience === 'customers')   query = query.eq('role', 'customer')
+    if (form.audience === 'owners')         query = query.eq('role', 'clinic_owner')
+    else if (form.audience === 'customers') query = query.eq('role', 'customer')
     else if (form.audience === 'specific_clinic') {
       const { data: clinic } = await supabase.from('clinics').select('owner_id').eq('id', form.clinic_id).single()
       if (clinic) query = query.eq('id', clinic.owner_id)
     }
-
     const { data: recipients } = await query
     if (!recipients?.length) { toast.error('No recipients found'); setSending(false); return }
-
-    await supabase.from('notifications').insert(
-      recipients.map(r => ({
-        recipient_id: r.id,
-        type: 'announcement',
-        title: form.title,
-        message: form.message,
-        audience_type: form.audience,
-        target_clinic_id: form.audience === 'specific_clinic' ? form.clinic_id : null,
-      }))
-    )
-
+    await supabase.from('notifications').insert(recipients.map(r => ({
+      recipient_id: r.id, type: 'announcement',
+      title: form.title, message: form.message,
+      audience_type: form.audience,
+      target_clinic_id: form.audience === 'specific_clinic' ? form.clinic_id : null,
+    })))
     toast.success(`Announcement sent to ${recipients.length} recipient(s)!`)
     setOpen(false)
     setForm({ title: '', message: '', audience: 'all', clinic_id: '' })
     setSending(false)
+    fetchAnnouncements()
   }
+
+  const paged = announcements.slice((page - 1) * PER_PAGE, page * PER_PAGE)
+
+  if (loadingAnnouncements) return <Spinner />
 
   return (
     <div>
-      <button onClick={() => setOpen(true)} className="btn btn-primary btn-md mb-4">+ New Announcement</button>
+      <button onClick={() => setOpen(true)} className="btn btn-primary btn-md mb-6">
+        + New Announcement
+      </button>
 
       <Modal open={open} onClose={() => setOpen(false)} title="Send Announcement">
         <div className="space-y-4">
           <Field label="Title" required>
-            <input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} className="input" placeholder="e.g. Platform maintenance on Friday" />
+            <input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })}
+              className="input" placeholder="e.g. Platform maintenance on Friday" />
           </Field>
           <Field label="Message" required>
             <textarea value={form.message} onChange={e => setForm({ ...form, message: e.target.value })}
@@ -422,15 +505,40 @@ function AnnouncementsTab() {
         </div>
       </Modal>
 
-      <p className="text-slate-400 text-sm">Announcements are delivered to the in-app notification bell. Recipients see them instantly.</p>
+      <h3 className="font-semibold text-slate-800 mb-4">Sent Announcements</h3>
+      {announcements.length === 0 ? (
+        <EmptyState title="No announcements sent yet" />
+      ) : (
+        <>
+          <div className="space-y-3">
+            {paged.map(a => (
+              <div key={a.id} className="card p-5 border-l-4 border-l-blue-400">
+                <h4 className="font-semibold text-slate-900">{a.title}</h4>
+                <p className="text-slate-500 text-sm mt-1">{a.message}</p>
+                <div className="flex items-center gap-4 text-xs text-slate-400 mt-3 flex-wrap">
+                  <span>Audience: <strong>{
+                    a.audience_type === 'all' ? 'Everyone'
+                      : a.audience_type === 'owners' ? 'Clinic Owners'
+                        : a.audience_type === 'customers' ? 'Patients'
+                          : 'Specific Clinic'
+                  }</strong></span>
+                  <span>Sent: <strong>{format(new Date(a.created_at), 'MMM d, yyyy · h:mm a')}</strong></span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <Pagination page={page} total={announcements.length} perPage={PER_PAGE} onPage={setPage} />
+        </>
+      )}
     </div>
   )
 }
 
-// ── Reports Tab ───────────────────────────────────────────────────────────────
+// ── Reports Tab ────────────────────────────────────────────────────────────
 function ReportsTab() {
   const [reports, setReports] = useState([])
   const [loading, setLoading] = useState(true)
+  const [page, setPage]       = useState(1)
 
   useEffect(() => {
     supabase.from('reports')
@@ -445,46 +553,47 @@ function ReportsTab() {
     toast.success('Marked as resolved')
   }
 
-  if (loading) return (
-    <div className="flex justify-center py-16">
-      <div className="w-7 h-7 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--color-brand)', borderTopColor: 'transparent' }} />
-    </div>
-  )
+  const paged = reports.slice((page - 1) * PER_PAGE, page * PER_PAGE)
 
+  if (loading) return <Spinner />
   if (reports.length === 0) return <EmptyState title="No reports yet" description="User-submitted reports will appear here." />
 
   return (
-    <TableWrapper>
-      <TableHead cols={['Reporter', 'Target ID', 'Type', 'Reason', 'Status', '']} />
-      <tbody className="divide-y divide-slate-100">
-        {reports.map(r => (
-          <tr key={r.id} className="hover:bg-slate-50 group">
-            <td className="px-4 py-3 text-sm text-slate-600">{r.reporter?.full_name || '—'}</td>
-            <td className="px-4 py-3 text-xs text-slate-400 font-mono">{r.target_id?.slice(0, 8)}…</td>
-            <td className="px-4 py-3"><span className="badge badge-info">{r.target_type}</span></td>
-            <td className="px-4 py-3 text-sm text-slate-600 max-w-xs truncate">{r.reason}</td>
-            <td className="px-4 py-3">
-              <span className={`badge ${r.status === 'resolved' ? 'badge-success' : 'badge-warning'}`}>{r.status}</span>
-            </td>
-            <td className="px-4 py-3">
-              {r.status === 'pending' && (
-                <button onClick={() => resolve(r.id)}
-                  className="btn btn-sm btn-secondary text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                  Resolve
-                </button>
-              )}
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </TableWrapper>
+    <>
+      <TableWrapper>
+        <TableHead cols={['Reporter', 'Target ID', 'Type', 'Reason', 'Status', '']} />
+        <tbody className="divide-y divide-slate-100">
+          {paged.map(r => (
+            <tr key={r.id} className="hover:bg-slate-50 group">
+              <td className="px-4 py-3 text-sm text-slate-600">{r.reporter?.full_name || '—'}</td>
+              <td className="px-4 py-3 text-xs text-slate-400 font-mono">{r.target_id?.slice(0, 8)}…</td>
+              <td className="px-4 py-3"><span className="badge badge-info">{r.target_type}</span></td>
+              <td className="px-4 py-3 text-sm text-slate-600 max-w-xs truncate">{r.reason}</td>
+              <td className="px-4 py-3">
+                <span className={`badge ${r.status === 'resolved' ? 'badge-success' : 'badge-warning'}`}>{r.status}</span>
+              </td>
+              <td className="px-4 py-3">
+                {r.status === 'pending' && (
+                  <button onClick={() => resolve(r.id)}
+                    className="btn btn-sm btn-secondary text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                    Resolve
+                  </button>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </TableWrapper>
+      <Pagination page={page} total={reports.length} perPage={PER_PAGE} onPage={setPage} />
+    </>
   )
 }
 
-// ── Revenue Tab ───────────────────────────────────────────────────────────────
+// ── Revenue Tab ────────────────────────────────────────────────────────────
 function RevenueTab() {
   const [data, setData]       = useState([])
   const [loading, setLoading] = useState(true)
+  const [page, setPage]       = useState(1)
 
   useEffect(() => {
     supabase.from('appointments')
@@ -503,14 +612,11 @@ function RevenueTab() {
       })
   }, [])
 
-  if (loading) return (
-    <div className="flex justify-center py-16">
-      <div className="w-7 h-7 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--color-brand)', borderTopColor: 'transparent' }} />
-    </div>
-  )
+  if (loading) return <Spinner />
 
   const totalRevenue = data.reduce((s, d) => s + d.revenue, 0)
   const totalAppts   = data.reduce((s, d) => s + d.completed, 0)
+  const paged        = data.slice((page - 1) * PER_PAGE, page * PER_PAGE)
 
   return (
     <div>
@@ -528,25 +634,28 @@ function RevenueTab() {
       {data.length === 0 ? (
         <EmptyState title="No completed appointments yet" />
       ) : (
-        <TableWrapper>
-          <TableHead cols={['#', 'Clinic', 'Completed Appts', 'Est. Revenue']} />
-          <tbody className="divide-y divide-slate-100">
-            {data.map((d, i) => (
-              <tr key={d.name} className="hover:bg-slate-50">
-                <td className="px-4 py-3 text-slate-400 text-sm">#{i + 1}</td>
-                <td className="px-4 py-3 font-medium text-slate-800 text-sm">{d.name}</td>
-                <td className="px-4 py-3 text-slate-600 text-sm">{d.completed}</td>
-                <td className="px-4 py-3 font-bold text-sky-600 text-sm">₱{d.revenue.toLocaleString()}</td>
-              </tr>
-            ))}
-          </tbody>
-        </TableWrapper>
+        <>
+          <TableWrapper>
+            <TableHead cols={['#', 'Clinic', 'Completed Appts', 'Est. Revenue']} />
+            <tbody className="divide-y divide-slate-100">
+              {paged.map((d, i) => (
+                <tr key={d.name} className="hover:bg-slate-50">
+                  <td className="px-4 py-3 text-slate-400 text-sm">#{(page - 1) * PER_PAGE + i + 1}</td>
+                  <td className="px-4 py-3 font-medium text-slate-800 text-sm">{d.name}</td>
+                  <td className="px-4 py-3 text-slate-600 text-sm">{d.completed}</td>
+                  <td className="px-4 py-3 font-bold text-sky-600 text-sm">₱{d.revenue.toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </TableWrapper>
+          <Pagination page={page} total={data.length} perPage={PER_PAGE} onPage={setPage} />
+        </>
       )}
     </div>
   )
 }
 
-// ── Analytics Tab ─────────────────────────────────────────────────────────────
+// ── Analytics Tab ──────────────────────────────────────────────────────────
 function AnalyticsTab() {
   const [apptData, setApptData] = useState([])
   const [userData, setUserData] = useState([])
@@ -567,10 +676,7 @@ function AnalyticsTab() {
 
   function groupByDay(rows) {
     const map = {}
-    rows.forEach(r => {
-      const day = r.created_at?.slice(0, 10)
-      if (day) map[day] = (map[day] || 0) + 1
-    })
+    rows.forEach(r => { const day = r.created_at?.slice(0, 10); if (day) map[day] = (map[day] || 0) + 1 })
     const result = []
     for (let i = 13; i >= 0; i--) {
       const d = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10)
@@ -584,21 +690,19 @@ function AnalyticsTab() {
       <div className="flex items-end gap-1 h-20">
         {data.map(d => (
           <div key={d.date} className="flex-1 flex flex-col items-center gap-0.5 group relative">
-            <div className="absolute bottom-full mb-1 bg-slate-800 text-white text-xs px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none">
+            <div className="absolute bottom-full mb-1 bg-slate-800 text-white text-xs px-1.5 py-0.5 rounded
+              opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none">
               {d.date.slice(5)}: {d.count}
             </div>
-            <div className="w-full rounded-sm transition-all" style={{ height: `${Math.max(2, (d.count / max) * 72)}px`, backgroundColor: color }} />
+            <div className="w-full rounded-sm transition-all"
+              style={{ height: `${Math.max(2, (d.count / max) * 72)}px`, backgroundColor: color }} />
           </div>
         ))}
       </div>
     )
   }
 
-  if (loading) return (
-    <div className="flex justify-center py-16">
-      <div className="w-7 h-7 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--color-brand)', borderTopColor: 'transparent' }} />
-    </div>
-  )
+  if (loading) return <Spinner />
 
   const maxAppts = Math.max(...apptData.map(d => d.count), 1)
   const maxUsers = Math.max(...userData.map(d => d.count), 1)
@@ -627,15 +731,16 @@ function AnalyticsTab() {
   )
 }
 
-// ── Reviews Moderation Tab ────────────────────────────────────────────────────
+// ── Reviews Tab ────────────────────────────────────────────────────────────
 function ReviewsModerationTab() {
   const [reviews, setReviews] = useState([])
   const [loading, setLoading] = useState(true)
+  const [page, setPage]       = useState(1)
 
   useEffect(() => {
     supabase.from('reviews')
       .select('*, profiles!reviews_customer_id_fkey(full_name), clinics(name)')
-      .order('created_at', { ascending: false }).limit(100)
+      .order('created_at', { ascending: false }).limit(200)
       .then(({ data }) => { setReviews(data || []); setLoading(false) })
   }, [])
 
@@ -646,48 +751,49 @@ function ReviewsModerationTab() {
     toast.success('Review deleted')
   }
 
-  if (loading) return (
-    <div className="flex justify-center py-16">
-      <div className="w-7 h-7 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--color-brand)', borderTopColor: 'transparent' }} />
-    </div>
-  )
+  const paged = reviews.slice((page - 1) * PER_PAGE, page * PER_PAGE)
 
+  if (loading) return <Spinner />
   if (reviews.length === 0) return <EmptyState title="No reviews yet" />
 
   return (
-    <TableWrapper>
-      <TableHead cols={['Patient', 'Clinic', 'Rating', 'Comment', '']} />
-      <tbody className="divide-y divide-slate-100">
-        {reviews.map(r => (
-          <tr key={r.id} className="hover:bg-slate-50 group">
-            <td className="px-4 py-3 text-sm font-medium text-slate-800">{r.profiles?.full_name || '—'}</td>
-            <td className="px-4 py-3 text-sm text-slate-500">{r.clinics?.name || '—'}</td>
-            <td className="px-4 py-3">
-              <div className="flex gap-0.5">
-                {[1, 2, 3, 4, 5].map(s => (
-                  <span key={s} className={`text-xs ${s <= r.rating ? 'text-amber-400' : 'text-slate-200'}`}>★</span>
-                ))}
-              </div>
-            </td>
-            <td className="px-4 py-3 text-sm text-slate-500 max-w-xs truncate">{r.comment || '—'}</td>
-            <td className="px-4 py-3">
-              <button onClick={() => deleteReview(r.id)}
-                className="btn btn-sm text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity"
-                style={{ border: '1px solid #fca5a5' }}>
-                Delete
-              </button>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </TableWrapper>
+    <>
+      <TableWrapper>
+        <TableHead cols={['Patient', 'Clinic', 'Rating', 'Comment', '']} />
+        <tbody className="divide-y divide-slate-100">
+          {paged.map(r => (
+            <tr key={r.id} className="hover:bg-slate-50 group">
+              <td className="px-4 py-3 text-sm font-medium text-slate-800">{r.profiles?.full_name || '—'}</td>
+              <td className="px-4 py-3 text-sm text-slate-500">{r.clinics?.name || '—'}</td>
+              <td className="px-4 py-3">
+                <div className="flex gap-0.5">
+                  {[1, 2, 3, 4, 5].map(s => (
+                    <span key={s} className={`text-xs ${s <= r.rating ? 'text-amber-400' : 'text-slate-200'}`}>★</span>
+                  ))}
+                </div>
+              </td>
+              <td className="px-4 py-3 text-sm text-slate-500 max-w-xs truncate">{r.comment || '—'}</td>
+              <td className="px-4 py-3">
+                <button onClick={() => deleteReview(r.id)}
+                  className="btn btn-sm text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                  style={{ border: '1px solid #fca5a5' }}>
+                  Delete
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </TableWrapper>
+      <Pagination page={page} total={reviews.length} perPage={PER_PAGE} onPage={setPage} />
+    </>
   )
 }
 
-// ── Clinic Performance Tab ────────────────────────────────────────────────────
+// ── Clinic Performance Tab ─────────────────────────────────────────────────
 function ClinicPerformanceTab() {
   const [clinics, setClinics] = useState([])
   const [loading, setLoading] = useState(true)
+  const [page, setPage]       = useState(1)
 
   useEffect(() => {
     supabase.from('clinics')
@@ -705,30 +811,26 @@ function ClinicPerformanceTab() {
       })
   }, [])
 
-  if (loading) return (
-    <div className="flex justify-center py-16">
-      <div className="w-7 h-7 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--color-brand)', borderTopColor: 'transparent' }} />
-    </div>
-  )
+  const paged = clinics.slice((page - 1) * PER_PAGE, page * PER_PAGE)
 
+  if (loading) return <Spinner />
   if (clinics.length === 0) return <EmptyState title="No data yet" description="Clinics with at least one appointment will appear here." />
 
   return (
-    <div>
-      <p className="text-slate-400 text-sm mb-4">Score = completed ÷ total × 100. Only clinics with at least 1 appointment shown.</p>
+    <>
+      <p className="text-slate-400 text-sm mb-4">Score = completed ÷ total × 100. Only clinics with ≥ 1 appointment shown.</p>
       <TableWrapper>
         <TableHead cols={['#', 'Clinic', 'Total', 'Completed', 'Cancelled', 'Score']} />
         <tbody className="divide-y divide-slate-100">
-          {clinics.map((c, i) => (
+          {paged.map((c, i) => (
             <tr key={c.id} className="hover:bg-slate-50">
-              <td className="px-4 py-3 text-slate-400 text-sm">#{i + 1}</td>
+              <td className="px-4 py-3 text-slate-400 text-sm">#{(page - 1) * PER_PAGE + i + 1}</td>
               <td className="px-4 py-3">
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-lg bg-slate-100 overflow-hidden shrink-0 flex items-center justify-center">
                     {c.logo_url
                       ? <img src={c.logo_url} alt="" className="w-full h-full object-cover" />
-                      : <span className="text-slate-400 text-xs">🦷</span>
-                    }
+                      : <span className="text-slate-400 text-xs">🦷</span>}
                   </div>
                   <div>
                     <p className="font-semibold text-slate-800 text-sm">{c.name}</p>
@@ -756,11 +858,42 @@ function ClinicPerformanceTab() {
           ))}
         </tbody>
       </TableWrapper>
-    </div>
+      <Pagination page={page} total={clinics.length} perPage={PER_PAGE} onPage={setPage} />
+    </>
   )
 }
 
-// ── Main ──────────────────────────────────────────────────────────────────────
+// ── Sidebar Config ─────────────────────────────────────────────────────────
+const NAV = [
+  { section: 'Clinics', items: [
+    { key: 'pending',  label: 'Pending Clinics', icon: Building2 },
+    { key: 'active',   label: 'Active Clinics',  icon: CheckCircle2 },
+    { key: 'performance', label: 'Performance',  icon: Activity },
+  ]},
+  { section: 'Users', items: [
+    { key: 'owners',    label: 'Clinic Owners', icon: Users },
+    { key: 'customers', label: 'Customers',     icon: User },
+  ]},
+  { section: 'Operations', items: [
+    { key: 'appointments',  label: 'Appointments',  icon: Calendar },
+    { key: 'announcements', label: 'Announcements', icon: Megaphone },
+    { key: 'reports',       label: 'Reports',       icon: FileText },
+    { key: 'reviews',       label: 'Reviews',       icon: Star },
+  ]},
+  { section: 'Insights', items: [
+    { key: 'revenue',   label: 'Revenue',   icon: DollarSign },
+    { key: 'analytics', label: 'Analytics', icon: BarChart2 },
+  ]},
+]
+
+const TAB_LABELS = {
+  pending: 'Pending Clinics', active: 'Active Clinics', performance: 'Clinic Performance',
+  owners: 'Clinic Owners', customers: 'Customers', appointments: 'Appointments',
+  announcements: 'Announcements', reports: 'Reports', reviews: 'Reviews',
+  revenue: 'Revenue', analytics: 'Analytics',
+}
+
+// ── Main ───────────────────────────────────────────────────────────────────
 export default function SuperAdminDashboard() {
   const { profile, signOut } = useAuth()
   const navigate = useNavigate()
@@ -768,6 +901,7 @@ export default function SuperAdminDashboard() {
   const [stats, setStats]               = useState({ clinics: 0, owners: 0, customers: 0, appointments: 0 })
   const [pendingCount, setPendingCount] = useState(0)
   const [loading, setLoading]           = useState(true)
+  const [sidebarOpen, setSidebarOpen]   = useState(false)
 
   useEffect(() => { loadStats() }, [])
 
@@ -784,17 +918,29 @@ export default function SuperAdminDashboard() {
     setLoading(false)
   }
 
+  function handleNav(key) {
+    setTab(key)
+    setSidebarOpen(false)
+  }
+
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Header */}
-      <header className="glass-header sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-sky-500 flex items-center justify-center">
-              <ToothIcon className="w-4 h-4 text-white" />
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      {/* ── Top Header ── */}
+      <header className="glass-header sticky top-0 z-40 border-b border-slate-200/60">
+        <div className="px-4 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {/* Mobile hamburger */}
+            <button onClick={() => setSidebarOpen(v => !v)}
+              className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100">
+              {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+            <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
+            <span className="font-display font-bold text-sky-400 text-3xl">Book
+            <span className="font-display font-bold text-slate-900 text-3xl">MyDentist</span></span>
+          </div>
+              <span className="badge badge-info ml-1">Admin</span>
             </div>
-            <span className="font-display font-bold text-slate-900 text-sm">BookMyDentistPH</span>
-            <span className="badge badge-info ml-1">Admin</span>
           </div>
           <div className="flex items-center gap-3">
             <div className="w-7 h-7 rounded-full bg-sky-100 flex items-center justify-center ring-1 ring-sky-200">
@@ -803,56 +949,105 @@ export default function SuperAdminDashboard() {
             <span className="text-sm font-medium text-slate-700 hidden sm:block">{profile?.full_name}</span>
             <button onClick={async () => { await signOut(); navigate('/') }}
               className="btn btn-ghost btn-sm text-red-400 hover:bg-red-50 flex items-center gap-1">
-              <LogOut className="w-3.5 h-3.5" />Sign out
+              <LogOut className="w-3.5 h-3.5" /><span className="hidden sm:inline">Sign out</span>
             </button>
           </div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <PageHeader
-          title="Admin Dashboard"
-          subtitle={new Date().toLocaleDateString('en-PH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-        />
+      <div className="flex flex-1 overflow-hidden">
+        {/* ── Sidebar ── */}
+        {/* Mobile overlay */}
+        {sidebarOpen && (
+          <div className="fixed inset-0 z-30 bg-black/30 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        )}
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-          <StatCard label="Active Clinics"  value={stats.clinics}      icon={Building2} iconClass="text-sky-500"    bg="bg-sky-50"    loading={loading} />
-          <StatCard label="Clinic Owners"   value={stats.owners}       icon={Users}     iconClass="text-blue-500"   bg="bg-blue-50"   loading={loading} />
-          <StatCard label="Customers"       value={stats.customers}    icon={User}      iconClass="text-violet-500" bg="bg-violet-50" loading={loading} />
-          <StatCard label="Appointments"    value={stats.appointments} icon={Calendar}  iconClass="text-amber-500"  bg="bg-amber-50"  loading={loading} />
-        </div>
-
-        {/* Tabs */}
-        <div className="flex gap-1 card p-1 mb-6 rounded-xl overflow-x-auto">
-          {TABS.map(t => (
-            <button key={t.key} onClick={() => setTab(t.key)}
-              className={`flex-1 min-w-max flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-lg text-sm font-semibold transition-all whitespace-nowrap
-                ${tab === t.key ? 'text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-              style={tab === t.key ? { backgroundColor: 'var(--color-brand)' } : {}}>
-              {t.label}
-              {t.key === 'pending' && pendingCount > 0 && (
-                <span className={`text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center
-                  ${tab === t.key ? 'bg-white/20 text-white' : 'bg-red-500 text-white'}`}>
-                  {pendingCount}
+        <aside className={`
+          fixed lg:static inset-y-0 left-0 z-30 w-70 px-8 py-2 bg-white border-r border-slate-100
+          flex flex-col pt-14 lg:pt-0 transition-transform duration-200
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        `}>
+          {/* Stats summary strip */}
+          <div className="px-4 py-4 border-b border-slate-100 space-y-1.5">
+            {[
+              { label: 'Active Clinics', value: stats.clinics,      color: 'text-sky-600' },
+              { label: 'Clinic Owners',  value: stats.owners,       color: 'text-blue-600' },
+              { label: 'Customers',      value: stats.customers,    color: 'text-violet-600' },
+              { label: 'Appointments',   value: stats.appointments, color: 'text-amber-600' },
+            ].map(s => (
+              <div key={s.label} className="flex items-center justify-between">
+                <span className="text-xs text-slate-400">{s.label}</span>
+                <span className={`text-xs font-bold ${s.color}`}>
+                  {loading ? '—' : s.value.toLocaleString()}
                 </span>
-              )}
-            </button>
-          ))}
-        </div>
+              </div>
+            ))}
+          </div>
 
-        {/* Content */}
-        {tab === 'pending'       && <PendingTab onRefreshStats={loadStats} />}
-        {tab === 'active'        && <ActiveClinicsTab />}
-        {tab === 'owners'        && <UsersTab role="clinic_owner" />}
-        {tab === 'customers'     && <UsersTab role="customer" />}
-        {tab === 'appointments'  && <AppointmentsTab />}
-        {tab === 'announcements' && <AnnouncementsTab />}
-        {tab === 'reports'       && <ReportsTab />}
-        {tab === 'revenue'       && <RevenueTab />}
-        {tab === 'analytics'     && <AnalyticsTab />}
-        {tab === 'reviews'       && <ReviewsModerationTab />}
-        {tab === 'performance'   && <ClinicPerformanceTab />}
+          {/* Nav */}
+          <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-4">
+            {NAV.map(group => (
+              <div key={group.section}>
+                <p className="text-[10px] font-bold tracking-widest text-slate-400 uppercase px-2 mb-1">
+                  {group.section}
+                </p>
+                <div className="space-y-0.5">
+                  {group.items.map(item => {
+                    const Icon    = item.icon
+                    const active  = tab === item.key
+                    const isPending = item.key === 'pending' && pendingCount > 0
+                    return (
+                      <button key={item.key} onClick={() => handleNav(item.key)}
+                        className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm font-medium transition-all
+                          ${active
+                            ? 'text-white shadow-sm'
+                            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}`}
+                        style={active ? { backgroundColor: 'var(--color-brand)' } : {}}>
+                        <Icon className="w-4 h-4 shrink-0" />
+                        <span className="flex-1 text-left">{item.label}</span>
+                        {isPending && (
+                          <span className={`text-[10px] font-bold min-w-[18px] h-[18px] rounded-full
+                            flex items-center justify-center px-1
+                            ${active ? 'bg-white/25 text-white' : 'bg-red-500 text-white'}`}>
+                            {pendingCount}
+                          </span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
+          </nav>
+        </aside>
+
+        {/* ── Main Content ── */}
+        <main className="flex-1 overflow-y-auto min-w-0">
+          <div className="max-w-[1500px] mx-auto px-2 sm:px-6 py-6">
+            {/* Page title */}
+            <div className="mb-6">
+              <h1 className="font-display font-bold text-slate-900 text-xl">{TAB_LABELS[tab]}</h1>
+              <p className="text-slate-400 text-sm mt-0.5">
+                {new Date().toLocaleDateString('en-PH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              </p>
+            </div>
+
+            {/* Tab content */}
+            <div className="card p-5 sm:p-6">
+              {tab === 'pending'       && <PendingTab onRefreshStats={loadStats} />}
+              {tab === 'active'        && <ActiveClinicsTab />}
+              {tab === 'owners'        && <UsersTab role="clinic_owner" />}
+              {tab === 'customers'     && <UsersTab role="customer" />}
+              {tab === 'appointments'  && <AppointmentsTab />}
+              {tab === 'announcements' && <AnnouncementsTab />}
+              {tab === 'reports'       && <ReportsTab />}
+              {tab === 'revenue'       && <RevenueTab />}
+              {tab === 'analytics'     && <AnalyticsTab />}
+              {tab === 'reviews'       && <ReviewsModerationTab />}
+              {tab === 'performance'   && <ClinicPerformanceTab />}
+            </div>
+          </div>
+        </main>
       </div>
     </div>
   )

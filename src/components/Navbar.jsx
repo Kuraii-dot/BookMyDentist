@@ -36,8 +36,8 @@ export default function Navbar({ showNotifications = false }) {
       <nav className="glass-header sticky top-0 z-40 hidden sm:block">
         <div className="max-w-full mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="font-display font-bold text-sky-400 text-3xl">Book</span>
-            <span className="font-display font-bold text-slate-900 text-3xl">MyDentist</span>
+            <span className="font-display font-bold text-sky-400 text-3xl">Book
+            <span className="font-display font-bold text-slate-900 text-3xl">MyDentist</span></span>
           </div>
           <div className="skeleton h-8 w-24 rounded-lg" />
         </div>

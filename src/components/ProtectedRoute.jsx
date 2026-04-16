@@ -1,8 +1,24 @@
-import { Navigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { AlertCircle, Lock } from 'lucide-react'
+import { useEffect } from 'react'
 
 export default function ProtectedRoute({ children, allowedRoles }) {
   const { user, profile, loading } = useAuth()
+  const navigate = useNavigate()
+
+  // ── Check for suspension/ban and force logout ────────────────────────────
+  useEffect(() => {
+    if (!loading && profile) {
+      if (profile.banned_at) {
+        console.log('User is banned, showing ban screen')
+        // Don't redirect, just show the ban screen below
+      } else if (profile.is_suspended) {
+        console.log('User is suspended, showing suspension screen')
+        // Don't redirect, just show the suspension screen below
+      }
+    }
+  }, [profile, loading])
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-amber-50">
@@ -20,7 +36,7 @@ export default function ProtectedRoute({ children, allowedRoles }) {
     <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
       <div className="w-full max-w-sm text-center animate-fade-in">
         <div className="w-16 h-16 rounded-2xl bg-red-100 flex items-center justify-center mx-auto mb-5 border border-red-200">
-          <span className="text-3xl">🚫</span>
+          <AlertCircle className="w-8 h-8 text-red-600" />
         </div>
         <h2 className="font-display font-bold text-slate-900 text-xl mb-2">Account Banned</h2>
         <p className="text-slate-500 text-sm leading-relaxed mb-6">
@@ -40,7 +56,7 @@ export default function ProtectedRoute({ children, allowedRoles }) {
     <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
       <div className="w-full max-w-sm text-center animate-fade-in">
         <div className="w-16 h-16 rounded-2xl bg-amber-100 flex items-center justify-center mx-auto mb-5 border border-amber-200">
-          <span className="text-3xl">⏸️</span>
+          <Lock className="w-8 h-8 text-amber-600" />
         </div>
         <h2 className="font-display font-bold text-slate-900 text-xl mb-2">Account Suspended</h2>
         <p className="text-slate-500 text-sm leading-relaxed mb-6">
