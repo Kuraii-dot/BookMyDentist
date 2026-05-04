@@ -2,9 +2,10 @@ import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 import toast from 'react-hot-toast'
+import { validateImageFile, checkRateLimit } from '../lib/security'
 import {
   Camera, Eye, EyeOff, Calendar, Clock, XCircle,
-  RefreshCw, CheckCircle2, Phone, Shield, Bell,
+  RefreshCw, CheckCircle2, Phone, Shield,
 } from 'lucide-react'
 import { PageHeader, Field, Alert } from '../components/ui/shared'
 
@@ -84,6 +85,23 @@ export default function ProfileEdit() {
     if (d.startsWith('09') && d.length === 11) return '+63' + d.slice(1)
     if (d.startsWith('639') && d.length === 12) return '+' + d
     return raw
+  }
+
+  function handleAvatarSelect(file) {
+    const rateCheck = checkRateLimit('image_upload')
+    if (!rateCheck.allowed) {
+      toast.error(rateCheck.message)
+      return
+    }
+
+    const validation = validateImageFile(file)
+    if (!validation.valid) {
+      toast.error(validation.error)
+      return
+    }
+
+    setAvatarFile(file)
+    setAvatarUrl(URL.createObjectURL(file))
   }
 
   async function handleSaveProfile(e) {
@@ -183,8 +201,12 @@ export default function ProfileEdit() {
                 <button type="button" onClick={() => document.getElementById('avatar-input').click()}
                   className="btn btn-secondary btn-sm mt-1.5">Change Photo</button>
               </div>
-              <input id="avatar-input" type="file" accept="image/*" className="hidden"
-                onChange={e => { const f = e.target.files[0]; if (f) { setAvatarFile(f); setAvatarUrl(URL.createObjectURL(f)) } }} />
+              <input id="avatar-input" type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden"
+                onChange={e => {
+                  const f = e.target.files[0]
+                  if (f) handleAvatarSelect(f)
+                  e.target.value = ''
+                }} />
             </div>
 
             <hr className="border-slate-100" />

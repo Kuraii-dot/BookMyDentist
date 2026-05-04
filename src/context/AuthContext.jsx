@@ -26,14 +26,18 @@ export function AuthProvider({ children }) {
       } else {
         setProfile(null)
         setLoading(false)
-        // Stop polling on logout
         if (pollIntervalRef.current) {
           clearInterval(pollIntervalRef.current)
         }
       }
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      subscription.unsubscribe()
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current)
+      }
+    }
   }, [])
 
   async function fetchProfile(userId) {
@@ -47,34 +51,30 @@ export function AuthProvider({ children }) {
       setProfile(data ?? null)
       setLoading(false)
 
-      // ── Stop old polling if it exists ─────────────────────────────────────
       if (pollIntervalRef.current) {
         clearInterval(pollIntervalRef.current)
       }
 
-// ── Poll profile every 10 seconds to check for suspension/ban ─────────
-pollIntervalRef.current = setInterval(async () => {
-  try {
-    const { data: updatedProfile, error } = await supabase
-      .from('profiles')
-      .select('is_suspended, banned_at')
-      .eq('id', userId)
-      .single()
+      // Poll profile every 10 seconds to catch suspension/ban changes.
+      pollIntervalRef.current = setInterval(async () => {
+        try {
+          const { data: updatedProfile } = await supabase
+            .from('profiles')
+            .select('is_suspended, banned_at')
+            .eq('id', userId)
+            .single()
 
-    console.log('POLL RESULT:', { updatedProfile, error }) // ← ADD THIS LINE
-
-    if (updatedProfile) {
-      console.log('UPDATING PROFILE:', updatedProfile) // ← ADD THIS LINE
-      setProfile(prev => ({
-        ...prev,
-        is_suspended: updatedProfile.is_suspended,
-        banned_at: updatedProfile.banned_at
-      }))
-    }
-  } catch (error) {
-    console.error('Error polling profile:', error)
-  }
-}, 10000) // 10 seconds // 10 seconds
+          if (updatedProfile) {
+            setProfile(prev => ({
+              ...prev,
+              is_suspended: updatedProfile.is_suspended,
+              banned_at: updatedProfile.banned_at
+            }))
+          }
+        } catch (error) {
+          console.error('Error polling profile:', error)
+        }
+      }, 10000)
     } catch (error) {
       console.error('Error fetching profile:', error)
       setLoading(false)
@@ -112,4 +112,3 @@ pollIntervalRef.current = setInterval(async () => {
 }
 
 export const useAuth = () => useContext(AuthContext)
-

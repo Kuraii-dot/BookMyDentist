@@ -23,9 +23,35 @@ export default function ClinicDashboard() {
   const [recentAppts, setRecentAppts] = useState([])
   const [loading, setLoading]         = useState(true)
 
-  useEffect(()=>{ loadData() },[user])
+  useEffect(() => {
+    if (!user?.id) return
+
+    loadData()
+
+    // AJAX-style polling fallback so dashboard stays fresh even if realtime drops.
+    const intervalId = setInterval(loadData, 20000)
+    return () => clearInterval(intervalId)
+  }, [user?.id])
+
+  useEffect(() => {
+    if (!clinic?.id) return
+
+    // Realtime updates for new/updated appointments in this clinic.
+    const channel = supabase
+      .channel(`clinic-dashboard-${clinic.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'appointments', filter: `clinic_id=eq.${clinic.id}` },
+        () => loadData()
+      )
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [clinic?.id])
 
   async function loadData() {
+    if (!user?.id) return
+
     const { data:c } = await supabase.from('clinics').select('*').eq('owner_id',user.id).maybeSingle()
     setClinic(c)
     if (!c) { setLoading(false); return }

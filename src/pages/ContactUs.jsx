@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar'
 import { Mail, MessageSquare, Building2, CheckCircle2, AlertCircle, Loader } from 'lucide-react'
 import { Field, Alert } from '../components/ui/shared'
 import { sendEmail } from '../lib/email'
+import { supabase } from '../lib/supabase'
 import {
   checkRateLimit,
   sanitizeText,
@@ -89,6 +90,13 @@ export default function ContactUs() {
 
     setLoading(true)
 
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.user) {
+      setLoading(false)
+      setError('Please sign in to submit the contact form, or email us directly at hello@bookmydentistph.com.')
+      return
+    }
+
     // ── Sanitize all inputs before sending ────────────────────────────────────
     const safeName    = sanitizeName(form.name, 100)
     const safeEmail   = form.email.trim().toLowerCase().slice(0, 254)
@@ -127,7 +135,7 @@ export default function ContactUs() {
             </div>
           </div>
         `,
-      })
+      }, { bestEffort: false })
 
       // Send auto-reply to the user
       await sendEmail({
@@ -154,7 +162,7 @@ export default function ContactUs() {
             </div>
           </div>
         `,
-      })
+      }, { bestEffort: true })
 
       setSubmitted(true)
     } catch (err) {
@@ -218,7 +226,7 @@ export default function ContactUs() {
                   </div>
                   <h3 className="font-display font-bold text-slate-900 text-xl mb-2">Message Sent!</h3>
                   <p className="text-slate-500 text-sm mb-2">Thanks for reaching out. We'll get back to you within 24 hours.</p>
-                  <p className="text-slate-400 text-xs mb-6">A confirmation has been sent to your email.</p>
+                  <p className="text-slate-400 text-xs mb-6">Need urgent help? Email us directly at hello@bookmydentistph.com.</p>
                   <button
                     onClick={() => { setSubmitted(false); setForm({ name: '', email: '', subject: 'general', message: '' }); submitTimeRef.current = Date.now() }}
                     className="btn btn-secondary btn-md"

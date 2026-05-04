@@ -876,12 +876,18 @@ export default function AppointmentRequests() {
       }
       const displayDate = actionType === 'reschedule' && rescheduleDate ? format(new Date(rescheduleDate), 'EEEE, MMMM d, yyyy') : dateStr
       const displayTime = actionType === 'reschedule' && rescheduleTime ? rescheduleTime : a.appointment_time
-      sendAppointmentEmail({
+      
+      await sendAppointmentEmail({
         to: patientEmail, subject: subjects[actionType],
         patientName, clinicName, serviceName,
         date: displayDate, time: displayTime, status: actionType,
         reason: actionType === 'decline' && reason ? reason : undefined,
-      }).catch(err => console.warn('Email failed:', err))
+      }, { bestEffort: false }).catch(err => {
+        console.warn('Email failed:', err)
+        toast.error('Notice: Email to patient failed (' + (err.message || 'error') + ')', { duration: 8000 })
+      })
+    } else {
+      toast.error('No patient email found! Cannot send update email.', { duration: 8000 })
     }
 
     toast.success({

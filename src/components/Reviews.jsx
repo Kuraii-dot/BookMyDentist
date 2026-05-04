@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { format } from 'date-fns'
 import { Star } from 'lucide-react'
+import toast from 'react-hot-toast'
+import { checkRateLimit } from '../lib/security'
 
 function StarRating({ value, onChange, readonly = false }) {
   const [hovered, setHovered] = useState(0)
@@ -114,15 +116,53 @@ export function SubmitReview({ appointmentId, clinicId, customerId, onSubmitted 
 
   async function handleSubmit(e) {
     e.preventDefault()
-    if (!rating) return
+    if (!rating) {
+      toast.error('Please select a rating first.')
+      return
+    }
+
+    const rateCheck = checkRateLimit('review')
+    if (!rateCheck.allowed) {
+      toast.error(rateCheck.message)
+      return
+    }
+
+    const safeComment = comment.trim().slice(0, 1000)
+
     setSubmitting(true)
-    await supabase.from('reviews').insert({
+    const { data, error } = await supabase.from('reviews').insert({
       appointment_id: appointmentId,
       clinic_id:      clinicId,
       customer_id:    customerId,
       rating,
-      comment,
-    })
+      comment: safeComment,
+    }).select('*').single()
+
+    if (error) {
+      // Duplicate review (unique constraint) can happen on delayed UI updates.
+      if (error.code === '23505' || error.status === 409) {
+        const { data: existingReview } = await supabase
+          .from('reviews')
+          .select('*')
+          .eq('appointment_id', appointmentId)
+          .maybeSingle()
+
+        if (existingReview) setExisting(existingReview)
+        toast.success('Review already submitted.')
+        onSubmitted?.()
+        setSubmitting(false)
+        return
+      }
+
+      toast.error(error.message || 'Failed to submit review.')
+      setSubmitting(false)
+      return
+    }
+
+    if (data) setExisting(data)
+    setComment('')
+    setRating(0)
+    toast.success('Review submitted successfully!')
     setSubmitting(false)
     onSubmitted?.()
   }

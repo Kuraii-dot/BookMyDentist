@@ -6,7 +6,7 @@ import toast from 'react-hot-toast'
 import { SubmitReview } from '../../components/Reviews'
 import {
   Calendar, Clock, ChevronDown, Building2, RefreshCw,
-  CheckCircle2, XCircle, AlertCircle, Trophy, Ban, DollarSign, User
+  CheckCircle2, XCircle, AlertCircle, Trophy, Ban, DollarSign
 } from 'lucide-react'
 import { PageHeader, EmptyState, StatusBadge, SkeletonCard } from '../../components/ui/shared'
 
@@ -27,14 +27,26 @@ export default function MyAppointments() {
   const [loading, setLoading]           = useState(true)
   const [actionLoading, setActionLoading] = useState(null)
   const [expanded, setExpanded]         = useState(null)
-  const [reviewRefresh, setReviewRefresh] = useState(0)
 
-  useEffect(()=>{ fetchAppointments() },[user])
+  useEffect(() => {
+    if (!user?.id) return
+    fetchAppointments()
+  }, [user])
 
   async function fetchAppointments() {
+    if (!user?.id) return
+
     const { data } = await supabase
-      .from('appointments').select('*, clinics(*), services(*)')
-      .eq('customer_id', user.id).order('created_at',{ascending:false})
+      .from('appointments')
+      .select(`
+        id, clinic_id, status, appointment_date, appointment_time, rescheduled_date,
+        rescheduled_time, rejection_reason, created_at,
+        clinics(id, name, logo_url), services(id, name, price)
+      `)
+      .eq('customer_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(100)
+
     setAppointments(data||[])
     setLoading(false)
   }
@@ -199,7 +211,7 @@ export default function MyAppointments() {
                           appointmentId={appt.id}
                           clinicId={appt.clinic_id}
                           customerId={user.id}
-                          onSubmitted={()=>setReviewRefresh(r=>r+1)}
+                          onSubmitted={fetchAppointments}
                         />
                       </div>
                     )}

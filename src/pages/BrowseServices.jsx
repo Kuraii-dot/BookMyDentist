@@ -86,8 +86,11 @@ export default function BrowseServices() {
   const [showFilters, setShowFilters] = useState(false)
 
   useEffect(()=>{
-    supabase.from('clinics').select('*, services(id,name,price), reviews(rating)')
+    supabase.from('clinics')
+      .select('id, name, city, logo_url, banner_url, created_at, services(id,name,price), reviews(rating)')
       .eq('is_active',true).eq('verification_status','approved')
+      .order('created_at', { ascending: false })
+      .limit(120)
       .then(({data})=>{
         const enriched = (data||[]).map(c=>({...c,
           avg_rating: c.reviews?.length?c.reviews.reduce((s,r)=>s+r.rating,0)/c.reviews.length:0,

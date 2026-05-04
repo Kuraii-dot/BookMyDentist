@@ -1,22 +1,24 @@
 // Calls our deployed send-email Edge Function
 // Used for: new booking alerts to clinic, status change alerts to customer
 
-const EDGE_URL = 'https://yaiebesffxghizzmrael.supabase.co/functions/v1/send-email'
-const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlhaWViZXNmZnhnaGl6em1yYWVsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1NjcwNTEsImV4cCI6MjA4NzE0MzA1MX0.P6ydIuOItLu87OIcFKNW5hbXvo-5QP93ILG5FacnOb0'
+import { supabase } from './supabase'
 
-export async function sendEmail({ to, subject, html }) {
+export async function sendEmail({ to, subject, html }, options = {}) {
+  const { bestEffort = true } = options
   try {
-    await fetch(EDGE_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${ANON_KEY}`,
-      },
-      body: JSON.stringify({ to, subject, html }),
+    const { data, error } = await supabase.functions.invoke('send-email', {
+      body: { to, subject, html },
     })
+
+    if (error) {
+      throw new Error(error.message || 'Email function returned an error')
+    }
+
+    return data
   } catch (err) {
-    // Email is best-effort — don't block the UI if it fails
+    if (!bestEffort) throw err
     console.warn('Email send failed:', err)
+    return null
   }
 }
 
@@ -325,7 +327,7 @@ export async function sendClinicRejectedEmail({ to, clinicName, ownerName, reaso
   })
 }
 
-export async function sendAppointmentEmail({ to, subject, patientName, clinicName, serviceName, date, time, status, reason }) {
+export async function sendAppointmentEmail({ to, subject, patientName, clinicName, serviceName, date, time, status, reason }, options = {}) {
   await sendEmail({
     to,
     subject,
@@ -361,5 +363,5 @@ export async function sendAppointmentEmail({ to, subject, patientName, clinicNam
         </div>
       </div>
     `
-  })
+  }, options)
 }

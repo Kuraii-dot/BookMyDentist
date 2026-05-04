@@ -284,15 +284,30 @@ export default function BookAppointment() {
 
     if (error) { toast.error(error.message); setBooking(false); return }
 
-    const { data: cd } = await supabase.from('clinics')
-      .select('owner_id, profiles!clinics_owner_id_fkey(full_name,email)')
-      .eq('id', clinicId).single()
-    const ownerName  = cd?.profiles?.full_name || 'Clinic Owner'
-    const ownerEmail = cd?.profiles?.email
+    const { data: clinicOwnerData } = await supabase.from('clinics')
+      .select('owner_id, email')
+      .eq('id', clinicId)
+      .single()
 
-    if (cd?.owner_id) {
+    let ownerName = 'Clinic Owner'
+    let ownerEmail = null
+
+    if (clinicOwnerData?.owner_id) {
+      const { data: ownerProfile } = await supabase
+        .from('profiles')
+        .select('full_name, email')
+        .eq('id', clinicOwnerData.owner_id)
+        .maybeSingle()
+      ownerName = ownerProfile?.full_name || ownerName
+      ownerEmail = ownerProfile?.email || null
+    }
+
+    const clinicContactEmail = clinicOwnerData?.email || clinic?.email || null
+    const clinicAlertRecipients = [...new Set([clinicContactEmail, ownerEmail].filter(Boolean))]
+
+    if (clinicOwnerData?.owner_id) {
       await supabase.from('notifications').insert({
-        recipient_id: cd.owner_id,
+        recipient_id: clinicOwnerData.owner_id,
         type: 'new_booking',
         title: 'New Appointment Request',
         message: `${profile?.full_name} booked ${selectedServices.map(s => s.name).join(', ')} for ${format(selectedDate, 'MMMM d, yyyy')} at ${selectedTime.label}. Total: ₱${totalPrice.toLocaleString()} (${totalDurationMinutes} min).`,
@@ -303,17 +318,19 @@ export default function BookAppointment() {
     const formattedDate   = format(selectedDate, 'EEEE, MMMM d, yyyy')
     const serviceNamesStr = selectedServices.map(s => s.name).join(', ')
 
-    sendBookingRequestedEmail({
+    const emailTasks = []
+
+    emailTasks.push(sendBookingRequestedEmail({
       to: user.email,
       patientName: profile?.full_name || 'there',
       clinicName: clinic?.name,
       serviceName: serviceNamesStr,
       date: formattedDate,
       time: selectedTime.label,
-    }).catch(console.warn)
+    }, { bestEffort: false }))
 
     if (ownerEmail) {
-      sendNewBookingAlertEmail({
+      emailTasks.push(sendNewBookingAlertEmail({
         to: ownerEmail,
         ownerName,
         clinicName: clinic?.name,
@@ -321,7 +338,20 @@ export default function BookAppointment() {
         serviceName: serviceNamesStr,
         date: formattedDate,
         time: selectedTime.label,
-      }).catch(console.warn)
+      }, { bestEffort: false }))
+    } else {
+      console.warn('Clinic owner email missing. Booking email alert skipped.')
+    }
+
+    if (emailTasks.length) {
+      const results = await Promise.allSettled(emailTasks)
+      const failedCount = results.filter(r => r.status === 'rejected').length
+      if (failedCount > 0) {
+        console.warn('Some booking emails failed:', results)
+        toast('Booking saved, but some email alerts failed. Clinic still has an in-app notification.', {
+          icon: '⚠️',
+        })
+      }
     }
 
     setBooking(false)

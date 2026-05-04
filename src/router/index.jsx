@@ -1,85 +1,102 @@
+import { Suspense, lazy } from 'react'
 import { createBrowserRouter } from 'react-router-dom'
 import ProtectedRoute from '../components/ProtectedRoute'
 
-import Landing from '../pages/Landing'
-import Login from '../pages/Login'
-import Register from '../pages/Register'
-import VerifyEmail from '../pages/VerifyEmail'
-import ClinicDetail from '../pages/ClinicDetail'
-import ProfileEdit from '../pages/ProfileEdit'
-import AboutUs from '../pages/AboutUs'
-import ContactUs from '../pages/ContactUs'
-import BrowseServices from '../pages/BrowseServices'
-import PrivacyPolicy from '../pages/PrivacyPolicy'
-import TermsOfService from '../pages/TermsOfService'
+const Landing = lazy(() => import('../pages/Landing'))
+const Login = lazy(() => import('../pages/Login'))
+const Register = lazy(() => import('../pages/Register'))
+const VerifyEmail = lazy(() => import('../pages/VerifyEmail'))
+const ClinicDetail = lazy(() => import('../pages/ClinicDetail'))
+const ProfileEdit = lazy(() => import('../pages/ProfileEdit'))
+const AboutUs = lazy(() => import('../pages/AboutUs'))
+const ContactUs = lazy(() => import('../pages/ContactUs'))
+const BrowseServices = lazy(() => import('../pages/BrowseServices'))
+const PrivacyPolicy = lazy(() => import('../pages/PrivacyPolicy'))
+const TermsOfService = lazy(() => import('../pages/TermsOfService'))
 
-// Customer
-import CustomerLayout from '../pages/customer/CustomerLayout'
-import CustomerDashboard from '../pages/customer/CustomerDashboard'
-import MyAppointments from '../pages/customer/MyAppointment'
-import BookAppointment from '../pages/customer/BookAppointment'
-import BrowseClinics from '../pages/customer/BrowseClinics'
+const CustomerLayout = lazy(() => import('../pages/customer/CustomerLayout'))
+const CustomerDashboard = lazy(() => import('../pages/customer/CustomerDashboard'))
+const MyAppointments = lazy(() => import('../pages/customer/MyAppointment'))
+const BookAppointment = lazy(() => import('../pages/customer/BookAppointment'))
+const BrowseClinics = lazy(() => import('../pages/customer/BrowseClinics'))
 
-// Clinic
-import ClinicLayout from '../pages/clinic/ClinicLayout'
-import ClinicDashboard from '../pages/clinic/ClinicDashboard'
-import AppointmentRequests from '../pages/clinic/AppointmentRequests'
-import ManageServices from '../pages/clinic/ManageServices'
-import ClinicProfile from '../pages/clinic/ClinicProfile'
-import ClinicAvailability from '../pages/clinic/ClinicAvailability'
-import ClinicReports from '../pages/clinic/ClinicReports'
+const ClinicLayout = lazy(() => import('../pages/clinic/ClinicLayout'))
+const ClinicDashboard = lazy(() => import('../pages/clinic/ClinicDashboard'))
+const AppointmentRequests = lazy(() => import('../pages/clinic/AppointmentRequests'))
+const ManageServices = lazy(() => import('../pages/clinic/ManageServices'))
+const ClinicProfile = lazy(() => import('../pages/clinic/ClinicProfile'))
+const ClinicAvailability = lazy(() => import('../pages/clinic/ClinicAvailability'))
+const ClinicReports = lazy(() => import('../pages/clinic/ClinicReports'))
 
-// Admin
-import SuperAdminDashboard from '../pages/admin/SuperAdminDashboard'
+const SuperAdminDashboard = lazy(() => import('../pages/admin/SuperAdminDashboard'))
 
-const router = createBrowserRouter([
-  { path: '/',             element: <Landing /> },
-  { path: '/login',        element: <Login /> },
-  { path: '/register',     element: <Register /> },
-  { path: '/verify-email', element: <VerifyEmail /> },
-  { path: '/about',        element: <AboutUs /> },
-  { path: '/contact',      element: <ContactUs /> },
-  { path: '/browse',       element: <BrowseServices /> },
-  { path: '/clinic/:id',   element: <ClinicDetail /> },
-  { path: '/terms',        element: <TermsOfService /> },
-  { path: '/privacy',      element: <PrivacyPolicy /> },
+function RouteLoader() {
+  return (
+    <div className="min-h-[40vh] flex items-center justify-center bg-slate-50">
+      <div className="w-9 h-9 border-4 border-sky-400 border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
+}
 
-  // Customer routes
+function loadable(Component) {
+  return (
+    <Suspense fallback={<RouteLoader />}>
+      <Component />
+    </Suspense>
+  )
+}
+
+const routes = [
+  { path: '/', element: loadable(Landing) },
+  { path: '/login', element: loadable(Login) },
+  { path: '/register', element: loadable(Register) },
+  { path: '/verify-email', element: loadable(VerifyEmail) },
+  { path: '/about', element: loadable(AboutUs) },
+  { path: '/contact', element: loadable(ContactUs) },
+  { path: '/browse', element: loadable(BrowseServices) },
+  { path: '/clinic/:id', element: loadable(ClinicDetail) },
+  { path: '/terms', element: loadable(TermsOfService) },
+  { path: '/privacy', element: loadable(PrivacyPolicy) },
+
   {
     path: '/dashboard',
-    element: <ProtectedRoute allowedRoles={['customer']}><CustomerLayout /></ProtectedRoute>,
+    element: <ProtectedRoute allowedRoles={['customer']}>{loadable(CustomerLayout)}</ProtectedRoute>,
     children: [
-      { index: true,              element: <CustomerDashboard /> },
-      { path: 'appointments',     element: <MyAppointments /> },
-      { path: 'browse',           element: <BrowseClinics /> },
-      { path: 'profile',          element: <ProfileEdit /> },
+      { index: true, element: loadable(CustomerDashboard) },
+      { path: 'appointments', element: loadable(MyAppointments) },
+      { path: 'browse', element: loadable(BrowseClinics) },
+      { path: 'profile', element: loadable(ProfileEdit) },
     ],
   },
   {
     path: '/book/:clinicId',
-    element: <ProtectedRoute allowedRoles={['customer']}><BookAppointment /></ProtectedRoute>,
+    element: <ProtectedRoute allowedRoles={['customer']}>{loadable(BookAppointment)}</ProtectedRoute>,
   },
 
-  // Clinic routes
   {
     path: '/clinic',
-    element: <ProtectedRoute allowedRoles={['clinic_owner']}><ClinicLayout /></ProtectedRoute>,
+    element: <ProtectedRoute allowedRoles={['clinic_owner']}>{loadable(ClinicLayout)}</ProtectedRoute>,
     children: [
-      { index: true,             element: <ClinicDashboard /> },
-      { path: 'appointments',    element: <AppointmentRequests /> },
-      { path: 'services',        element: <ManageServices /> },
-      { path: 'availability',    element: <ClinicAvailability /> },
-      { path: 'reports',         element: <ClinicReports /> },
-      { path: 'profile',         element: <ClinicProfile /> },
-      { path: 'account',         element: <ProfileEdit /> },
+      { index: true, element: loadable(ClinicDashboard) },
+      { path: 'appointments', element: loadable(AppointmentRequests) },
+      { path: 'services', element: loadable(ManageServices) },
+      { path: 'availability', element: loadable(ClinicAvailability) },
+      { path: 'reports', element: loadable(ClinicReports) },
+      { path: 'profile', element: loadable(ClinicProfile) },
+      { path: 'account', element: loadable(ProfileEdit) },
     ],
   },
 
-  // Admin
   {
     path: '/admin',
-    element: <ProtectedRoute allowedRoles={['super_admin']}><SuperAdminDashboard /></ProtectedRoute>,
+    element: <ProtectedRoute allowedRoles={['super_admin']}>{loadable(SuperAdminDashboard)}</ProtectedRoute>,
   },
-])
+]
+
+const router = createBrowserRouter(routes, {
+  future: {
+    v7_startTransition: true,
+  },
+})
 
 export default router
