@@ -271,18 +271,43 @@ export default function BookAppointment() {
     // Primary service_id = first selected service (for backward compat)
     const primaryServiceId = selectedServices[0].id
 
-    const { error } = await supabase.from('appointments').insert({
-      clinic_id:         clinicId,
-      customer_id:       user.id,
-      service_id:        primaryServiceId,
-      selected_services: selectedServicesData, // new field
-      appointment_date:  format(selectedDate, 'yyyy-MM-dd'),
-      appointment_time:  selectedTime.value,
-      notes,
-      status: 'pending',
+    const appointmentDate = format(selectedDate, 'yyyy-MM-dd')
+    const { data: bookedAppointment, error: rpcError } = await supabase.rpc('book_appointment_atomic', {
+      p_clinic_id: clinicId,
+      p_selected_services: selectedServicesData,
+      p_appointment_date: appointmentDate,
+      p_appointment_time: selectedTime.value,
+      p_notes: notes,
     })
 
-    if (error) { toast.error(error.message); setBooking(false); return }
+    const rpcMissing = ['42883', 'PGRST202'].includes(rpcError?.code)
+    if (rpcError && !rpcMissing) {
+      toast.error(rpcError.message || 'This slot is no longer available. Please choose another time.')
+      setSelectedTime(null)
+      setStep(2)
+      setBooking(false)
+      return
+    }
+
+    const insertedAppointment = Array.isArray(bookedAppointment) ? bookedAppointment[0] : bookedAppointment
+    let appointmentId = insertedAppointment?.id
+
+    if (rpcMissing) {
+      const { data: fallbackAppointment, error } = await supabase.from('appointments').insert({
+        clinic_id:         clinicId,
+        customer_id:       user.id,
+        service_id:        primaryServiceId,
+        selected_services: selectedServicesData,
+        appointment_date:  appointmentDate,
+        appointment_time:  selectedTime.value,
+        notes,
+        status: 'pending',
+      }).select('id').single()
+
+      if (error) { toast.error(error.message); setBooking(false); return }
+      appointmentId = fallbackAppointment?.id
+      console.warn('book_appointment_atomic RPC is not deployed yet; used legacy booking insert.')
+    }
 
     const { data: clinicOwnerData } = await supabase.from('clinics')
       .select('owner_id, email')
@@ -311,7 +336,8 @@ export default function BookAppointment() {
         type: 'new_booking',
         title: 'New Appointment Request',
         message: `${profile?.full_name} booked ${selectedServices.map(s => s.name).join(', ')} for ${format(selectedDate, 'MMMM d, yyyy')} at ${selectedTime.label}. Total: ₱${totalPrice.toLocaleString()} (${totalDurationMinutes} min).`,
-        related_id: clinicId,
+        appointment_id: appointmentId,
+        related_id: appointmentId || clinicId,
       })
     }
 

@@ -6,6 +6,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? ''
 const FROM_EMAIL = Deno.env.get('FROM_EMAIL') ?? 'BookMyDentistPH <hello@bookmydentistph.com>'
 
@@ -26,6 +27,9 @@ const MAX_EMAILS_PER_HOUR = 20
 const MAX_RECIPIENTS = 5
 const HOUR_MS = 60 * 60 * 1000
 const rateBucket = new Map<string, number[]>()
+const adminSupabase = SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY
+  ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } })
+  : null
 
 function corsHeaders(req: Request) {
   const origin = req.headers.get('origin') ?? ''
@@ -54,7 +58,7 @@ function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
 }
 
-function isRateLimited(bucketKey: string, maxRequests: number, windowMs: number) {
+function isMemoryRateLimited(bucketKey: string, maxRequests: number, windowMs: number) {
   const now = Date.now()
   const recent = (rateBucket.get(bucketKey) ?? []).filter((stamp) => now - stamp < windowMs)
 
@@ -66,6 +70,22 @@ function isRateLimited(bucketKey: string, maxRequests: number, windowMs: number)
   recent.push(now)
   rateBucket.set(bucketKey, recent)
   return false
+}
+
+async function isRateLimited(bucketKey: string, maxRequests: number, windowMs: number) {
+  if (adminSupabase) {
+    const windowStart = new Date(Math.floor(Date.now() / windowMs) * windowMs).toISOString()
+    const { data, error } = await adminSupabase.rpc('increment_rate_limit', {
+      p_bucket_key: bucketKey,
+      p_window_start: windowStart,
+      p_max_requests: maxRequests,
+    })
+
+    if (!error && typeof data === 'boolean') return data
+    console.error('Persistent email rate limit failed, using memory fallback:', error)
+  }
+
+  return isMemoryRateLimited(bucketKey, maxRequests, windowMs)
 }
 
 serve(async (req) => {
@@ -147,7 +167,7 @@ serve(async (req) => {
       return json({ error: 'Forbidden' }, 403, req)
     }
 
-    if (isRateLimited(`user:${user.id}`, MAX_EMAILS_PER_HOUR, HOUR_MS)) {
+    if (await isRateLimited(`email:user:${user.id}`, MAX_EMAILS_PER_HOUR, HOUR_MS)) {
       return json({ error: 'Too many email requests. Please try again later.' }, 429, req, {
         'Retry-After': '3600',
       })

@@ -7,7 +7,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
-  const pollIntervalRef = useRef(null)
+  const profileChannelRef = useRef(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -26,21 +26,44 @@ export function AuthProvider({ children }) {
       } else {
         setProfile(null)
         setLoading(false)
-        if (pollIntervalRef.current) {
-          clearInterval(pollIntervalRef.current)
-        }
+        clearProfileSubscription()
       }
     })
 
     return () => {
       subscription.unsubscribe()
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current)
-      }
+      clearProfileSubscription()
     }
   }, [])
 
-  async function fetchProfile(userId) {
+  useEffect(() => {
+    if (!user?.id) return undefined
+
+    const refreshOnFocus = () => fetchProfile(user.id, { subscribe: false })
+    window.addEventListener('focus', refreshOnFocus)
+    return () => window.removeEventListener('focus', refreshOnFocus)
+  }, [user?.id])
+
+  function clearProfileSubscription() {
+    if (profileChannelRef.current) {
+      supabase.removeChannel(profileChannelRef.current)
+      profileChannelRef.current = null
+    }
+  }
+
+  function subscribeToProfile(userId) {
+    clearProfileSubscription()
+    profileChannelRef.current = supabase
+      .channel(`profile-${userId}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${userId}` },
+        (payload) => setProfile(payload.new ?? null)
+      )
+      .subscribe()
+  }
+
+  async function fetchProfile(userId, { subscribe = true } = {}) {
     try {
       const { data } = await supabase
         .from('profiles')
@@ -51,30 +74,7 @@ export function AuthProvider({ children }) {
       setProfile(data ?? null)
       setLoading(false)
 
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current)
-      }
-
-      // Poll profile every 10 seconds to catch suspension/ban changes.
-      pollIntervalRef.current = setInterval(async () => {
-        try {
-          const { data: updatedProfile } = await supabase
-            .from('profiles')
-            .select('is_suspended, banned_at')
-            .eq('id', userId)
-            .single()
-
-          if (updatedProfile) {
-            setProfile(prev => ({
-              ...prev,
-              is_suspended: updatedProfile.is_suspended,
-              banned_at: updatedProfile.banned_at
-            }))
-          }
-        } catch (error) {
-          console.error('Error polling profile:', error)
-        }
-      }, 10000)
+      if (subscribe) subscribeToProfile(userId)
     } catch (error) {
       console.error('Error fetching profile:', error)
       setLoading(false)
@@ -99,13 +99,16 @@ export function AuthProvider({ children }) {
     await supabase.auth.signOut()
     setUser(null)
     setProfile(null)
-    if (pollIntervalRef.current) {
-      clearInterval(pollIntervalRef.current)
-    }
+    clearProfileSubscription()
+  }
+
+  function refreshProfile() {
+    if (!user?.id) return Promise.resolve()
+    return fetchProfile(user.id, { subscribe: false })
   }
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ user, profile, loading, signUp, signIn, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   )

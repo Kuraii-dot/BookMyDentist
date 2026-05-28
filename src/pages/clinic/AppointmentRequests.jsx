@@ -33,6 +33,26 @@ const STATUS_CONFIG = {
 }
 
 const DAY_KEYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday']
+const PER_PAGE = 20
+const APPOINTMENT_SELECT = '*, profiles!appointments_customer_id_fkey(full_name,email,phone,avatar_url), services(name,price,duration_minutes)'
+const TAB_STATUSES = {
+  pending: ['pending'],
+  upcoming: ['accepted', 'reschedule_accepted', 'rescheduled'],
+  completed: ['completed', 'rejected', 'cancelled'],
+}
+
+function filterByTab(query, tab) {
+  const statuses = TAB_STATUSES[tab]
+  return statuses ? query.in('status', statuses) : query
+}
+
+function orderForTab(query, tab) {
+  const ascending = tab === 'pending' || tab === 'upcoming'
+  return query
+    .order('appointment_date', { ascending })
+    .order('appointment_time', { ascending })
+    .order('created_at', { ascending })
+}
 
 // ── Mini Calendar ─────────────────────────────────────────────────────────────
 function MiniCalendar({ appointments, onSelectDate, selectedDate, bookingWindowDays = 30 }) {
@@ -119,6 +139,43 @@ function MiniCalendar({ appointments, onSelectDate, selectedDate, bookingWindowD
 }
 
 // ── Helper: get display name & services for an appointment ────────────────────
+function Pagination({ page, total, perPage, onPage }) {
+  const pages = Math.max(1, Math.ceil(total / perPage))
+  if (pages <= 1) return null
+
+  const start = (page - 1) * perPage + 1
+  const end = Math.min(total, page * perPage)
+
+  return (
+    <div className="flex items-center justify-between gap-3 pt-4 mt-4 border-t border-slate-100 flex-wrap">
+      <p className="text-xs text-slate-400">
+        Showing {start}-{end} of {total}
+      </p>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => onPage(page - 1)}
+          disabled={page <= 1}
+          className="btn btn-secondary btn-sm flex items-center gap-1 disabled:opacity-40"
+        >
+          <ChevronLeft className="w-3.5 h-3.5" /> Prev
+        </button>
+        <span className="text-xs font-semibold text-slate-500">
+          Page {page} of {pages}
+        </span>
+        <button
+          type="button"
+          onClick={() => onPage(page + 1)}
+          disabled={page >= pages}
+          className="btn btn-secondary btn-sm flex items-center gap-1 disabled:opacity-40"
+        >
+          Next <ChevronRight className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function getApptServices(a) {
   // Multi-service appointments store selected_services as JSON array
   if (a.selected_services && Array.isArray(a.selected_services) && a.selected_services.length > 0) {
@@ -800,6 +857,11 @@ export default function AppointmentRequests() {
   const [clinic, setClinic]               = useState(null)
   const [clinicServices, setClinicServices] = useState([])
   const [appointments, setAppointments]   = useState([])
+  const [calendarAppointments, setCalendarAppointments] = useState([])
+  const [activeAppointments, setActiveAppointments] = useState([])
+  const [totalCount, setTotalCount]       = useState(0)
+  const [counts, setCounts]               = useState({ pending: 0, upcoming: 0, completed: 0, all: 0 })
+  const [page, setPage]                   = useState(1)
   const [loading, setLoading]             = useState(true)
   const [tab, setTab]                     = useState('pending')
   const [selectedDate, setSelectedDate]   = useState(null)
@@ -814,22 +876,81 @@ export default function AppointmentRequests() {
   const [showEmergency, setShowEmergency] = useState(false)
   const [search, setSearch]               = useState('')
 
-  useEffect(() => { loadData() }, [user])
+  useEffect(() => {
+    setPage(1)
+    setSelectedDate(null)
+  }, [tab])
+
+  useEffect(() => { loadData() }, [user?.id, tab, page])
 
   async function loadData() {
+    if (!user?.id) return
+    setLoading(true)
+
     const { data: c } = await supabase.from('clinics').select('id, name, availability').eq('owner_id', user.id).maybeSingle()
     setClinic(c)
     if (!c) { setLoading(false); return }
-    const [appts, services] = await Promise.all([
-      supabase.from('appointments')
-        .select('*, profiles!appointments_customer_id_fkey(full_name,email,phone,avatar_url), services(name,price,duration_minutes)')
-        .eq('clinic_id', c.id)
-        .order('appointment_date', { ascending: true })
-        .order('appointment_time', { ascending: true }),
+
+    const from = (page - 1) * PER_PAGE
+    const to = from + PER_PAGE - 1
+    const today = format(new Date(), 'yyyy-MM-dd')
+    const bookingWindow = c.availability?.booking_window_days || 30
+    const maxDate = format(addDays(startOfToday(), bookingWindow), 'yyyy-MM-dd')
+
+    let pageQuery = supabase.from('appointments')
+      .select(APPOINTMENT_SELECT, { count: 'exact' })
+      .eq('clinic_id', c.id)
+    pageQuery = orderForTab(filterByTab(pageQuery, tab), tab).range(from, to)
+
+    const countQuery = (statuses) => {
+      let query = supabase.from('appointments').select('id', { count: 'exact', head: true }).eq('clinic_id', c.id)
+      return statuses ? query.in('status', statuses) : query
+    }
+
+    const calendarStatuses = tab === 'pending' || tab === 'upcoming' ? TAB_STATUSES[tab] : null
+    const calendarQuery = calendarStatuses
+      ? orderForTab(
+          supabase.from('appointments')
+            .select(APPOINTMENT_SELECT)
+            .eq('clinic_id', c.id)
+            .in('status', calendarStatuses)
+            .gte('appointment_date', today)
+            .lte('appointment_date', maxDate),
+          tab
+        )
+      : Promise.resolve({ data: [] })
+
+    const activeQuery = supabase.from('appointments')
+      .select(APPOINTMENT_SELECT)
+      .eq('clinic_id', c.id)
+      .in('status', ['pending', 'accepted', 'reschedule_accepted'])
+      .gte('appointment_date', today)
+      .lte('appointment_date', maxDate)
+      .order('appointment_date', { ascending: true })
+      .order('appointment_time', { ascending: true })
+
+    const [appts, services, pendingCount, upcomingCount, completedCount, allCount, calendarRows, activeRows] = await Promise.all([
+      pageQuery,
       supabase.from('services').select('*').eq('clinic_id', c.id).eq('is_active', true),
+      countQuery(TAB_STATUSES.pending),
+      countQuery(TAB_STATUSES.upcoming),
+      countQuery(TAB_STATUSES.completed),
+      countQuery(null),
+      calendarQuery,
+      activeQuery,
     ])
+
     setAppointments(appts.data || [])
+    setTotalCount(appts.count || 0)
     setClinicServices(services.data || [])
+    setCounts({
+      pending: pendingCount.count || 0,
+      upcoming: upcomingCount.count || 0,
+      completed: completedCount.count || 0,
+      all: allCount.count || 0,
+    })
+    setCalendarAppointments(calendarRows.data || [])
+    setActiveAppointments(activeRows.data || [])
     setLoading(false)
   }
 
@@ -905,7 +1026,7 @@ export default function AppointmentRequests() {
     const { error } = await supabase.from('appointments')
       .update({ performed_services: performedServices, clinic_notes: clinicNotes }).eq('id', appointmentId)
     if (error) { toast.error(error.message); return }
-    const appt = appointments.find(a => a.id === appointmentId)
+    const appt = [...appointments, ...calendarAppointments, ...activeAppointments].find(a => a.id === appointmentId)
     if (appt?.customer_id) {
       const total = performedServices.reduce((s, p) => s + (p.price || 0), 0)
       const names = performedServices.map(p => p.name).join(', ')
@@ -924,16 +1045,12 @@ export default function AppointmentRequests() {
     setRescheduleDate(appt.appointment_date); setRescheduleTime(appt.appointment_time || '')
   }
 
-  const pendingAppts   = appointments.filter(a => a.status === 'pending')
-  const upcomingAppts  = appointments.filter(a => ['accepted','reschedule_accepted','rescheduled'].includes(a.status))
-  const completedAppts = appointments.filter(a => ['completed','rejected','cancelled'].includes(a.status))
-
-  const calendarAppts     = tab === 'pending' ? pendingAppts : upcomingAppts
+  const calendarAppts     = tab === 'pending' || tab === 'upcoming' ? calendarAppointments : []
   const selectedDateAppts = selectedDate
     ? calendarAppts.filter(a => a.appointment_date === format(selectedDate, 'yyyy-MM-dd'))
     : []
 
-  const listAppts = (tab === 'completed' ? completedAppts : appointments).filter(a =>
+  const listAppts = appointments.filter(a =>
     !search ||
     (a.profiles?.full_name || a.guest_name || '').toLowerCase().includes(search.toLowerCase()) ||
     (getApptServices(a).map(s => s.name).join(' ') || '').toLowerCase().includes(search.toLowerCase())
@@ -941,12 +1058,6 @@ export default function AppointmentRequests() {
 
   const bookingWindow  = clinic?.availability?.booking_window_days || 30
   const isCalendarTab  = tab === 'pending' || tab === 'upcoming'
-  const counts = {
-    pending:   pendingAppts.length,
-    upcoming:  upcomingAppts.length,
-    completed: completedAppts.length,
-    all:       appointments.length,
-  }
 
   if (loading) return (
     <div className="flex justify-center py-16">
@@ -961,7 +1072,7 @@ export default function AppointmentRequests() {
       <div className="page-header flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="page-title">Appointments</h1>
-          <p className="page-subtitle">{appointments.length} total</p>
+          <p className="page-subtitle">{totalCount} {tab === 'all' ? 'total' : tab} appointment{totalCount === 1 ? '' : 's'}</p>
         </div>
         <div className="flex gap-2 flex-wrap">
           <button onClick={() => setShowWalkIn(true)}
@@ -979,7 +1090,7 @@ export default function AppointmentRequests() {
       {/* Tabs */}
       <div className="flex gap-1 card p-1 mb-5 rounded-2xl overflow-x-auto">
         {TABS.map(t => (
-          <button key={t.key} onClick={() => { setTab(t.key); setSelectedDate(null) }}
+          <button key={t.key} onClick={() => { setTab(t.key); setSelectedDate(null); setPage(1) }}
             className={`flex-1 min-w-0 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap px-2
               ${tab === t.key ? 'text-white shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
             style={tab === t.key ? { backgroundColor: 'var(--color-brand)' } : {}}>
@@ -1061,11 +1172,14 @@ export default function AppointmentRequests() {
               <p className="text-slate-500 font-medium">No appointments found</p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {listAppts.map(a => (
-                <ApptCard key={a.id} a={a} onAction={openAction} onProcedures={setPerformedModal} />
-              ))}
-            </div>
+            <>
+              <div className="space-y-3">
+                {listAppts.map(a => (
+                  <ApptCard key={a.id} a={a} onAction={openAction} onProcedures={setPerformedModal} />
+                ))}
+              </div>
+              <Pagination page={page} total={totalCount} perPage={PER_PAGE} onPage={setPage} />
+            </>
           )}
         </div>
       )}
@@ -1157,7 +1271,7 @@ export default function AppointmentRequests() {
           onClose={() => setShowWalkIn(false)} onSaved={loadData} />
       )}
       {showEmergency && (
-        <EmergencyClosureModal appointments={appointments} clinicName={clinic?.name}
+        <EmergencyClosureModal appointments={activeAppointments} clinicName={clinic?.name}
           onClose={() => setShowEmergency(false)} onDone={loadData} />
       )}
     </div>

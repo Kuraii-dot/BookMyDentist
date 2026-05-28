@@ -6,6 +6,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL') ?? ''
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 const TWILIO_ACCOUNT_SID = Deno.env.get('TWILIO_ACCOUNT_SID') ?? ''
 const TWILIO_AUTH_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN') ?? ''
 const TWILIO_FROM_NUMBER = Deno.env.get('TWILIO_FROM_NUMBER') ?? ''
@@ -26,6 +27,9 @@ const ALLOWED_ORIGINS = configuredOrigins.length ? configuredOrigins : DEFAULT_A
 const MAX_SMS_PER_HOUR = 30
 const HOUR_MS = 60 * 60 * 1000
 const rateBucket = new Map<string, number[]>()
+const adminSupabase = SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY
+  ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } })
+  : null
 
 function corsHeaders(req: Request) {
   const origin = req.headers.get('origin') ?? ''
@@ -50,7 +54,7 @@ function json(body: unknown, status: number, req: Request, extraHeaders: Record<
   })
 }
 
-function isRateLimited(userId: string) {
+function isMemoryRateLimited(userId: string) {
   const now = Date.now()
   const recent = (rateBucket.get(userId) ?? []).filter((stamp) => now - stamp < HOUR_MS)
 
@@ -62,6 +66,24 @@ function isRateLimited(userId: string) {
   recent.push(now)
   rateBucket.set(userId, recent)
   return false
+}
+
+async function isRateLimited(userId: string) {
+  const bucketKey = `sms:user:${userId}`
+
+  if (adminSupabase) {
+    const windowStart = new Date(Math.floor(Date.now() / HOUR_MS) * HOUR_MS).toISOString()
+    const { data, error } = await adminSupabase.rpc('increment_rate_limit', {
+      p_bucket_key: bucketKey,
+      p_window_start: windowStart,
+      p_max_requests: MAX_SMS_PER_HOUR,
+    })
+
+    if (!error && typeof data === 'boolean') return data
+    console.error('Persistent SMS rate limit failed, using memory fallback:', error)
+  }
+
+  return isMemoryRateLimited(userId)
 }
 
 serve(async (req) => {
@@ -110,7 +132,7 @@ serve(async (req) => {
       return json({ error: 'Forbidden' }, 403, req)
     }
 
-    if (isRateLimited(user.id)) {
+    if (await isRateLimited(user.id)) {
       return json({ error: 'Too many SMS requests. Please try again later.' }, 429, req, {
         'Retry-After': '3600',
       })

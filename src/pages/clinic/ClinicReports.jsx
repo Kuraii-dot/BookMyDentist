@@ -1,12 +1,12 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { format, parseISO, startOfMonth, endOfMonth, subMonths } from 'date-fns'
 import toast from 'react-hot-toast'
 import {
-  FileSpreadsheet, FileText, Download, Calendar,
-  Filter, Users, DollarSign, Stethoscope, Loader,
-  ChevronDown, BarChart2, RefreshCw,
+  FileSpreadsheet, FileText, Calendar, Clock,
+  Users, DollarSign, Stethoscope, Loader,
+  BarChart2, RefreshCw, X, User,
 } from 'lucide-react'
 import { PageHeader, Field } from '../../components/ui/shared'
 
@@ -244,6 +244,66 @@ function exportPDF({ rows, clinic, dateFrom, dateTo, procedure }) {
 }
 
 // ── Main Component ────────────────────────────────────────────────────────────
+function getAppointmentProcedures(appointment) {
+  if (appointment.performed_services?.length) {
+    return appointment.performed_services.map(p => ({
+      name: p.name || 'Procedure',
+      price: parseFloat(p.price || 0),
+      service_id: p.service_id,
+      source: 'performed',
+    }))
+  }
+
+  if (appointment.selected_services?.length) {
+    return appointment.selected_services.map(p => ({
+      name: p.name || 'Procedure',
+      price: parseFloat(p.price || 0),
+      service_id: p.service_id,
+      source: 'booked',
+    }))
+  }
+
+  if (appointment.services) {
+    return [{
+      name: appointment.services.name || 'Procedure',
+      price: parseFloat(appointment.services.price || 0),
+      service_id: appointment.services.id,
+      source: 'service',
+    }]
+  }
+
+  return []
+}
+
+function buildCustomerSummaries(rows) {
+  const map = new Map()
+
+  for (const row of rows || []) {
+    const key = row.customerId || `walkin:${row.patientName}:${row.guestContact || ''}`
+    if (!map.has(key)) {
+      map.set(key, {
+        key,
+        customerId: row.customerId,
+        patientName: row.patientName,
+        email: row.patientEmail,
+        phone: row.patientPhone,
+        guestContact: row.guestContact,
+        isWalkIn: row.isWalkIn,
+        visitIds: new Set(),
+        reportAmount: 0,
+      })
+    }
+
+    const summary = map.get(key)
+    summary.visitIds.add(row.apptId)
+    summary.reportAmount += row.amount
+  }
+
+  return [...map.values()]
+    .map(summary => ({ ...summary, reportVisits: summary.visitIds.size }))
+    .sort((a, b) => b.reportVisits - a.reportVisits || a.patientName.localeCompare(b.patientName))
+}
+
 export default function ClinicReports() {
   const { user }  = useAuth()
   const [clinic, setClinic]           = useState(null)
@@ -252,6 +312,7 @@ export default function ClinicReports() {
   const [generating, setGenerating]   = useState(false)
   const [reportRows, setReportRows]   = useState(null)
   const [hasGenerated, setHasGenerated] = useState(false)
+  const [customerHistory, setCustomerHistory] = useState(null)
 
   // Filters
   const [dateFrom, setDateFrom]       = useState(format(startOfMonth(new Date()), 'yyyy-MM-dd'))
@@ -260,7 +321,9 @@ export default function ClinicReports() {
   const [activePreset, setActivePreset] = useState(0)
 
   // Summary stats from generated report
-  const totalPatients = reportRows?.length || 0
+  const customerSummaries = reportRows ? buildCustomerSummaries(reportRows) : []
+  const totalPatients = customerSummaries.length
+  const totalVisits = reportRows ? new Set(reportRows.map(r => r.apptId)).size : 0
   const totalEarnings = reportRows?.reduce((s, r) => s + r.amount, 0) || 0
 
   useEffect(() => {
@@ -296,7 +359,7 @@ export default function ClinicReports() {
     // Fetch completed appointments in range
     let query = supabase
       .from('appointments')
-      .select('*, profiles!appointments_customer_id_fkey(full_name), services(id,name,price)')
+      .select('*, profiles!appointments_customer_id_fkey(full_name,email,phone), services(id,name,price)')
       .eq('clinic_id', clinic.id)
       .eq('status', 'completed')
       .gte('appointment_date', dateFrom)
@@ -326,6 +389,11 @@ export default function ClinicReports() {
         for (const p of filtered) {
           rows.push({
             patientName: a.profiles?.full_name || a.guest_name || 'Walk-in',
+            patientEmail: a.profiles?.email,
+            patientPhone: a.profiles?.phone,
+            customerId:   a.customer_id,
+            isWalkIn:     a.is_walk_in,
+            guestContact: a.guest_contact,
             date:        format(parseISO(a.appointment_date), 'MMMM d, yyyy'),
             time:        a.appointment_time ? formatTime(a.appointment_time) : '—',
             procedure:   p.name,
@@ -338,6 +406,11 @@ export default function ClinicReports() {
         if (procedure !== 'all' && a.services?.id !== procedure && a.services?.name !== procedure) continue
         rows.push({
           patientName: a.profiles?.full_name || a.guest_name || 'Walk-in',
+          patientEmail: a.profiles?.email,
+          patientPhone: a.profiles?.phone,
+          customerId:   a.customer_id,
+          isWalkIn:     a.is_walk_in,
+          guestContact: a.guest_contact,
           date:        format(parseISO(a.appointment_date), 'MMMM d, yyyy'),
           time:        a.appointment_time ? formatTime(a.appointment_time) : '—',
           procedure:   a.services?.name || '—',
@@ -364,6 +437,51 @@ export default function ClinicReports() {
     const ampm   = h >= 12 ? 'PM' : 'AM'
     const h12    = h === 0 ? 12 : h > 12 ? h - 12 : h
     return `${h12}:${m.toString().padStart(2, '0')} ${ampm}`
+  }
+
+  async function openCustomerHistory(customer) {
+    if (!clinic) return
+
+    setCustomerHistory({ customer, loading: true, rows: [] })
+
+    let query = supabase
+      .from('appointments')
+      .select('*, profiles!appointments_customer_id_fkey(full_name,email,phone), services(id,name,price)')
+      .eq('clinic_id', clinic.id)
+      .eq('status', 'completed')
+      .order('appointment_date', { ascending: false })
+      .order('appointment_time', { ascending: false })
+
+    if (customer.customerId) {
+      query = query.eq('customer_id', customer.customerId)
+    } else {
+      query = query.eq('is_walk_in', true).eq('guest_name', customer.patientName)
+      if (customer.guestContact) query = query.eq('guest_contact', customer.guestContact)
+    }
+
+    const { data, error } = await query
+    if (error) {
+      toast.error('Failed to load customer history.')
+      setCustomerHistory({ customer, loading: false, rows: [] })
+      return
+    }
+
+    const rows = (data || []).map(appt => {
+      const procedures = getAppointmentProcedures(appt)
+      const total = procedures.reduce((sum, p) => sum + (p.price || 0), 0)
+
+      return {
+        id: appt.id,
+        date: format(parseISO(appt.appointment_date), 'MMMM d, yyyy'),
+        time: appt.appointment_time ? formatTime(appt.appointment_time) : 'â€”',
+        procedures,
+        total,
+        notes: appt.clinic_notes || appt.notes,
+        completedAt: appt.completed_at,
+      }
+    })
+
+    setCustomerHistory({ customer, loading: false, rows })
   }
 
   async function handleExcelExport() {
@@ -483,8 +601,9 @@ export default function ClinicReports() {
                   <Users className="w-5 h-5 text-sky-500" />
                 </div>
                 <div>
-                  <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">Total Patients</p>
+                  <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">Unique Patients</p>
                   <p className="font-display font-bold text-2xl text-slate-900">{totalPatients}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">{totalVisits} completed visit{totalVisits === 1 ? '' : 's'}</p>
                 </div>
               </div>
             </div>
@@ -534,6 +653,39 @@ export default function ClinicReports() {
             </div>
           )}
 
+          {customerSummaries.length > 0 && (
+            <div className="card p-5 mb-5">
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <div>
+                  <p className="font-semibold text-slate-800 text-sm">Patients in this report</p>
+                  <p className="text-xs text-slate-400">Click a patient to view their completed booking history with this clinic.</p>
+                </div>
+                <Users className="w-5 h-5 text-sky-500" />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {customerSummaries.map(customer => (
+                  <button
+                    key={customer.key}
+                    type="button"
+                    onClick={() => openCustomerHistory(customer)}
+                    className="text-left rounded-xl border border-slate-100 bg-white px-3 py-3 hover:border-sky-200 hover:bg-sky-50/40 transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-slate-800 text-sm truncate">{customer.patientName}</p>
+                        <p className="text-xs text-slate-400 truncate">{customer.email || customer.guestContact || 'No contact saved'}</p>
+                      </div>
+                      <span className="badge badge-teal shrink-0">{customer.reportVisits}</span>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-2">
+                      {customer.reportVisits} visit{customer.reportVisits === 1 ? '' : 's'} in report · {peso(customer.reportAmount)}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Preview table */}
           <div className="card overflow-hidden">
             <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 bg-slate-50/60">
@@ -569,7 +721,23 @@ export default function ClinicReports() {
                       {reportRows.map((r, i) => (
                         <tr key={`${r.apptId}-${i}`} className="hover:bg-slate-50 transition-colors">
                           <td className="px-4 py-3 text-slate-400 text-xs">{i + 1}</td>
-                          <td className="px-4 py-3 font-semibold text-slate-800">{r.patientName}</td>
+                          <td className="px-4 py-3">
+                            <button
+                              type="button"
+                              onClick={() => openCustomerHistory({
+                                key: r.customerId || `walkin:${r.patientName}:${r.guestContact || ''}`,
+                                customerId: r.customerId,
+                                patientName: r.patientName,
+                                email: r.patientEmail,
+                                phone: r.patientPhone,
+                                guestContact: r.guestContact,
+                                isWalkIn: r.isWalkIn,
+                              })}
+                              className="font-semibold text-slate-800 hover:text-sky-600 transition-colors"
+                            >
+                              {r.patientName}
+                            </button>
+                          </td>
                           <td className="px-4 py-3 text-slate-500">{r.date}</td>
                           <td className="px-4 py-3 text-slate-500">{r.time}</td>
                           <td className="px-4 py-3 text-sky-600 font-medium">{r.procedure}</td>
@@ -585,7 +753,7 @@ export default function ClinicReports() {
                       </tr>
                       <tr className="bg-slate-50">
                         <td colSpan={4} className="px-4 pb-4" />
-                        <td className="px-4 pb-4 text-xs text-slate-400">Total Patients</td>
+                        <td className="px-4 pb-4 text-xs text-slate-400">Unique Patients</td>
                         <td className="px-4 pb-4 text-right text-xs font-bold text-slate-600">{totalPatients}</td>
                       </tr>
                     </tfoot>
@@ -593,6 +761,88 @@ export default function ClinicReports() {
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {customerHistory && (
+        <div className="modal-backdrop" onClick={() => setCustomerHistory(null)}>
+          <div className="modal w-full max-w-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-start justify-between gap-4 px-6 py-4 border-b border-slate-100">
+              <div>
+                <h3 className="font-display font-bold text-slate-900 text-lg flex items-center gap-2">
+                  <User className="w-5 h-5 text-sky-500" />
+                  {customerHistory.customer.patientName}
+                </h3>
+                <p className="text-xs text-slate-400 mt-1">
+                  {customerHistory.customer.email || customerHistory.customer.guestContact || customerHistory.customer.phone || 'No contact saved'}
+                </p>
+              </div>
+              <button onClick={() => setCustomerHistory(null)} className="text-slate-300 hover:text-slate-500">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6">
+              {customerHistory.loading ? (
+                <div className="py-12 flex items-center justify-center">
+                  <Loader className="w-6 h-6 text-sky-500 animate-spin" />
+                </div>
+              ) : customerHistory.rows.length === 0 ? (
+                <div className="py-10 text-center">
+                  <Users className="w-10 h-10 text-slate-200 mx-auto mb-3" />
+                  <p className="text-slate-500 font-medium">No completed visits found</p>
+                  <p className="text-slate-400 text-sm mt-1">Only completed appointments are counted as clinic visits.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-3 gap-3 mb-5">
+                    <div className="rounded-xl border border-slate-100 p-3">
+                      <p className="text-xs text-slate-400 uppercase font-semibold">Visits</p>
+                      <p className="font-display font-bold text-xl text-slate-900">{customerHistory.rows.length}</p>
+                    </div>
+                    <div className="rounded-xl border border-slate-100 p-3">
+                      <p className="text-xs text-slate-400 uppercase font-semibold">Total Spent</p>
+                      <p className="font-display font-bold text-xl text-slate-900">
+                        {peso(customerHistory.rows.reduce((sum, row) => sum + row.total, 0))}
+                      </p>
+                    </div>
+                    <div className="rounded-xl border border-slate-100 p-3">
+                      <p className="text-xs text-slate-400 uppercase font-semibold">Avg Visit</p>
+                      <p className="font-display font-bold text-xl text-slate-900">
+                        {peso(customerHistory.rows.reduce((sum, row) => sum + row.total, 0) / customerHistory.rows.length)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 max-h-[55vh] overflow-y-auto pr-1">
+                    {customerHistory.rows.map(row => (
+                      <div key={row.id} className="rounded-xl border border-slate-100 p-4 bg-white">
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                          <div>
+                            <p className="font-semibold text-slate-800 text-sm">{row.date}</p>
+                            <p className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
+                              <Clock className="w-3 h-3" /> {row.time}
+                            </p>
+                          </div>
+                          <p className="font-display font-bold text-sky-600">{peso(row.total)}</p>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {row.procedures.map((procedureItem, i) => (
+                            <span key={`${row.id}-${i}`} className="badge badge-teal">
+                              {procedureItem.name} · {peso(procedureItem.price)}
+                            </span>
+                          ))}
+                        </div>
+                        {row.notes && (
+                          <p className="text-xs text-slate-500 mt-3 bg-slate-50 rounded-lg px-3 py-2">{row.notes}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
