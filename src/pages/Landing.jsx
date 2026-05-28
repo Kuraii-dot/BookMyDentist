@@ -1143,18 +1143,51 @@ export default function Landing() {
                     </div>
                   </div>
                   {[
-                    { title:'Product',   links:[['Browse Clinics','/browse'],['Book Appointment','/register'],['List Your Clinic','/register?role=clinic'],['How It Works','/#how-it-works']] },
-                    { title:'Resources', links:[['Help Centre','/contact'],['FAQ','/contact'],['Contact Us','/contact'],['For Clinics','/register?role=clinic']] },
-                    { title:'Company',   links:[['About Us','/about'],['Blog','/about'],['Careers','/contact']] },
-                    { title:'Legal',     links:[['Privacy Policy','/privacy'],['Terms of Service','/terms'],['Accessibility','/contact']] },
+                    { title:'Product', links:[
+                      { label:'Browse Clinics', to:'/browse' },
+                      { label:'Book Appointment', to:'/register' },
+                      { label:'List Your Clinic', to:'/register?role=clinic' },
+                      { label:'How It Works', to:'/how-it-works' },
+                    ] },
+                    { title:'Resources', links:[
+                      { label:'Help Centre', to:'/help-centre' },
+                      { label:'FAQs', to:'/faqs' },
+                      { label:'Blog', to:'/blog' },
+                      { label:'Contact Us', to:'/contact' },
+                    ] },
+                    { title:'Company', links:[
+                      { label:'About Us', to:'/about' },
+                      { label:'For Clinics', to:'/register?role=clinic' },
+                      { label:'Careers', href:'https://www.facebook.com/profile.php?id=61578505320360' },
+                    ] },
+                    { title:'Legal', links:[
+                      { label:'Privacy Policy', to:'/privacy' },
+                      { label:'Terms of Service', to:'/terms' },
+                      { label:'Accessibility', to:'/help-centre' },
+                    ] },
                   ].map(col => (
                     <div key={col.title}>
                       <p className="text-white font-bold text-[0.85rem] mb-4 tracking-[0.03em]">{col.title}</p>
-                      {col.links.map(([label,to]) => (
-                        <Link key={label} to={to}
-                          className="block text-white/55 text-[0.875rem] no-underline mb-2.5 transition-colors hover:text-white">
-                          {label}
-                        </Link>
+                      {col.links.map(link => (
+                        link.href ? (
+                          <a
+                            key={link.label}
+                            href={link.href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block text-white/55 text-[0.875rem] no-underline mb-2.5 transition-colors hover:text-white"
+                          >
+                            {link.label}
+                          </a>
+                        ) : (
+                          <Link
+                            key={link.label}
+                            to={link.to}
+                            className="block text-white/55 text-[0.875rem] no-underline mb-2.5 transition-colors hover:text-white"
+                          >
+                            {link.label}
+                          </Link>
+                        )
                       ))}
                     </div>
                   ))}

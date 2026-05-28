@@ -10,6 +10,10 @@ const ClinicDetail = lazy(() => import('../pages/ClinicDetail'))
 const ProfileEdit = lazy(() => import('../pages/ProfileEdit'))
 const AboutUs = lazy(() => import('../pages/AboutUs'))
 const ContactUs = lazy(() => import('../pages/ContactUs'))
+const Blog = lazy(() => import('../pages/Blog'))
+const HelpCentre = lazy(() => import('../pages/HelpCentre'))
+const FAQs = lazy(() => import('../pages/FAQs'))
+const HowItWorks = lazy(() => import('../pages/HowItWorks'))
 const BrowseServices = lazy(() => import('../pages/BrowseServices'))
 const PrivacyPolicy = lazy(() => import('../pages/PrivacyPolicy'))
 const TermsOfService = lazy(() => import('../pages/TermsOfService'))
@@ -53,6 +57,10 @@ const routes = [
   { path: '/verify-email', element: loadable(VerifyEmail) },
   { path: '/about', element: loadable(AboutUs) },
   { path: '/contact', element: loadable(ContactUs) },
+  { path: '/blog', element: loadable(Blog) },
+  { path: '/help-centre', element: loadable(HelpCentre) },
+  { path: '/faqs', element: loadable(FAQs) },
+  { path: '/how-it-works', element: loadable(HowItWorks) },
   { path: '/browse', element: loadable(BrowseServices) },
   { path: '/clinic/:id', element: loadable(ClinicDetail) },
   { path: '/terms', element: loadable(TermsOfService) },
