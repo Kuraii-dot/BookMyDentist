@@ -150,21 +150,28 @@ export default function ClinicDetail() {
         </div>
 
         {/* Hero card */}
-        <div className="card overflow-hidden mb-5">
+        <div className="card overflow-visible mb-5">
           {/* Banner */}
-          <div className="relative h-48 sm:h-64 bg-slate-100">
-            {clinic.banner_url
-              ? <img src={clinic.banner_url} alt="" className="w-full h-full object-cover" />
+          <div className="relative h-64 sm:h-[22rem] w-full overflow-hidden rounded-t-[1rem] bg-gradient-to-br from-sky-100 via-white to-cyan-100">
+            {clinic.banner_url ? (
+              <img
+                src={clinic.banner_url}
+                alt={`${clinic.name} clinic`}
+                className="absolute inset-0 h-full w-full object-cover object-center"
+              />
+            )
               : <div className="w-full h-full flex items-center justify-center text-6xl opacity-10">🦷</div>
             }
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_28%_18%,rgba(255,255,255,0.22),transparent_42%),linear-gradient(to_top,rgba(15,23,42,0.16),transparent_58%)]" />
+            <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-white/60" />
           </div>
 
-          <div className="p-5">
+          <div className="relative z-10 p-5 pt-0">
             <div className="flex items-start gap-4">
               {/* Logo */}
-              <div className="w-16 h-16 rounded-xl border-4 border-white shadow-md overflow-hidden -mt-12 shrink-0 bg-white">
+              <div className="relative z-20 w-[4.5rem] h-[4.5rem] sm:w-24 sm:h-24 rounded-2xl border-4 border-white shadow-[0_14px_34px_rgba(15,23,42,0.18)] -mt-12 sm:-mt-16 shrink-0 bg-white flex items-center justify-center overflow-visible">
                 {clinic.logo_url
-                  ? <img src={clinic.logo_url} alt="" className="w-full h-full object-cover" />
+                  ? <img src={clinic.logo_url} alt={`${clinic.name} logo`} className="max-w-full max-h-full object-contain" />
                   : <div className="w-full h-full bg-sky-50 flex items-center justify-center text-2xl">🦷</div>
                 }
               </div>

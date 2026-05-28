@@ -300,23 +300,21 @@ function ClinicCard({ clinic }) {
   const navigate = useNavigate()
   return (
     <div
-      className="card overflow-hidden hover:-translate-y-1 transition-all duration-300 group cursor-pointer"
+      className="card h-full overflow-hidden hover:-translate-y-1 transition-all duration-300 group cursor-pointer flex flex-col"
       onClick={() => navigate(`/clinic/${clinic.id}`)}
     >
-      <div className="relative h-36 overflow-hidden bg-gradient-to-br from-sky-100/60 to-cyan-100/50">
-        {clinic.banner_url
-          ? <img src={clinic.banner_url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
-          : <div className="w-full h-full flex items-center justify-center"><ToothIcon className="w-14 h-14 text-sky-200"/></div>
-        }
-        <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"/>
-        <div className="absolute bottom-0 left-4 translate-y-1/2">
-          <div className="w-11 h-11 rounded-xl border-2 border-white/90 shadow-lg overflow-hidden bg-white/90">
-            {clinic.logo_url
-              ? <img src={clinic.logo_url} alt="" className="w-full h-full object-cover"/>
-              : <div className="w-full h-full flex items-center justify-center"><ToothIcon className="w-6 h-6 text-sky-400"/></div>
-            }
-          </div>
-        </div>
+      <div className="relative aspect-[16/10] min-h-[150px] shrink-0 overflow-hidden bg-gradient-to-br from-sky-100/70 via-white to-cyan-100/60 flex items-center justify-center">
+        {clinic.banner_url ? (
+          <img
+            src={clinic.banner_url}
+            alt={`${clinic.name} clinic`}
+            className="absolute inset-0 h-full w-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center"><ToothIcon className="w-14 h-14 text-sky-200"/></div>
+        )}
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_15%,rgba(255,255,255,0.22),transparent_42%),linear-gradient(to_top,rgba(15,23,42,0.18),transparent_58%)]"/>
+        <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-white/60"/>
         {clinic.avg_rating > 0 && (
           <div className="absolute top-2.5 right-2.5 rounded-full px-2 py-0.5 flex items-center gap-1 shadow-sm bg-white/85 backdrop-blur-sm">
             <StarIcon className="w-3 h-3 text-amber-400" filled/>
@@ -324,7 +322,16 @@ function ClinicCard({ clinic }) {
           </div>
         )}
       </div>
-      <div className="p-4 pt-7">
+      <div className="p-4 pt-0 flex flex-1 flex-col">
+        <div className="relative z-[2] -mt-9 mb-3 flex items-end justify-between gap-3">
+          <div className="w-20 h-20 rounded-2xl border-[4px] border-white shadow-[0_14px_34px_rgba(15,23,42,0.18)] ring-1 ring-sky-100/80 bg-white flex items-center justify-center overflow-visible">
+            {clinic.logo_url
+              ? <img src={clinic.logo_url} alt={`${clinic.name} logo`} className="max-w-full max-h-full object-contain"/>
+              : <div className="w-full h-full flex items-center justify-center bg-sky-50"><ToothIcon className="w-9 h-9 text-sky-400"/></div>
+            }
+          </div>
+          <div className="h-px flex-1 bg-gradient-to-r from-sky-100 to-transparent mb-4" />
+        </div>
         <h3 className="font-display font-bold text-slate-900 text-sm leading-tight">{clinic.name}</h3>
         {clinic.city && (
           <div className="flex items-center gap-1 mt-0.5">
@@ -344,7 +351,7 @@ function ClinicCard({ clinic }) {
         {clinic.services?.length > 0 && (
           <p className="text-xs text-slate-400 mt-2">From <span className="font-bold text-sky-600">₱{Math.min(...clinic.services.map(s=>s.price||0)).toLocaleString()}</span></p>
         )}
-        <div className="flex gap-2 mt-3" onClick={e => e.stopPropagation()}>
+        <div className="flex gap-2 mt-auto pt-3" onClick={e => e.stopPropagation()}>
           <Link to={`/clinic/${clinic.id}`} className="btn btn-secondary btn-sm flex-1 text-center text-xs">Details</Link>
           <button onClick={() => navigate(`/book/${clinic.id}`)} className="btn btn-primary btn-sm flex-1 text-xs">Book Now</button>
         </div>
@@ -932,7 +939,7 @@ export default function Landing() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
               {filtered.map((c, i) => (
-                <Reveal key={c.id} variant="blur-up" delay={i * 60}>
+                <Reveal key={c.id} variant="blur-up" delay={i * 60} className="h-full">
                   <ClinicCard clinic={c}/>
                 </Reveal>
               ))}

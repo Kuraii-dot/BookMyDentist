@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { format, parseISO, startOfMonth, endOfMonth, subMonths } from 'date-fns'
@@ -338,6 +339,16 @@ export default function ClinicReports() {
     }
     load()
   }, [user])
+
+  useEffect(() => {
+    if (!customerHistory || typeof document === 'undefined') return
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [customerHistory])
 
   function applyPreset(idx) {
     const preset = PRESETS[idx]
@@ -765,10 +776,10 @@ export default function ClinicReports() {
         </div>
       )}
 
-      {customerHistory && (
-        <div className="modal-backdrop" onClick={() => setCustomerHistory(null)}>
-          <div className="modal w-full max-w-2xl" onClick={e => e.stopPropagation()}>
-            <div className="flex items-start justify-between gap-4 px-6 py-4 border-b border-slate-100">
+      {customerHistory && typeof document !== 'undefined' && createPortal(
+        <div className="modal-backdrop modal-backdrop-elevated items-start sm:items-center overflow-y-auto" onClick={() => setCustomerHistory(null)}>
+          <div className="modal modal-wide my-6 sm:my-8 max-h-[calc(100vh-3rem)] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="flex items-start justify-between gap-4 px-5 sm:px-6 py-4 border-b border-slate-100 bg-white/95 backdrop-blur sticky top-0 z-10">
               <div>
                 <h3 className="font-display font-bold text-slate-900 text-lg flex items-center gap-2">
                   <User className="w-5 h-5 text-sky-500" />
@@ -778,12 +789,12 @@ export default function ClinicReports() {
                   {customerHistory.customer.email || customerHistory.customer.guestContact || customerHistory.customer.phone || 'No contact saved'}
                 </p>
               </div>
-              <button onClick={() => setCustomerHistory(null)} className="text-slate-300 hover:text-slate-500">
+              <button onClick={() => setCustomerHistory(null)} className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-300 hover:text-slate-500 hover:bg-slate-100 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="p-6">
+            <div className="p-5 sm:p-6 overflow-y-auto">
               {customerHistory.loading ? (
                 <div className="py-12 flex items-center justify-center">
                   <Loader className="w-6 h-6 text-sky-500 animate-spin" />
@@ -796,7 +807,7 @@ export default function ClinicReports() {
                 </div>
               ) : (
                 <>
-                  <div className="grid grid-cols-3 gap-3 mb-5">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
                     <div className="rounded-xl border border-slate-100 p-3">
                       <p className="text-xs text-slate-400 uppercase font-semibold">Visits</p>
                       <p className="font-display font-bold text-xl text-slate-900">{customerHistory.rows.length}</p>
@@ -815,7 +826,7 @@ export default function ClinicReports() {
                     </div>
                   </div>
 
-                  <div className="space-y-3 max-h-[55vh] overflow-y-auto pr-1">
+                  <div className="space-y-3">
                     {customerHistory.rows.map(row => (
                       <div key={row.id} className="rounded-xl border border-slate-100 p-4 bg-white">
                         <div className="flex items-start justify-between gap-3 mb-3">
@@ -844,7 +855,8 @@ export default function ClinicReports() {
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )

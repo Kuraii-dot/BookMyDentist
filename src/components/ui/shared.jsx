@@ -1,8 +1,9 @@
+import { createPortal } from 'react-dom'
 import { X, AlertCircle, CheckCircle2, Info, Inbox } from 'lucide-react'
 
 export function Modal({ open, onClose, title, children, maxWidth = 'max-w-md' }) {
   if (!open) return null
-  return (
+  const modal = (
     <div className="modal-backdrop" onClick={onClose}>
       <div className={`modal ${maxWidth}`} onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
@@ -15,6 +16,8 @@ export function Modal({ open, onClose, title, children, maxWidth = 'max-w-md' })
       </div>
     </div>
   )
+
+  return typeof document === 'undefined' ? modal : createPortal(modal, document.body)
 }
 
 export function Field({ label, required, hint, children }) {
