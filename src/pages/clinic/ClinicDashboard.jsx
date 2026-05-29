@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
@@ -98,12 +98,12 @@ export default function ClinicDashboard() {
       <div className="gradient-banner p-6 text-white">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
-            <p className="text-sky-100 text-sm">{greeting} ðŸ‘‹</p>
+            <p className="text-sky-100 text-sm">{greeting} 👋</p>
             <h1 className="font-display font-bold text-2xl mt-0.5">{clinic?.name||profile?.full_name}</h1>
             <p className="text-sky-100 text-sm mt-1">
               {stats.pending>0
                 ? `${stats.pending} request${stats.pending>1?'s':''} awaiting your response`
-                : 'All caught up â€” no pending requests!'}
+                : 'All caught up — no pending requests!'}
             </p>
           </div>
           {stats.pending>0 && (
@@ -125,7 +125,7 @@ export default function ClinicDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Today's schedule */}
         <SectionCard
-          title={`Today's Schedule â€” ${format(new Date(),'MMM d')}`}
+          title={`Today's Schedule — ${format(new Date(),'MMM d')}`}
           action={<span className="badge badge-teal">{todayAppts.length} appt{todayAppts.length!==1?'s':''}</span>}>
           {todayAppts.length===0 ? (
             <EmptyState icon={<Calendar className="w-6 h-6 text-slate-300"/>} title="No appointments today"/>

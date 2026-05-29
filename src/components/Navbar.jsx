@@ -16,6 +16,13 @@ export default function Navbar({ showNotifications = false }) {
     customer:     '/dashboard',
   }[profile?.role] || '/dashboard'
 
+  const desktopNavLinks = [
+    { to: '/browse', label: 'Browse' },
+    { to: '/about', label: 'About' },
+    { to: '/contact', label: 'Contact' },
+    { to: '/tools', label: 'Tools' },
+  ]
+
   // Mobile bottom tab items
   const mobileTabs = user
     ? [
@@ -53,21 +60,27 @@ export default function Navbar({ showNotifications = false }) {
     <>
       {/* ── Desktop navbar (hidden on mobile) ── */}
       <nav className="glass-header sticky top-0 z-40 hidden sm:block">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-          <Link to="/" className="flex items-center">
-            <span className="font-display font-bold text-sky-400 text-3xl">Book</span>
-            <span className="font-display font-bold text-slate-900 text-3xl">MyDentist</span>
-          </Link>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-6">
+          <div className="flex items-center gap-6 min-w-0">
+            <Link to="/" className="flex items-center shrink-0">
+              <span className="font-display font-bold text-sky-400 text-3xl">Book</span>
+              <span className="font-display font-bold text-slate-900 text-3xl">MyDentist</span>
+            </Link>
 
-          <div className="flex items-center gap-3">
-            <Link to="/browse"
-              className="text-sm font-semibold text-slate-600 hover:text-sky-600 transition-colors">
-              Browse
-            </Link>
-            <Link to="/tools"
-              className="text-sm font-semibold text-slate-600 hover:text-sky-600 transition-colors">
-              Tools
-            </Link>
+            <div className="hidden md:flex items-center gap-1">
+              {desktopNavLinks.map(({ to, label }) => (
+                <Link
+                  key={to}
+                  to={to}
+                  className="text-sm font-semibold text-slate-600 hover:text-sky-600 transition-colors px-3 py-2 whitespace-nowrap"
+                >
+                  {label}
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 shrink-0">
             {user ? (
               <>
                 {showNotifications && <NotificationBell />}

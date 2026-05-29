@@ -623,6 +623,7 @@ export default function Landing() {
               <BrowseDropdown/>
               <Link to="/about" className="text-sm font-semibold text-slate-600 hover:text-sky-600 transition-colors px-3 py-2">About</Link>
               <Link to="/contact" className="text-sm font-semibold text-slate-600 hover:text-sky-600 transition-colors px-3 py-2">Contact</Link>
+              <Link to="/tools" className="text-sm font-semibold text-slate-600 hover:text-sky-600 transition-colors px-3 py-2">Tools</Link>
             </div>
           </div>
           <div className="hidden md:flex items-center gap-3">

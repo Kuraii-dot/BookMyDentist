@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
@@ -27,7 +27,7 @@ function StepIndicator({ current, done }) {
                 ${isActive ? 'bg-sky-500 border-sky-500 text-white shadow-md shadow-sky-200'
                   : isDone  ? 'bg-sky-100 border-sky-300 text-sky-600'
                   : 'border-slate-200 text-slate-400 bg-white'}`}>
-                {isDone && !isActive ? 'âœ“' : num}
+                {isDone && !isActive ? '✓' : num}
               </div>
               <span className={`text-xs font-semibold hidden sm:block transition-colors
                 ${isActive ? 'text-sky-600' : isDone ? 'text-sky-400' : 'text-slate-300'}`}>
@@ -187,7 +187,7 @@ export default function BookAppointment() {
 
       let endMin
       if (slot.completedAt) {
-        // Appointment completed early â€” use actual completion time
+        // Appointment completed early — use actual completion time
         const completedHour = slot.completedAt.getHours()
         const completedMin  = slot.completedAt.getMinutes()
         endMin = completedHour * 60 + completedMin
@@ -337,7 +337,7 @@ export default function BookAppointment() {
         recipient_id: clinicOwnerData.owner_id,
         type: 'new_booking',
         title: 'New Appointment Request',
-        message: `${profile?.full_name} booked ${selectedServices.map(s => s.name).join(', ')} for ${format(selectedDate, 'MMMM d, yyyy')} at ${selectedTime.label}. Total: â‚±${totalPrice.toLocaleString()} (${totalDurationMinutes} min).`,
+        message: `${profile?.full_name} booked ${selectedServices.map(s => s.name).join(', ')} for ${format(selectedDate, 'MMMM d, yyyy')} at ${selectedTime.label}. Total: ₱${totalPrice.toLocaleString()} (${totalDurationMinutes} min).`,
         appointment_id: appointmentId,
         related_id: appointmentId || clinicId,
       })
@@ -377,7 +377,7 @@ export default function BookAppointment() {
       if (failedCount > 0) {
         console.warn('Some booking emails failed:', results)
         toast('Booking saved, but some email alerts failed. Clinic still has an in-app notification.', {
-          icon: 'âš ï¸',
+          icon: '⚠️',
         })
       }
     }
@@ -435,16 +435,16 @@ export default function BookAppointment() {
           <div className="flex items-center gap-3 py-3 border-b border-slate-100">
             <Clock className="w-4 h-4 text-slate-400 shrink-0" />
             <span className="text-slate-400 text-sm w-16">Time</span>
-            <span className="font-semibold text-slate-800 text-sm">{selectedTime?.label} â€“ {selectedTime?.endLabel}</span>
+            <span className="font-semibold text-slate-800 text-sm">{selectedTime?.label} – {selectedTime?.endLabel}</span>
           </div>
           <div className="flex items-center gap-3 py-3">
             <Clock className="w-4 h-4 text-slate-400 shrink-0" />
             <span className="text-slate-400 text-sm w-16">Duration</span>
-            <span className="font-semibold text-slate-800 text-sm">{totalDurationMinutes} min Â· â‚±{totalPrice.toLocaleString()} total</span>
+            <span className="font-semibold text-slate-800 text-sm">{totalDurationMinutes} min · ₱{totalPrice.toLocaleString()} total</span>
           </div>
         </div>
         <button onClick={() => navigate('/dashboard')} className="btn btn-primary btn-lg w-full">
-          View My Appointments â†’
+          View My Appointments →
         </button>
       </div>
     </div>
@@ -472,7 +472,7 @@ export default function BookAppointment() {
       <div className="max-w-2xl mx-auto px-4 py-8">
         <StepIndicator current={step} done={done} />
 
-        {/* â”€â”€ Step 1: Select Services (multi-select) â”€â”€ */}
+        {/* ── Step 1: Select Services (multi-select) ── */}
         {step === 1 && (
           <div className="animate-fade-in">
             <div className="mb-6">
@@ -487,7 +487,7 @@ export default function BookAppointment() {
                   <p className="font-bold text-amber-700 text-sm">This clinic is currently on vacation</p>
                 </div>
                 {clinic.availability.vacation_from && clinic.availability.vacation_to && (
-                  <p className="text-amber-600 text-xs mb-1">{clinic.availability.vacation_from} â€“ {clinic.availability.vacation_to}</p>
+                  <p className="text-amber-600 text-xs mb-1">{clinic.availability.vacation_from} – {clinic.availability.vacation_to}</p>
                 )}
                 {clinic.availability.vacation_message && (
                   <p className="text-amber-600 text-xs">{clinic.availability.vacation_message}</p>
@@ -528,7 +528,7 @@ export default function BookAppointment() {
                             </div>
                           </div>
                           <span className={`font-display font-bold text-lg shrink-0 ${isSelected ? 'text-sky-600' : 'text-sky-600'}`}>
-                            â‚±{parseFloat(s.price || 0).toLocaleString()}
+                            ₱{parseFloat(s.price || 0).toLocaleString()}
                           </span>
                         </div>
                       </button>
@@ -556,7 +556,7 @@ export default function BookAppointment() {
                         </div>
                       </div>
                       <div className="text-right shrink-0">
-                        <p className="font-display font-bold text-sky-700 text-xl">â‚±{totalPrice.toLocaleString()}</p>
+                        <p className="font-display font-bold text-sky-700 text-xl">₱{totalPrice.toLocaleString()}</p>
                         <p className="text-sky-500 text-xs">{totalDurationMinutes} min total</p>
                       </div>
                     </div>
@@ -569,14 +569,14 @@ export default function BookAppointment() {
                   className="btn btn-primary btn-lg w-full">
                   {selectedServices.length === 0
                     ? 'Select at least one service'
-                    : `Continue with ${selectedServices.length} service${selectedServices.length > 1 ? 's' : ''} â†’`}
+                    : `Continue with ${selectedServices.length} service${selectedServices.length > 1 ? 's' : ''} →`}
                 </button>
               </>
             )}
           </div>
         )}
 
-        {/* â”€â”€ Step 2: Schedule â”€â”€ */}
+        {/* ── Step 2: Schedule ── */}
         {step === 2 && (
           <div className="animate-fade-in">
             <div className="mb-6">
@@ -599,7 +599,7 @@ export default function BookAppointment() {
                       </span>
                     ))}
                   </div>
-                  <p className="text-sky-600 text-xs font-bold">â‚±{totalPrice.toLocaleString()} Â· {totalDurationMinutes} min total</p>
+                  <p className="text-sky-600 text-xs font-bold">₱{totalPrice.toLocaleString()} · {totalDurationMinutes} min total</p>
                 </div>
                 <button onClick={() => setStep(1)} className="text-xs font-semibold text-sky-500 hover:text-sky-600 shrink-0">Change</button>
               </div>
@@ -641,7 +641,7 @@ export default function BookAppointment() {
             {selectedDate && (
               <div className="mb-5">
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">
-                  Available Times â€” {format(selectedDate, 'EEEE, MMM d')}
+                  Available Times — {format(selectedDate, 'EEEE, MMM d')}
                 </p>
                 {timeSlots.length === 0 ? (
                   <div className="card p-4 text-center text-slate-400 text-sm">
@@ -667,12 +667,12 @@ export default function BookAppointment() {
 
             <button disabled={!selectedDate || !selectedTime} onClick={() => setStep(3)}
               className="btn btn-primary btn-lg w-full">
-              Continue â†’
+              Continue →
             </button>
           </div>
         )}
 
-        {/* â”€â”€ Step 3: Confirm â”€â”€ */}
+        {/* ── Step 3: Confirm ── */}
         {step === 3 && (
           <div className="animate-fade-in">
             <div className="mb-6">
@@ -696,12 +696,12 @@ export default function BookAppointment() {
                         {s.name}
                         <CoverageBadge value={s.covered} className="text-xs" />
                       </span>
-                      <span className="text-sky-600 font-bold text-sm">â‚±{parseFloat(s.price||0).toLocaleString()}</span>
+                      <span className="text-sky-600 font-bold text-sm">₱{parseFloat(s.price||0).toLocaleString()}</span>
                     </div>
                   ))}
                   <div className="border-t border-slate-100 pt-1.5 flex items-center justify-between">
-                    <span className="text-slate-500 text-xs">{selectedServices.length} service{selectedServices.length > 1 ? 's' : ''} Â· {totalDurationMinutes} min</span>
-                    <span className="font-display font-bold text-sky-700">â‚±{totalPrice.toLocaleString()} total</span>
+                    <span className="text-slate-500 text-xs">{selectedServices.length} service{selectedServices.length > 1 ? 's' : ''} · {totalDurationMinutes} min</span>
+                    <span className="font-display font-bold text-sky-700">₱{totalPrice.toLocaleString()} total</span>
                   </div>
                 </div>
               </div>
@@ -713,7 +713,7 @@ export default function BookAppointment() {
               <div className="flex items-center gap-3 py-3 border-b border-slate-100">
                 <Clock className="w-4 h-4 text-slate-400 shrink-0" />
                 <span className="text-slate-400 text-sm w-16">Time</span>
-                <span className="font-semibold text-slate-800 text-sm">{selectedTime?.label} â€“ {selectedTime?.endLabel}</span>
+                <span className="font-semibold text-slate-800 text-sm">{selectedTime?.label} – {selectedTime?.endLabel}</span>
               </div>
               <div className="flex items-center gap-3 py-3">
                 <User className="w-4 h-4 text-slate-400 shrink-0" />

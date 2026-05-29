@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
@@ -12,7 +12,7 @@ import {
 import { PageHeader, Field } from '../../components/ui/shared'
 import CoverageBadge from '../../components/CoverageBadge'
 
-// â”€â”€ Quick date range presets â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Quick date range presets ─────────────────────────────────────────────────
 const PRESETS = [
   {
     label: 'This Month',
@@ -37,12 +37,12 @@ const PRESETS = [
   { label: 'Custom', from: null, to: null },
 ]
 
-// â”€â”€ Format currency â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Format currency ───────────────────────────────────────────────────────────
 function peso(n) {
-  return `â‚±${(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  return `₱${(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
-// â”€â”€ Excel export via SheetJS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Excel export via SheetJS ──────────────────────────────────────────────────
 async function exportExcel({ rows, clinic, dateFrom, dateTo, procedure }) {
   // Load SheetJS from CDN
   const XLSX = await new Promise((resolve, reject) => {
@@ -56,25 +56,25 @@ async function exportExcel({ rows, clinic, dateFrom, dateTo, procedure }) {
 
   const wb = XLSX.utils.book_new()
 
-  // â”€â”€ Header metadata rows â”€â”€
+  // ── Header metadata rows ──
   const title       = clinic?.name || 'Clinic'
-  const periodLabel = `${format(parseISO(dateFrom), 'MMMM d, yyyy')} â€“ ${format(parseISO(dateTo), 'MMMM d, yyyy')}`
+  const periodLabel = `${format(parseISO(dateFrom), 'MMMM d, yyyy')} – ${format(parseISO(dateTo), 'MMMM d, yyyy')}`
   const procLabel   = procedure === 'all' ? 'All Procedures' : procedure
 
   const headerRows = [
     [title],
-    [`Appointment Report â€” ${procLabel}`],
+    [`Appointment Report — ${procLabel}`],
     [`Period: ${periodLabel}`],
     [`Generated: ${format(new Date(), 'MMMM d, yyyy h:mm a')}`],
     [],
-    ['No.', 'Patient Name', 'Date', 'Time', 'Procedure', 'Amount (â‚±)'],
+    ['No.', 'Patient Name', 'Date', 'Time', 'Procedure', 'Amount (₱)'],
   ]
 
   const dataRows = rows.map((r, i) => [
     i + 1,
     r.patientName,
     r.date,
-    r.time || 'â€”',
+    r.time || '—',
     r.procedure,
     r.amount,
   ])
@@ -137,10 +137,10 @@ async function exportExcel({ rows, clinic, dateFrom, dateTo, procedure }) {
   XLSX.writeFile(wb, filename)
 }
 
-// â”€â”€ PDF export via browser print â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── PDF export via browser print ─────────────────────────────────────────────
 function exportPDF({ rows, clinic, dateFrom, dateTo, procedure }) {
   const title       = clinic?.name || 'Clinic Report'
-  const periodLabel = `${format(parseISO(dateFrom), 'MMMM d, yyyy')} â€“ ${format(parseISO(dateTo), 'MMMM d, yyyy')}`
+  const periodLabel = `${format(parseISO(dateFrom), 'MMMM d, yyyy')} – ${format(parseISO(dateTo), 'MMMM d, yyyy')}`
   const procLabel   = procedure === 'all' ? 'All Procedures' : procedure
   const totalAmount = rows.reduce((s, r) => s + r.amount, 0)
   const generatedAt = format(new Date(), 'MMMM d, yyyy h:mm a')
@@ -150,9 +150,9 @@ function exportPDF({ rows, clinic, dateFrom, dateTo, procedure }) {
       <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;text-align:center;color:#64748b;font-size:12px;">${i + 1}</td>
       <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;font-weight:600;font-size:13px;">${r.patientName}</td>
       <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;color:#475569;font-size:12px;">${r.date}</td>
-      <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;color:#475569;font-size:12px;">${r.time || 'â€”'}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;color:#475569;font-size:12px;">${r.time || '—'}</td>
       <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;color:#0369a1;font-size:12px;font-weight:500;">${r.procedure}</td>
-      <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:600;font-size:12px;">â‚±${r.amount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;text-align:right;font-weight:600;font-size:12px;">₱${r.amount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</td>
     </tr>
   `).join('')
 
@@ -161,7 +161,7 @@ function exportPDF({ rows, clinic, dateFrom, dateTo, procedure }) {
     <html>
     <head>
       <meta charset="UTF-8"/>
-      <title>${title} â€” Report</title>
+      <title>${title} — Report</title>
       <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: Arial, sans-serif; color: #0f172a; background: white; }
@@ -175,7 +175,7 @@ function exportPDF({ rows, clinic, dateFrom, dateTo, procedure }) {
         <div style="display:flex;justify-content:space-between;align-items:flex-start;">
           <div>
             <h1 style="font-size:24px;font-weight:800;color:#0f172a;letter-spacing:-0.5px;">${title}</h1>
-            <p style="color:#64748b;font-size:13px;margin-top:4px;">Appointment Report â€” ${procLabel}</p>
+            <p style="color:#64748b;font-size:13px;margin-top:4px;">Appointment Report — ${procLabel}</p>
           </div>
           <div style="text-align:right;">
             <div style="background:#e0f2fe;border-radius:8px;padding:8px 16px;display:inline-block;">
@@ -194,12 +194,12 @@ function exportPDF({ rows, clinic, dateFrom, dateTo, procedure }) {
         </div>
         <div style="flex:1;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px 18px;">
           <p style="color:#1d4ed8;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Total Earnings</p>
-          <p style="color:#0f172a;font-size:24px;font-weight:800;margin-top:4px;">â‚±${totalAmount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</p>
+          <p style="color:#0f172a;font-size:24px;font-weight:800;margin-top:4px;">₱${totalAmount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</p>
         </div>
         ${rows.length > 0 ? `
         <div style="flex:1;background:#faf5ff;border:1px solid #e9d5ff;border-radius:10px;padding:14px 18px;">
           <p style="color:#7c3aed;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;">Avg per Patient</p>
-          <p style="color:#0f172a;font-size:24px;font-weight:800;margin-top:4px;">â‚±${(totalAmount / rows.length).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</p>
+          <p style="color:#0f172a;font-size:24px;font-weight:800;margin-top:4px;">₱${(totalAmount / rows.length).toLocaleString('en-PH', { minimumFractionDigits: 2 })}</p>
         </div>` : ''}
       </div>
 
@@ -223,7 +223,7 @@ function exportPDF({ rows, clinic, dateFrom, dateTo, procedure }) {
             <td colspan="4" style="padding:12px;border-top:2px solid #e2e8f0;"></td>
             <td style="padding:12px;border-top:2px solid #e2e8f0;font-weight:800;font-size:13px;color:#0f172a;">TOTAL</td>
             <td style="padding:12px;border-top:2px solid #e2e8f0;text-align:right;font-weight:800;font-size:14px;color:#0369a1;">
-              â‚±${totalAmount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+              ₱${totalAmount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
             </td>
           </tr>
         </tfoot>
@@ -231,8 +231,8 @@ function exportPDF({ rows, clinic, dateFrom, dateTo, procedure }) {
 
       <!-- Footer -->
       <div style="margin-top:32px;padding-top:16px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;">
-        <p style="color:#94a3b8;font-size:11px;">Generated by BookMyDentistPH Â· ${generatedAt}</p>
-        <p style="color:#94a3b8;font-size:11px;">${title} â€” Confidential</p>
+        <p style="color:#94a3b8;font-size:11px;">Generated by BookMyDentistPH · ${generatedAt}</p>
+        <p style="color:#94a3b8;font-size:11px;">${title} — Confidential</p>
       </div>
     </body>
     </html>
@@ -245,7 +245,7 @@ function exportPDF({ rows, clinic, dateFrom, dateTo, procedure }) {
   setTimeout(() => { win.print(); win.close() }, 500)
 }
 
-// â”€â”€ Main Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Main Component ────────────────────────────────────────────────────────────
 function getAppointmentProcedures(appointment) {
   if (appointment.performed_services?.length) {
     return appointment.performed_services.map(p => ({
@@ -410,7 +410,7 @@ export default function ClinicReports() {
             isWalkIn:     a.is_walk_in,
             guestContact: a.guest_contact,
             date:        format(parseISO(a.appointment_date), 'MMMM d, yyyy'),
-            time:        a.appointment_time ? formatTime(a.appointment_time) : 'â€”',
+            time:        a.appointment_time ? formatTime(a.appointment_time) : '—',
             procedure:   p.name,
             amount:      parseFloat(p.price) || 0,
             covered:     p.covered || 'none',
@@ -418,7 +418,7 @@ export default function ClinicReports() {
           })
         }
       } else {
-        // No performed_services â€” use booked service
+        // No performed_services — use booked service
         if (procedure !== 'all' && a.services?.id !== procedure && a.services?.name !== procedure) continue
         rows.push({
           patientName: a.profiles?.full_name || a.guest_name || 'Walk-in',
@@ -428,8 +428,8 @@ export default function ClinicReports() {
           isWalkIn:     a.is_walk_in,
           guestContact: a.guest_contact,
           date:        format(parseISO(a.appointment_date), 'MMMM d, yyyy'),
-          time:        a.appointment_time ? formatTime(a.appointment_time) : 'â€”',
-          procedure:   a.services?.name || 'â€”',
+          time:        a.appointment_time ? formatTime(a.appointment_time) : '—',
+          procedure:   a.services?.name || '—',
           amount:      parseFloat(a.services?.price) || 0,
           covered:     a.services?.covered || 'none',
           apptId:      a.id,
@@ -442,14 +442,14 @@ export default function ClinicReports() {
     setGenerating(false)
 
     if (rows.length === 0) {
-      toast('No completed appointments found for this period.', { icon: 'ðŸ“‹' })
+      toast('No completed appointments found for this period.', { icon: '📋' })
     } else {
-      toast.success(`Report generated â€” ${rows.length} record${rows.length !== 1 ? 's' : ''} found`)
+      toast.success(`Report generated — ${rows.length} record${rows.length !== 1 ? 's' : ''} found`)
     }
   }
 
   function formatTime(t) {
-    if (!t) return 'â€”'
+    if (!t) return '—'
     const [h, m] = t.split(':').map(Number)
     const ampm   = h >= 12 ? 'PM' : 'AM'
     const h12    = h === 0 ? 12 : h > 12 ? h - 12 : h
@@ -490,7 +490,7 @@ export default function ClinicReports() {
       return {
         id: appt.id,
         date: format(parseISO(appt.appointment_date), 'MMMM d, yyyy'),
-        time: appt.appointment_time ? formatTime(appt.appointment_time) : 'Ã¢â‚¬â€',
+        time: appt.appointment_time ? formatTime(appt.appointment_time) : '—',
         procedures,
         total,
         notes: appt.clinic_notes || appt.notes,
@@ -695,7 +695,7 @@ export default function ClinicReports() {
                       <span className="badge badge-teal shrink-0">{customer.reportVisits}</span>
                     </div>
                     <p className="text-xs text-slate-500 mt-2">
-                      {customer.reportVisits} visit{customer.reportVisits === 1 ? '' : 's'} in report Â· {peso(customer.reportAmount)}
+                      {customer.reportVisits} visit{customer.reportVisits === 1 ? '' : 's'} in report · {peso(customer.reportAmount)}
                     </p>
                   </button>
                 ))}
@@ -707,10 +707,10 @@ export default function ClinicReports() {
           <div className="card overflow-hidden">
             <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 bg-slate-50/60">
               <p className="font-semibold text-slate-800 text-sm">
-                {clinic?.name} â€” {procedure === 'all' ? 'All Procedures' : services.find(s => s.id === procedure)?.name || procedure}
+                {clinic?.name} — {procedure === 'all' ? 'All Procedures' : services.find(s => s.id === procedure)?.name || procedure}
               </p>
               <p className="text-xs text-slate-400">
-                {format(parseISO(dateFrom), 'MMM d, yyyy')} â€“ {format(parseISO(dateTo), 'MMM d, yyyy')}
+                {format(parseISO(dateFrom), 'MMM d, yyyy')} – {format(parseISO(dateTo), 'MMM d, yyyy')}
               </p>
             </div>
 
