@@ -4,13 +4,16 @@ import { supabase } from '../../lib/supabase'
 import toast from 'react-hot-toast'
 import { Wrench, Clock, Plus, ToggleLeft, ToggleRight, Pencil, Trash2 } from 'lucide-react'
 import { PageHeader, EmptyState, Modal, Field, Alert, SkeletonRows, TableWrapper, TableHead } from '../../components/ui/shared'
+import CoverageBadge from '../../components/CoverageBadge'
+import { COVERAGE_OPTIONS, normalizeCoverage } from '../../lib/coverage'
 
-const EMPTY = { name:'', description:'', duration_minutes:60, price:'' }
+const EMPTY = { name:'', description:'', duration_minutes:60, price:'', covered:'none' }
 
 function ServiceForm({ service, onClose, onSaved }) {
   const [form, setForm]   = useState(service ? {
     name: service.name, description: service.description||'',
-    duration_minutes: service.duration_minutes, price: service.price||''
+    duration_minutes: service.duration_minutes, price: service.price||'',
+    covered: normalizeCoverage(service.covered),
   } : EMPTY)
   const [saving, setSaving] = useState(false)
   const [error, setError]   = useState('')
@@ -20,7 +23,12 @@ function ServiceForm({ service, onClose, onSaved }) {
   async function handleSave() {
     if (!form.name.trim()) { setError('Service name is required'); return }
     setSaving(true); setError('')
-    const payload = { ...form, price: form.price ? parseFloat(form.price) : null }
+    const payload = {
+      ...form,
+      duration_minutes: parseInt(form.duration_minutes, 10) || 30,
+      price: form.price ? parseFloat(form.price) : null,
+      covered: normalizeCoverage(form.covered),
+    }
     try {
       if (service) {
         const { error:err } = await supabase.from('services').update(payload).eq('id', service.id)
@@ -59,6 +67,27 @@ function ServiceForm({ service, onClose, onSaved }) {
               placeholder="0.00" min={0} step={0.01} className="input"/>
           </Field>
         </div>
+        <Field label="Coverage">
+          <div className="grid grid-cols-3 gap-2">
+            {COVERAGE_OPTIONS.map(option => {
+              const active = normalizeCoverage(form.covered) === option.value
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setForm(p => ({ ...p, covered: option.value }))}
+                  className={`rounded-xl border px-3 py-2 text-xs font-bold transition-all ${
+                    active
+                      ? 'border-sky-400 bg-sky-50 text-sky-700 ring-2 ring-sky-100'
+                      : 'border-slate-200 text-slate-500 hover:border-sky-200 hover:text-sky-600'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              )
+            })}
+          </div>
+        </Field>
         {error && <Alert type="error">{error}</Alert>}
         <div className="flex gap-3 pt-1">
           <button onClick={onClose} className="btn btn-secondary btn-md flex-1">Cancel</button>
@@ -123,8 +152,8 @@ export default function ManageServices() {
     <div>
       <div className="skeleton h-8 w-32 mb-6"/>
       <TableWrapper>
-        <TableHead cols={['Name','Duration','Price','Status','']}/>
-        <tbody><SkeletonRows n={4} cols={5}/></tbody>
+        <TableHead cols={['Name','Duration','Price','Coverage','Status','']}/>
+        <tbody><SkeletonRows n={4} cols={6}/></tbody>
       </TableWrapper>
     </div>
   )
@@ -150,7 +179,7 @@ export default function ManageServices() {
         />
       ) : (
         <TableWrapper>
-          <TableHead cols={['Service','Duration','Price','Status','']}/>
+          <TableHead cols={['Service','Duration','Price','Coverage','Status','']}/>
           <tbody className="divide-y divide-slate-100">
             {services.map(s=>(
               <tr key={s.id} className="hover:bg-slate-50 transition-colors group">
@@ -163,6 +192,9 @@ export default function ManageServices() {
                 </td>
                 <td className="px-4 py-3 font-bold text-slate-800 text-sm">
                   {s.price ? `₱${parseFloat(s.price).toLocaleString()}` : '—'}
+                </td>
+                <td className="px-4 py-3">
+                  <CoverageBadge value={s.covered} />
                 </td>
                 <td className="px-4 py-3">
                   <button onClick={()=>toggleActive(s)} className="flex items-center gap-1.5 text-xs font-semibold transition-colors">

@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { MapPin, Star, Search, X } from 'lucide-react'
 import { PageHeader, EmptyState, SkeletonCard } from '../../components/ui/shared'
 import ToothIcon from '../../components/ToothIcon'
+import CoverageBadge from '../../components/CoverageBadge'
 
 const STAR_PATH = "M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
 
@@ -59,7 +60,10 @@ function ClinicCard({ clinic }) {
         {clinic.services?.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-2">
             {clinic.services.slice(0, 3).map(s => (
-              <span key={s.id} className="badge badge-teal" style={{ fontSize: '0.62rem', padding: '0.1rem 0.45rem' }}>{s.name}</span>
+              <span key={s.id} className="inline-flex items-center gap-1 flex-wrap">
+                <span className="badge badge-teal" style={{ fontSize: '0.62rem', padding: '0.1rem 0.45rem' }}>{s.name}</span>
+                <CoverageBadge value={s.covered} className="text-xs" />
+              </span>
             ))}
             {clinic.services.length > 3 && <span className="badge badge-gray" style={{ fontSize: '0.62rem', padding: '0.1rem 0.45rem' }}>+{clinic.services.length - 3}</span>}
           </div>
@@ -91,7 +95,7 @@ export default function BrowseClinics() {
 
   useEffect(() => {
     supabase.from('clinics')
-      .select('id, name, city, logo_url, banner_url, created_at, services(id,name,price), reviews(rating)')
+      .select('id, name, city, logo_url, banner_url, created_at, services(id,name,price,covered), reviews(rating)')
       .eq('is_active', true)
       .eq('verification_status', 'approved')
       .order('created_at', { ascending: false })

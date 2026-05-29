@@ -15,6 +15,7 @@ const HelpCentre = lazy(() => import('../pages/HelpCentre'))
 const FAQs = lazy(() => import('../pages/FAQs'))
 const HowItWorks = lazy(() => import('../pages/HowItWorks'))
 const BrowseServices = lazy(() => import('../pages/BrowseServices'))
+const Tools = lazy(() => import('../pages/Tools'))
 const PrivacyPolicy = lazy(() => import('../pages/PrivacyPolicy'))
 const TermsOfService = lazy(() => import('../pages/TermsOfService'))
 
@@ -62,6 +63,7 @@ const routes = [
   { path: '/faqs', element: loadable(FAQs) },
   { path: '/how-it-works', element: loadable(HowItWorks) },
   { path: '/browse', element: loadable(BrowseServices) },
+  { path: '/tools', element: loadable(Tools) },
   { path: '/clinic/:id', element: loadable(ClinicDetail) },
   { path: '/terms', element: loadable(TermsOfService) },
   { path: '/privacy', element: loadable(PrivacyPolicy) },

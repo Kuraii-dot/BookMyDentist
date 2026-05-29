@@ -6,6 +6,7 @@ import { format, isToday, isTomorrow, isPast } from 'date-fns'
 import { Calendar, Trophy, Ban, BarChart2, Building2, Clock,
          ChevronRight, AlertCircle, CheckCircle2, XCircle, RefreshCw, Search } from 'lucide-react'
 import { StatCard, StatusBadge, EmptyState, SkeletonCard, PageHeader, SectionCard } from '../../components/ui/shared'
+import CoverageBadge from '../../components/CoverageBadge'
 
 function AppointmentRow({ appt, onCancel }) {
   const date = new Date(appt.appointment_date)
@@ -26,7 +27,10 @@ function AppointmentRow({ appt, onCancel }) {
         <div className="flex items-start justify-between gap-2 flex-wrap">
           <div>
             <p className="font-semibold text-slate-900 text-sm">{appt.clinics?.name}</p>
-            <p className="text-xs text-sky-600 font-medium mt-0.5">{appt.services?.name}</p>
+            <p className="text-xs text-sky-600 font-medium mt-0.5 inline-flex items-center gap-2 flex-wrap">
+              {appt.services?.name}
+              {appt.services && <CoverageBadge value={appt.services.covered} className="text-xs" />}
+            </p>
           </div>
           <StatusBadge status={appt.status}/>
         </div>
@@ -76,7 +80,7 @@ export default function CustomerDashboard() {
 
   async function loadAppointments() {
     const { data } = await supabase.from('appointments')
-      .select('*, clinics(name,logo_url,city), services(name,price)')
+      .select('*, clinics(name,logo_url,city), services(name,price,covered)')
       .eq('customer_id', user.id)
       .order('appointment_date',{ascending:false}).limit(50)
     setAppointments(data||[])

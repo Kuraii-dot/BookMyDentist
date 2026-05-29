@@ -13,6 +13,7 @@ import {
   Trophy, Stethoscope, Mail, Users, Timer, ClipboardList,
   Save, Zap, AlertCircle, ListChecks,
 } from 'lucide-react'
+import CoverageBadge from '../../components/CoverageBadge'
 
 const TABS = [
   { key: 'pending',   label: 'Pending',   Icon: Timer        },
@@ -34,7 +35,7 @@ const STATUS_CONFIG = {
 
 const DAY_KEYS = ['sunday','monday','tuesday','wednesday','thursday','friday','saturday']
 const PER_PAGE = 20
-const APPOINTMENT_SELECT = '*, profiles!appointments_customer_id_fkey(full_name,email,phone,avatar_url), services(name,price,duration_minutes)'
+const APPOINTMENT_SELECT = '*, profiles!appointments_customer_id_fkey(full_name,email,phone,avatar_url), services(name,price,duration_minutes,covered)'
 const TAB_STATUSES = {
   pending: ['pending'],
   upcoming: ['accepted', 'reschedule_accepted', 'rescheduled'],
@@ -183,7 +184,7 @@ function getApptServices(a) {
   }
   // Fallback: single service from the join
   if (a.services) {
-    return [{ name: a.services.name, price: a.services.price, duration_minutes: a.services.duration_minutes }]
+    return [{ name: a.services.name, price: a.services.price, duration_minutes: a.services.duration_minutes, covered: a.services.covered }]
   }
   return []
 }
@@ -273,7 +274,10 @@ function ApptCard({ a, onAction, onProcedures }) {
               <div className="space-y-0.5">
                 {apptServices.map((s, i) => (
                   <div key={i} className="flex items-center justify-between text-xs">
-                    <span className="font-medium text-sky-600">{s.name}</span>
+                    <span className="font-medium text-sky-600 inline-flex items-center gap-1.5 flex-wrap">
+                      {s.name}
+                      <CoverageBadge value={s.covered} className="text-xs" />
+                    </span>
                     <span className="text-slate-400">₱{parseFloat(s.price || 0).toLocaleString()}</span>
                   </div>
                 ))}
@@ -284,7 +288,10 @@ function ApptCard({ a, onAction, onProcedures }) {
               </div>
             ) : (
               <div className="flex items-center gap-3 text-xs text-slate-500 flex-wrap">
-                <span className="font-semibold text-sky-600">{apptServices[0]?.name || a.guest_procedure}</span>
+                <span className="font-semibold text-sky-600 inline-flex items-center gap-1.5 flex-wrap">
+                  {apptServices[0]?.name || a.guest_procedure}
+                  {apptServices[0] && <CoverageBadge value={apptServices[0].covered} className="text-xs" />}
+                </span>
                 {apptServices[0]?.price && (
                   <span className="font-semibold">₱{parseFloat(apptServices[0].price).toLocaleString()}</span>
                 )}
@@ -323,7 +330,10 @@ function ApptCard({ a, onAction, onProcedures }) {
             <div className="mt-2 p-2 rounded-lg bg-sky-50 border border-sky-100">
               <div className="flex flex-wrap gap-1">
                 {a.performed_services.map((p, i) => (
-                  <span key={i} className="badge badge-teal" style={{ fontSize: '0.6rem', padding: '0.1rem 0.4rem' }}>{p.name}</span>
+                  <span key={i} className="inline-flex items-center gap-1 flex-wrap">
+                    <span className="badge badge-teal" style={{ fontSize: '0.6rem', padding: '0.1rem 0.4rem' }}>{p.name}</span>
+                    <CoverageBadge value={p.covered} className="text-xs" />
+                  </span>
                 ))}
               </div>
               <p className="text-xs font-bold text-sky-700 mt-1">
@@ -379,6 +389,7 @@ function PerformedServicesModal({ appointment, clinicServices, onSave, onClose }
       service_id: s.service_id || appointment.service_id,
       name: s.name,
       price: parseFloat(s.price || 0),
+      covered: s.covered || 'none',
       custom: false,
     }))
   }
@@ -394,11 +405,11 @@ function PerformedServicesModal({ appointment, clinicServices, onSave, onClose }
 
   function addFromCatalog(svc) {
     if (performed.find(p => p.service_id === svc.id)) { toast.error('Already added'); return }
-    setPerformed(p => [...p, { service_id: svc.id, name: svc.name, price: parseFloat(svc.price || 0), custom: false }])
+    setPerformed(p => [...p, { service_id: svc.id, name: svc.name, price: parseFloat(svc.price || 0), covered: svc.covered || 'none', custom: false }])
   }
   function addCustom() {
     if (!customName.trim()) { toast.error('Enter a name'); return }
-    setPerformed(p => [...p, { name: customName.trim(), price: parseFloat(customPrice) || 0, custom: true }])
+    setPerformed(p => [...p, { name: customName.trim(), price: parseFloat(customPrice) || 0, covered: 'none', custom: true }])
     setCustomName(''); setCustomPrice(''); setShowCustom(false)
   }
   function remove(i)         { setPerformed(p => p.filter((_, j) => j !== i)) }
@@ -560,6 +571,7 @@ function WalkInModal({ clinic, clinicServices, availability, onClose, onSaved })
       name: svc.name,
       price: parseFloat(svc.price || 0),
       duration_minutes: svc.duration_minutes || 30,
+      covered: svc.covered || 'none',
     }] : []
 
     const { error } = await supabase.from('appointments').insert({

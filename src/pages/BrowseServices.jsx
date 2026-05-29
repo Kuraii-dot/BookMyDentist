@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { MapPin, Search, X, SlidersHorizontal, Star, ChevronDown } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import { EmptyState, SkeletonCard } from '../components/ui/shared'
+import CoverageBadge from '../components/CoverageBadge'
 
 const STAR_PATH = "M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
 
@@ -19,13 +20,13 @@ function ClinicCard({ clinic, highlightService }) {
       <div className="relative h-32 overflow-hidden bg-slate-100">
         {clinic.banner_url
           ? <img src={clinic.banner_url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"/>
-          : <div className="w-full h-full flex items-center justify-center text-4xl opacity-10">🦷</div>
+          : <div className="w-full h-full flex items-center justify-center text-4xl opacity-10">ðŸ¦·</div>
         }
         <div className="absolute bottom-0 left-4 translate-y-1/2">
           <div className="w-10 h-10 rounded-xl border-2 border-white bg-white shadow-sm overflow-hidden">
             {clinic.logo_url
               ? <img src={clinic.logo_url} alt="" className="w-full h-full object-cover"/>
-              : <div className="w-full h-full bg-sky-50 flex items-center justify-center text-base">🦷</div>
+              : <div className="w-full h-full bg-sky-50 flex items-center justify-center text-base">ðŸ¦·</div>
             }
           </div>
         </div>
@@ -36,7 +37,12 @@ function ClinicCard({ clinic, highlightService }) {
           </div>
         )}
         {matched && (
-          <div className="absolute top-2 left-2 badge badge-teal text-xs">{matched.name} — ₱{parseFloat(matched.price).toLocaleString()}</div>
+          <div className="absolute top-2 left-2 flex flex-wrap items-center gap-1">
+            <span className="badge badge-teal text-xs">
+              {matched.name} - ₱{parseFloat(matched.price).toLocaleString()}
+            </span>
+            <CoverageBadge value={matched.covered} className="text-xs" />
+          </div>
         )}
       </div>
       <div className="p-4 pt-7">
@@ -52,13 +58,16 @@ function ClinicCard({ clinic, highlightService }) {
         )}
         <div className="flex flex-wrap gap-1 mt-2">
           {clinic.services?.slice(0,3).map(s=>(
-            <span key={s.id} className={`badge text-xs ${highlightService&&s.name.toLowerCase().includes(highlightService.toLowerCase())?'badge-teal':'badge-gray'}`}
-              style={{fontSize:'0.62rem'}}>{s.name}</span>
+            <span key={s.id} className="inline-flex items-center gap-1 flex-wrap">
+              <span className={`badge text-xs ${highlightService&&s.name.toLowerCase().includes(highlightService.toLowerCase())?'badge-teal':'badge-gray'}`}
+                style={{fontSize:'0.62rem'}}>{s.name}</span>
+              <CoverageBadge value={s.covered} className="text-xs" />
+            </span>
           ))}
           {clinic.services?.length>3&&<span className="badge badge-gray" style={{fontSize:'0.62rem'}}>+{clinic.services.length-3}</span>}
         </div>
         {clinic.services?.length>0 && (
-          <p className="text-xs text-slate-400 mt-1.5">From <span className="font-bold text-sky-600">₱{Math.min(...clinic.services.map(s=>s.price||0)).toLocaleString()}</span></p>
+          <p className="text-xs text-slate-400 mt-1.5">From <span className="font-bold text-sky-600">â‚±{Math.min(...clinic.services.map(s=>s.price||0)).toLocaleString()}</span></p>
         )}
         <div className="flex gap-2 mt-3" onClick={e=>e.stopPropagation()}>
           <Link to={`/clinic/${clinic.id}`} className="btn btn-secondary btn-sm flex-1 text-xs text-center">Details</Link>
@@ -87,7 +96,7 @@ export default function BrowseServices() {
 
   useEffect(()=>{
     supabase.from('clinics')
-      .select('id, name, city, logo_url, banner_url, created_at, services(id,name,price), reviews(rating)')
+      .select('id, name, city, logo_url, banner_url, created_at, services(id,name,price,covered), reviews(rating)')
       .eq('is_active',true).eq('verification_status','approved')
       .order('created_at', { ascending: false })
       .limit(120)
@@ -180,14 +189,14 @@ export default function BrowseServices() {
               </div>
               {/* Price */}
               <div className="card p-4">
-                <p className="section-label mb-2">Price Range (₱)</p>
+                <p className="section-label mb-2">Price Range (â‚±)</p>
                 <div className="flex items-center gap-2">
                   <input type="number" value={minPrice} onChange={e=>setMinPrice(e.target.value)} placeholder="Min" className="input text-sm" min="0"/>
-                  <span className="text-slate-400 text-sm shrink-0">–</span>
+                  <span className="text-slate-400 text-sm shrink-0">â€“</span>
                   <input type="number" value={maxPrice} onChange={e=>setMaxPrice(e.target.value)} placeholder="Max" className="input text-sm" min="0"/>
                 </div>
                 <div className="flex flex-wrap gap-1.5 mt-2">
-                  {[['<₱500','','500'],['₱500–1k','500','1000'],['₱1k+','1000','']].map(([l,mn,mx])=>(
+                  {[['<â‚±500','','500'],['â‚±500â€“1k','500','1000'],['â‚±1k+','1000','']].map(([l,mn,mx])=>(
                     <button key={l} onClick={()=>{setMinPrice(mn);setMaxPrice(mx)}}
                       className={`text-xs px-2.5 py-1 rounded-full font-medium border transition-all
                         ${minPrice===mn&&maxPrice===mx?'bg-sky-500 text-white border-sky-500':'border-slate-200 text-slate-500 hover:border-sky-300'}`}>
@@ -202,8 +211,8 @@ export default function BrowseServices() {
                 <select value={sortBy} onChange={e=>setSortBy(e.target.value)} className="input text-sm">
                   <option value="rating">Highest Rated</option>
                   <option value="reviews">Most Reviewed</option>
-                  <option value="price_asc">Price: Low → High</option>
-                  <option value="price_desc">Price: High → Low</option>
+                  <option value="price_asc">Price: Low â†’ High</option>
+                  <option value="price_desc">Price: High â†’ Low</option>
                 </select>
               </div>
               {hasFilters && (
@@ -224,7 +233,7 @@ export default function BrowseServices() {
                 {city!=='all'&&<span className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full font-semibold bg-sky-50 text-sky-700 border border-sky-200">
                   {city}<button onClick={()=>setCity('all')}><X className="w-3 h-3"/></button></span>}
                 {(minPrice||maxPrice)&&<span className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full font-semibold bg-sky-50 text-sky-700 border border-sky-200">
-                  ₱{minPrice||'0'}–₱{maxPrice||'∞'}<button onClick={()=>{setMinPrice('');setMaxPrice('')}}><X className="w-3 h-3"/></button></span>}
+                  â‚±{minPrice||'0'}â€“â‚±{maxPrice||'âˆž'}<button onClick={()=>{setMinPrice('');setMaxPrice('')}}><X className="w-3 h-3"/></button></span>}
                 {search&&<span className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full font-semibold bg-sky-50 text-sky-700 border border-sky-200">
                   "{search}"<button onClick={()=>setSearch('')}><X className="w-3 h-3"/></button></span>}
               </div>

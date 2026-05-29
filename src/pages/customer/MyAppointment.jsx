@@ -9,6 +9,7 @@ import {
   CheckCircle2, XCircle, AlertCircle, Trophy, Ban, DollarSign
 } from 'lucide-react'
 import { PageHeader, EmptyState, StatusBadge, SkeletonCard } from '../../components/ui/shared'
+import CoverageBadge from '../../components/CoverageBadge'
 
 const STATUS_ICON = {
   pending:             { Icon: AlertCircle,  cls: 'text-amber-500 animate-pulse' },
@@ -41,7 +42,7 @@ export default function MyAppointments() {
       .select(`
         id, clinic_id, status, appointment_date, appointment_time, rescheduled_date,
         rescheduled_time, rejection_reason, created_at,
-        clinics(id, name, logo_url), services(id, name, price)
+        clinics(id, name, logo_url), services(id, name, price, covered)
       `)
       .eq('customer_id', user.id)
       .order('created_at', { ascending: false })
@@ -117,7 +118,10 @@ export default function MyAppointments() {
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-slate-900 text-sm truncate">{appt.clinics?.name}</p>
                     <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5 flex-wrap">
-                      <span className="text-sky-600 font-medium">{appt.services?.name}</span>
+                      <span className="text-sky-600 font-medium inline-flex items-center gap-1.5">
+                        {appt.services?.name}
+                        {appt.services && <CoverageBadge value={appt.services.covered} className="text-xs" />}
+                      </span>
                       <span className="flex items-center gap-0.5">
                         <Calendar className="w-3 h-3"/>
                         {format(new Date(appt.appointment_date),'MMM d, yyyy')}

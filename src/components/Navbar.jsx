@@ -1,7 +1,7 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import NotificationBell from './NotificationBell'
-import { LayoutDashboard, Search, Home, User, LogIn } from 'lucide-react'
+import { LayoutDashboard, Search, Home, User, LogIn, Calculator } from 'lucide-react'
 
 export default function Navbar({ showNotifications = false }) {
   const { user, profile, loading, signOut } = useAuth()
@@ -21,12 +21,14 @@ export default function Navbar({ showNotifications = false }) {
     ? [
         { to: '/',           Icon: Home,          label: 'Home'      },
         { to: '/browse',     Icon: Search,        label: 'Browse'    },
+        { to: '/tools',      Icon: Calculator,    label: 'Tools'     },
         { to: dashboardLink, Icon: LayoutDashboard,label: 'Dashboard' },
         { to: '/dashboard/profile', Icon: User,   label: 'Account'   },
       ]
     : [
         { to: '/',          Icon: Home,   label: 'Home'   },
         { to: '/browse',    Icon: Search, label: 'Browse' },
+        { to: '/tools',     Icon: Calculator, label: 'Tools' },
         { to: '/login',     Icon: LogIn,  label: 'Sign In'},
       ]
 
@@ -58,6 +60,14 @@ export default function Navbar({ showNotifications = false }) {
           </Link>
 
           <div className="flex items-center gap-3">
+            <Link to="/browse"
+              className="text-sm font-semibold text-slate-600 hover:text-sky-600 transition-colors">
+              Browse
+            </Link>
+            <Link to="/tools"
+              className="text-sm font-semibold text-slate-600 hover:text-sky-600 transition-colors">
+              Tools
+            </Link>
             {user ? (
               <>
                 {showNotifications && <NotificationBell />}

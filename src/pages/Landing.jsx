@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import CoverageBadge from '../components/CoverageBadge'
 import mascotImage from '../assets/MNB.png'
 import footerBg from '../assets/Footer.png'
 import searchMascot from '../assets/search.png'
@@ -343,7 +344,10 @@ function ClinicCard({ clinic }) {
         {clinic.services?.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-2.5">
             {clinic.services.slice(0,3).map(s => (
-              <span key={s.id} className="badge badge-teal text-[0.65rem]">{s.name}</span>
+              <span key={s.id} className="inline-flex items-center gap-1 flex-wrap">
+                <span className="badge badge-teal text-[0.65rem]">{s.name}</span>
+                <CoverageBadge value={s.covered} className="text-[0.65rem]" />
+              </span>
             ))}
             {clinic.services.length > 3 && <span className="badge badge-gray text-[0.65rem]">+{clinic.services.length-3}</span>}
           </div>
@@ -569,7 +573,7 @@ export default function Landing() {
 
   useEffect(() => {
     supabase.from('clinics')
-      .select('*, services(id,name,price), reviews(rating)')
+      .select('*, services(id,name,price,covered), reviews(rating)')
       .eq('is_active', true).eq('verification_status', 'approved')
       .then(({ data }) => {
         const enriched = (data||[]).map(c => ({
@@ -1145,6 +1149,7 @@ export default function Landing() {
                   {[
                     { title:'Product', links:[
                       { label:'Browse Clinics', to:'/browse' },
+                      { label:'Tools', to:'/tools' },
                       { label:'Book Appointment', to:'/register' },
                       { label:'List Your Clinic', to:'/register?role=clinic' },
                       { label:'How It Works', to:'/how-it-works' },

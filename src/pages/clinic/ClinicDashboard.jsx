@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
 import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { AlertCircle, Calendar, BarChart2, CheckCircle2, Wrench, Clock, Building2, User, ChevronRight } from 'lucide-react'
 import { StatCard, StatusBadge, EmptyState, SectionCard, PageHeader, SkeletonRows } from '../../components/ui/shared'
+import CoverageBadge from '../../components/CoverageBadge'
 
 const STATUS_CONFIG = {
   pending:    { label:'Pending',    cls:'badge-warning' },
@@ -60,7 +61,7 @@ export default function ClinicDashboard() {
     const monthStart = format(startOfMonth(now),'yyyy-MM-dd')
     const monthEnd   = format(endOfMonth(now),'yyyy-MM-dd')
     const { data:all } = await supabase.from('appointments')
-      .select('*, profiles!appointments_customer_id_fkey(full_name,avatar_url), services(name,price)')
+      .select('*, profiles!appointments_customer_id_fkey(full_name,avatar_url), services(name,price,covered)')
       .eq('clinic_id',c.id).order('appointment_date',{ascending:false}).limit(50)
     const appts = all||[]
     setStats({
@@ -97,12 +98,12 @@ export default function ClinicDashboard() {
       <div className="gradient-banner p-6 text-white">
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
-            <p className="text-sky-100 text-sm">{greeting} 👋</p>
+            <p className="text-sky-100 text-sm">{greeting} ðŸ‘‹</p>
             <h1 className="font-display font-bold text-2xl mt-0.5">{clinic?.name||profile?.full_name}</h1>
             <p className="text-sky-100 text-sm mt-1">
               {stats.pending>0
                 ? `${stats.pending} request${stats.pending>1?'s':''} awaiting your response`
-                : 'All caught up — no pending requests!'}
+                : 'All caught up â€” no pending requests!'}
             </p>
           </div>
           {stats.pending>0 && (
@@ -124,7 +125,7 @@ export default function ClinicDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Today's schedule */}
         <SectionCard
-          title={`Today's Schedule — ${format(new Date(),'MMM d')}`}
+          title={`Today's Schedule â€” ${format(new Date(),'MMM d')}`}
           action={<span className="badge badge-teal">{todayAppts.length} appt{todayAppts.length!==1?'s':''}</span>}>
           {todayAppts.length===0 ? (
             <EmptyState icon={<Calendar className="w-6 h-6 text-slate-300"/>} title="No appointments today"/>
@@ -142,7 +143,10 @@ export default function ClinicDashboard() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-slate-800 text-sm truncate">{a.profiles?.full_name}</p>
-                      <p className="text-sky-600 text-xs">{a.services?.name}</p>
+                      <p className="text-sky-600 text-xs inline-flex items-center gap-1.5 flex-wrap">
+                        {a.services?.name}
+                        {a.services && <CoverageBadge value={a.services.covered} className="text-xs" />}
+                      </p>
                     </div>
                     <div className="text-right shrink-0">
                       {a.appointment_time && <p className="text-slate-500 text-xs flex items-center gap-1 justify-end"><Clock className="w-3 h-3"/>{a.appointment_time}</p>}
@@ -175,7 +179,10 @@ export default function ClinicDashboard() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-slate-800 text-sm truncate">{a.profiles?.full_name}</p>
-                      <p className="text-slate-400 text-xs">{a.services?.name} · {format(new Date(a.appointment_date),'MMM d')}</p>
+                      <p className="text-slate-400 text-xs inline-flex items-center gap-1.5 flex-wrap">
+                        {a.services?.name} · {format(new Date(a.appointment_date),'MMM d')}
+                        {a.services && <CoverageBadge value={a.services.covered} className="text-xs" />}
+                      </p>
                     </div>
                     <span className={`badge ${st.cls} shrink-0`}>{st.label}</span>
                   </div>

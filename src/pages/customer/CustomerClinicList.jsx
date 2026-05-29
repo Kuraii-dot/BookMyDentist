@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import CoverageBadge from '../../components/CoverageBadge'
 
 export default function CustomerClinicList() {
   const [clinics, setClinics] = useState([])
@@ -64,8 +65,9 @@ export default function CustomerClinicList() {
                 {clinic.services?.filter(s => s.is_active).length > 0 && (
                   <div className="flex flex-wrap gap-1 mb-3">
                     {clinic.services.filter(s => s.is_active).slice(0, 3).map(s => (
-                      <span key={s.id} className="bg-amber-50 text-amber-700 text-xs px-2 py-0.5 rounded-full border border-amber-100">
+                      <span key={s.id} className="bg-amber-50 text-amber-700 text-xs px-2 py-0.5 rounded-full border border-amber-100 inline-flex items-center gap-1">
                         {s.name} {s.price ? `· ₱${parseFloat(s.price).toLocaleString()}` : ''}
+                        <CoverageBadge value={s.covered} className="text-xs" />
                       </span>
                     ))}
                     {clinic.services.filter(s => s.is_active).length > 3 && (

@@ -7,6 +7,7 @@ import { MapPin, Phone, Mail, Clock, ChevronLeft, Star, Flag } from 'lucide-reac
 import Navbar from '../components/Navbar'
 import { EmptyState, SkeletonCard, Modal, Field } from '../components/ui/shared'
 import toast from 'react-hot-toast'
+import CoverageBadge from '../components/CoverageBadge'
 
 // ── Star Rating ───────────────────────────────────────────────────────────────
 function StarRating({ rating, interactive = false, onRate, size = 'md' }) {
@@ -268,6 +269,9 @@ export default function ClinicDetail() {
                             <Clock className="w-3 h-3" />{s.duration_minutes} min
                           </p>
                         )}
+                        <div className="mt-2">
+                          <CoverageBadge value={s.covered} />
+                        </div>
                       </div>
                       <div className="text-right shrink-0">
                         <p className="font-display font-bold text-sky-600 text-lg">₱{parseFloat(s.price || 0).toLocaleString()}</p>
