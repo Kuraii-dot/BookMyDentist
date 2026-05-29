@@ -214,19 +214,19 @@ function ServicesPieChart({ data }) {
   return (
     <div className="px-5 py-5">
       <p className="text-slate-400 text-xs mb-5">Based on booked services in the last six months.</p>
-      <div className="grid grid-cols-1 sm:grid-cols-[150px_1fr] gap-5 items-center">
-        <div className="relative w-36 h-36 mx-auto rounded-full shadow-inner" style={{ background: `conic-gradient(${gradient})` }}>
-          <div className="absolute inset-5 rounded-full bg-white flex flex-col items-center justify-center shadow-inner">
-            <p className="font-display font-bold text-2xl text-slate-900">{total}</p>
-            <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wide">Bookings</p>
+      <div className="grid grid-cols-1 sm:grid-cols-[minmax(120px,150px)_minmax(0,1fr)] gap-5 items-center">
+        <div className="relative w-32 h-32 sm:w-36 sm:h-36 mx-auto rounded-full shadow-inner" style={{ background: `conic-gradient(${gradient})` }}>
+          <div className="absolute inset-4 sm:inset-5 rounded-full bg-white flex flex-col items-center justify-center shadow-inner px-2 text-center">
+            <p className="font-display font-bold text-xl sm:text-2xl leading-none text-slate-900 break-all">{total}</p>
+            <p className="text-[10px] sm:text-[11px] font-semibold text-slate-400 uppercase tracking-wide mt-1">Bookings</p>
           </div>
         </div>
-        <div className="space-y-2">
+        <div className="space-y-2 min-w-0">
           {data.map((service, index) => (
             <div key={service.name} className="flex items-center gap-2 text-sm">
               <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }} />
               <span className="flex-1 min-w-0 truncate text-slate-600">{service.name}</span>
-              <span className="font-bold text-slate-900">{service.count}</span>
+              <span className="font-bold text-slate-900 tabular-nums shrink-0">{service.count}</span>
             </div>
           ))}
         </div>
@@ -268,7 +268,7 @@ function AnalyticsCharts({ analytics }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-5">
         <SectionCard title="Customer Bar Chart" action={<span className="badge badge-info">Last 6 months</span>}>
           <MonthlyCustomersChart data={analytics.months} />
         </SectionCard>
